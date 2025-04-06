@@ -1,0 +1,30 @@
+/* Footer Styling */
+.footer {
+    background: white;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-direction: column;
+}
+
+.contact-info {
+    text-align: left;
+    margin-left: -300px;
+    margin-right: 250px;
+}
+
+.footer-links {
+    display: flex;
+    gap: 50px;
+}
+
+.footer-links a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    color: grey;
+}

@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout - Purely Homemade</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="/src/assets/css/global.css" rel="stylesheet">
+  <style>
+    .order-summary {
+      background-color: #f8f9fa;
+      border-radius: 0.25rem;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .summary-total {
+      border-top: 1px solid #dee2e6;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      font-weight: bold;
+    }
+    .section-card {
+      margin-bottom: 1.5rem;
+    }
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .payment-option {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      border: 1px solid #dee2e6;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .payment-option:hover {
+      border-color: var(--accent-color);
+      background-color: #f8f9fa;
+    }
+    .payment-option.selected {
+      border-color: var(--accent-color);
+      background-color: #f0f0f0;
+    }
+    .cart-item {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+    .cart-item-checkbox {
+      transform: scale(1.2);
+      cursor: pointer;
+      accent-color: var(--accent-color);
+    }
+    .cart-item {
+      transition: opacity 0.3s;
+    }
+    .cart-item-unchecked {
+      opacity: 0.6;
+    }
+    .cart-summary-header {
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar Placeholder -->
+  <div id="navbar-placeholder"></div>
+  
+  <!-- Main Content -->
+  <div id="main-content" class="container my-5">
+    <h1 class="text-center mb-4">Checkout</h1>
+    
+    <div class="row">
+      <!-- Shipping & Payment Column -->
+      <div class="col-lg-8">
+        <!-- Shipping Information -->
+        <div class="card shadow-sm section-card">
+          <div class="card-body">
+            <h3 class="section-title">Shipping Information</h3>
+            
+            <form id="shipping-form" novalidate>
+              <div class="mb-3">
+                <select id="shipCountry" class="form-select" required>
+                  <option value="" selected disabled>Select Country</option>
+                  <option value="US">United States</option>
+                  <option value="CA">Canada</option>
+                  <option value="UK">United Kingdom</option>
+                  <option value="AU">Australia</option>
+                  <option value="FR">France</option>
+                  <option value="DE">Germany</option>
+                  <option value="JP">Japan</option>
+                  <option value="CN">China</option>
+                  <option value="IN">India</option>
+                  <option value="BR">Brazil</option>
+                  <option value="MX">Mexico</option>
+
+                </select>
+              </div>
+              <input type="text" id="shipName" class="form-control mb-3" placeholder="Full Name" required>
+              <input type="text" id="shipAddress" class="form-control mb-3" placeholder="Address Line 1" required>
+              <input type="text" id="shipAddress2" class="form-control mb-3" placeholder="Address Line 2 (Optional)">
+              <div class="row mb-3" id="domestic-fields">
+                <div class="col-md-6">
+                  <input type="text" id="shipCity" class="form-control" placeholder="City" required>
+                </div>
+                <div class="col-md-3">
+                  <select id="shipState" class="form-select" required>
+                    <option value="" selected disabled>State</option>
+                    <option value="AL">Alabama</option>
+                    <option value="AK">Alaska</option>
+                    <option value="AZ">Arizona</option>
+                    <option value="AR">Arkansas</option>
+                    <option value="CA">California</option>
+                    <option value="CO">Colorado</option>
+                    <option value="CT">Connecticut</option>
+                    <option value="DE">Delaware</option>
+                    <option value="FL">Florida</option>
+                    <option value="GA">Georgia</option>
+                    <option value="HI">Hawaii</option>
+                    <option value="ID">Idaho</option>
+                    <option value="IL">Illinois</option>
+                    <option value="IN">Indiana</option>
+                    <option value="IA">Iowa</option>
+                    <option value="KS">Kansas</option>
+                    <option value="KY">Kentucky</option>
+                    <option value="LA">Louisiana</option>
+                    <option value="ME">Maine</option>
+                    <option value="MD">Maryland</option>
+                    <option value="MA">Massachusetts</option>
+                    <option value="MI">Michigan</option>
+                    <option value="MN">Minnesota</option>
+                    <option value="MS">Mississippi</option>
+                    <option value="MO">Missouri</option>
+                    <option value="MT">Montana</option>
+                    <option value="NE">Nebraska</option>
+                    <option value="NV">Nevada</option>
+                    <option value="NH">New Hampshire</option>
+                    <option value="NJ">New Jersey</option>
+                    <option value="NM">New Mexico</option>
+                    <option value="NY">New York</option>
+                    <option value="NC">North Carolina</option>
+                    <option value="ND">North Dakota</option>
+                    <option value="OH">Ohio</option>
+                    <option value="OK">Oklahoma</option>
+                    <option value="OR">Oregon</option>
+                    <option value="PA">Pennsylvania</option>
+                    <option value="RI">Rhode Island</option>
+                    <option value="SC">South Carolina</option>
+                    <option value="SD">South Dakota</option>
+                    <option value="TN">Tennessee</option>
+                    <option value="TX">Texas</option>
+                    <option value="UT">Utah</option>
+                    <option value="VT">Vermont</option>
+                    <option value="VA">Virginia</option>
+                    <option value="WA">Washington</option>
+                    <option value="WV">West Virginia</option>
+                    <option value="WI">Wisconsin</option>
+                    <option value="WY">Wyoming</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <input type="text" id="shipZip" class="form-control" placeholder="ZIP" required>
+                </div>
+              </div>
+              <div class="row mb-3" id="international-fields" style="display: none;">
+                <div class="col-md-5">
+                  <input type="text" id="shipCityInt" class="form-control" placeholder="City" required>
+                </div>
+                <div class="col-md-4">
+                  <input type="text" id="shipStateInt" class="form-control" placeholder="State/Province/Region">
+                  <select id="shipProvince" class="form-select" style="display:none;" required>
+                    <option value="" selected disabled>Province/Region</option>
+                    <option value="AB">Alberta</option>
+                    <option value="BC">British Columbia</option>
+                    <option value="MB">Manitoba</option>
+                    <option value="NB">New Brunswick</option>
+                    <option value="NL">Newfoundland and Labrador</option>
+                    <option value="NS">Nova Scotia</option>
+                    <option value="ON">Ontario</option>
+                    <option value="PE">Prince Edward Island</option>
+                    <option value="QC">Quebec</option>
+                    <option value="SK">Saskatchewan</option>
+                    <option value="NT">Northwest Territories</option>
+                    <option value="NU">Nunavut</option>
+                    <option value="YT">Yukon</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <input type="text" id="shipZipInt" class="form-control" placeholder="Postal Code">
+                </div>
+              </div>
+              <input type="tel" id="shipPhone" class="form-control mb-3" placeholder="Phone Number" required>
+              <div class="mb-3">
+                <label class="form-label">Shipping Method</label>
+                <div class="form-check">
+                  <input class="form-check-input shipping-method" type="radio" name="shippingMethod" id="methodStandard" value="standard" checked data-price="5.99">
+                  <label class="form-check-label" for="methodStandard">Standard Shipping ($5.99)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input shipping-method" type="radio" name="shippingMethod" id="methodExpress" value="express" data-price="12.99">
+                  <label class="form-check-label" for="methodExpress">Express Shipping ($12.99)</label>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Payment Information -->
+        <div class="card shadow-sm section-card">
+          <div class="card-body">
+            <h3 class="section-title">Payment Method</h3>
+            
+            <div class="mb-4">
+              <div id="credit-card-option" class="payment-option selected">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" id="methodCard" value="card" checked>
+                  <label class="form-check-label" for="methodCard">
+                    <strong>Credit / Debit Card</strong>
+                  </label>
+                </div>
+              </div>
+              
+              <div id="paypal-option" class="payment-option">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" id="methodPaypal" value="paypal">
+                  <label class="form-check-label" for="methodPaypal">
+                    <strong>PayPal</strong>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div id="card-payment-form">
+              <form id="payment-form" novalidate>
+                <div class="mb-3">
+                  <label for="cardNumber" class="form-label">Card Number</label>
+                  <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456" required>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label for="cardExpiry" class="form-label">Expiry Date</label>
+                    <input type="text" id="cardExpiry" class="form-control" placeholder="MM/YY" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="cardCVV" class="form-label">CVV</label>
+                    <input type="text" id="cardCVV" class="form-control" placeholder="123" required>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="cardName" class="form-label">Name on Card</label>
+                  <input type="text" id="cardName" class="form-control" placeholder="John Doe" required>
+                </div>
+              </form>
+            </div>
+            
+            <div id="paypal-payment-form" style="display: none;">
+              <div class="alert alert-info">
+                You will be redirected to PayPal to complete your payment after placing your order.
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Place Order Button -->
+        <div class="d-grid mb-4">
+          <button type="button" id="place-order" class="btn btn-success btn-lg">Place Order</button>
+        </div>
+      </div>
+      
+      <!-- Order Summary Column -->
+      <div class="col-lg-4">
+        <div class="card shadow-sm sticky-top" style="top: 20px; z-index: 100;">
+          <div class="card-body">
+            <h3 class="section-title">Order Summary</h3>
+            
+            <div id="cart-items-summary" class="order-summary">
+
+              <div class="cart-summary-header">
+                Select items to include in your order:
+              </div>
+              <!-- Cart items will be displayed here -->
+              <div class="text-center py-2">
+                <div class="spinner-border text-secondary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="summary-item">
+              <span>Subtotal:</span>
+              <span id="subtotal">$0.00</span>
+            </div>
+            <div class="summary-item">
+              <span>Shipping:</span>
+              <span id="shipping-cost">$5.99</span>
+            </div>
+            <div class="summary-item" id="regional-fee-container" style="display: none;">
+              <span>Regional Fee:</span>
+              <span id="regional-fee">$0.00</span>
+            </div>
+            <div class="summary-item summary-total">
+              <span>Total:</span>
+              <span id="total-cost">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer Placeholder -->
+  <div id="footer-placeholder"></div>
+  
+  <script>
+    // Load navbar and footer
+    fetch('../../assets/layout/navbar.html').then(r => r.text()).then(html => document.getElementById('navbar-placeholder').innerHTML = html);
+    fetch('../../assets/layout/footer.html').then(r => r.text()).then(html => document.getElementById('footer-placeholder').innerHTML = html);
+
+    const regionalFees = {
+      "US": {
+        "CA": 2.99,
+        "NY": 2.49,
+        "FL": 1.99,
+        "TX": 1.49,
+      },
+      "CA": {
+        "ON": 3.99,
+        "QC": 3.49,
+        "BC": 4.99,
+      },
+      "UK": {
+        "London": 2.99,
+        "Manchester": 1.99,
+      }
+    };
+
+    const internationalShippingRates = {
+      "US": {standard: 5.99, express: 12.99},
+      "CA": {standard: 8.99, express: 16.99},
+      "UK": {standard: 12.99, express: 24.99},
+      "AU": {standard: 15.99, express: 29.99},
+      "FR": {standard: 14.99, express: 27.99},
+      "DE": {standard: 14.99, express: 27.99},
+      "JP": {standard: 18.99, express: 32.99},
+      "CN": {standard: 18.99, express: 32.99},
+      "IN": {standard: 16.99, express: 30.99},
+      "BR": {standard: 17.99, express: 31.99},
+      "MX": {standard: 10.99, express: 19.99}
+    };
+
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        if (this.value === 'card') {
+          document.getElementById('card-payment-form').style.display = 'block';
+          document.getElementById('paypal-payment-form').style.display = 'none';
+          document.getElementById('credit-card-option').classList.add('selected');
+          document.getElementById('paypal-option').classList.remove('selected');
+          document.getElementById('place-order').textContent = 'Place Order';
+        } else {
+          document.getElementById('card-payment-form').style.display = 'none';
+          document.getElementById('paypal-payment-form').style.display = 'block';
+          document.getElementById('credit-card-option').classList.remove('selected');
+          document.getElementById('paypal-option').classList.add('selected');
+          document.getElementById('place-order').textContent = 'Proceed to PayPal';
+        }
+      });
+    });
+
+    document.getElementById('credit-card-option').addEventListener('click', function() {
+      document.getElementById('methodCard').checked = true;
+      document.getElementById('credit-card-option').classList.add('selected');
+      document.getElementById('paypal-option').classList.remove('selected');
+      document.getElementById('card-payment-form').style.display = 'block';
+      document.getElementById('paypal-payment-form').style.display = 'none';
+      document.getElementById('place-order').textContent = 'Place Order';
+    });
+    
+    document.getElementById('paypal-option').addEventListener('click', function() {
+      document.getElementById('methodPaypal').checked = true;
+      document.getElementById('credit-card-option').classList.remove('selected');
+      document.getElementById('paypal-option').classList.add('selected');
+      document.getElementById('card-payment-form').style.display = 'none';
+      document.getElementById('paypal-payment-form').style.display = 'block';
+      document.getElementById('place-order').textContent = 'Proceed to PayPal';
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const cartSummaryEl = document.getElementById('cart-items-summary');
+      const subtotalEl = document.getElementById('subtotal');
+      const shippingCostEl = document.getElementById('shipping-cost');
+      const regionalFeeEl = document.getElementById('regional-fee');
+      const regionalFeeContainerEl = document.getElementById('regional-fee-container');
+      const totalCostEl = document.getElementById('total-cost');
+
+      let subtotal = 0;
+
+      if (cart.length === 0) {
+        cartSummaryEl.innerHTML = '<p class="text-center">Your cart is empty.</p>';
+        updateTotals(0);
+        return;
+      }
+
+      let cartHTML = '';
+      cart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        cartHTML += `
+          <div class="cart-item">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <input type="checkbox" class="cart-item-checkbox me-2" data-index="${index}" data-price="${itemTotal.toFixed(2)}" checked>
+                <span><strong>${item.name}</strong> × ${item.quantity}</span>
+              </div>
+              <span>$${itemTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      cartSummaryEl.innerHTML = cartHTML;
+      subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+
+      updateTotals(subtotal);
+
+      document.querySelectorAll('.cart-item-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          const cartItem = this.closest('.cart-item');
+          if (this.checked) {
+            cartItem.classList.remove('cart-item-unchecked');
+          } else {
+            cartItem.classList.add('cart-item-unchecked');
+          }
+          updateTotals();
+        });
+      });
+
+      const savedShippingInfo = JSON.parse(localStorage.getItem('shippingInfo') || '{}');
+      if (savedShippingInfo.name) {
+        if (savedShippingInfo.country) {
+          document.getElementById('shipCountry').value = savedShippingInfo.country;
+
+          const domesticFields = document.getElementById('domestic-fields');
+          const internationalFields = document.getElementById('international-fields');
+          
+          if (savedShippingInfo.country === 'US') {
+            domesticFields.style.display = 'flex';
+            internationalFields.style.display = 'none';
+          } else {
+            domesticFields.style.display = 'none';
+            internationalFields.style.display = 'flex';
+          }
+
+          if (internationalShippingRates[savedShippingInfo.country]) {
+            const rates = internationalShippingRates[savedShippingInfo.country];
+            document.getElementById('methodStandard').dataset.price = rates.standard;
+            document.getElementById('methodExpress').dataset.price = rates.express;
+            document.querySelector('label[for="methodStandard"]').textContent = 
+              `Standard Shipping ($${rates.standard.toFixed(2)})`;
+            document.querySelector('label[for="methodExpress"]').textContent = 
+              `Express Shipping ($${rates.express.toFixed(2)})`;
+          }
+        }
+
+        document.getElementById('shipName').value = savedShippingInfo.name;
+        document.getElementById('shipAddress').value = savedShippingInfo.address || '';
+        document.getElementById('shipAddress2').value = savedShippingInfo.address2 || '';
+        document.getElementById('shipPhone').value = savedShippingInfo.phone || '';
+
+        if (savedShippingInfo.country === 'US') {
+          document.getElementById('shipCity').value = savedShippingInfo.city || '';
+          document.getElementById('shipState').value = savedShippingInfo.state || '';
+          document.getElementById('shipZip').value = savedShippingInfo.zip || '';
+        } else if (savedShippingInfo.country === 'CA') {
+          document.getElementById('shipCityInt').value = savedShippingInfo.city || '';
+          document.getElementById('shipProvince').value = savedShippingInfo.state || '';
+          document.getElementById('shipProvince').style.display = 'block';
+          document.getElementById('shipStateInt').style.display = 'none';
+          document.getElementById('shipZipInt').value = savedShippingInfo.zip || '';
+        } else {
+          document.getElementById('shipCityInt').value = savedShippingInfo.city || '';
+          document.getElementById('shipStateInt').value = savedShippingInfo.state || '';
+          document.getElementById('shipZipInt').value = savedShippingInfo.zip || '';
+        }
+
+        if (savedShippingInfo.method) {
+          document.querySelector(`input[value="${savedShippingInfo.method}"]`).checked = true;
+
+          const selectedMethod = document.querySelector('input[name="shippingMethod"]:checked');
+          const shippingCost = parseFloat(selectedMethod.dataset.price);
+          shippingCostEl.textContent = `$${shippingCost.toFixed(2)}`;
+
+          if (savedShippingInfo.regionalFee > 0) {
+            regionalFeeEl.textContent = `$${savedShippingInfo.regionalFee.toFixed(2)}`;
+            regionalFeeContainerEl.style.display = 'flex';
+          } else {
+            regionalFeeContainerEl.style.display = 'none';
+          }
+
+          updateTotals(subtotal);
+        }
+      }
+      const savedPaymentInfo = JSON.parse(localStorage.getItem('paymentInfo') || '{}');
+      if (savedPaymentInfo.method) {
+        document.querySelector(`input[value="${savedPaymentInfo.method}"]`).checked = true;
+        
+        if (savedPaymentInfo.method === 'card' && savedPaymentInfo.cardInfo) {
+          document.getElementById('cardNumber').value = `**** **** **** ${savedPaymentInfo.cardInfo.lastFour}`;
+          document.getElementById('cardExpiry').value = savedPaymentInfo.cardInfo.expiry || '';
+          document.getElementById('cardName').value = savedPaymentInfo.cardInfo.name || '';
+          
+          document.getElementById('card-payment-form').style.display = 'block';
+          document.getElementById('paypal-payment-form').style.display = 'none';
+          document.getElementById('credit-card-option').classList.add('selected');
+          document.getElementById('paypal-option').classList.remove('selected');
+          document.getElementById('place-order').textContent = 'Place Order';
+        } else if (savedPaymentInfo.method === 'paypal') {
+          document.getElementById('card-payment-form').style.display = 'none';
+          document.getElementById('paypal-payment-form').style.display = 'block';
+          document.getElementById('credit-card-option').classList.remove('selected');
+          document.getElementById('paypal-option').classList.add('selected');
+          document.getElementById('place-order').textContent = 'Proceed to PayPal';
+        }
+      }
+    });
+
+    document.getElementById('shipCountry').addEventListener('change', function() {
+      const country = this.value;
+      const domesticFields = document.getElementById('domestic-fields');
+      const internationalFields = document.getElementById('international-fields');
+      const stateSelect = document.getElementById('shipState');
+      const methodStandard = document.getElementById('methodStandard');
+      const methodExpress = document.getElementById('methodExpress');
+      const provinceSelect = document.getElementById('shipProvince');
+      const stateIntInput = document.getElementById('shipStateInt');
+      const zipIntInput = document.getElementById('shipZipInt');
+
+      if (country === 'US') {
+        domesticFields.style.display = 'flex';
+        internationalFields.style.display = 'none';
+
+        const rates = internationalShippingRates[country];
+        methodStandard.dataset.price = rates.standard;
+        methodExpress.dataset.price = rates.express;
+        document.querySelector('label[for="methodStandard"]').textContent = 
+          `Standard Shipping ($${rates.standard.toFixed(2)})`;
+        document.querySelector('label[for="methodExpress"]').textContent = 
+          `Express Shipping ($${rates.express.toFixed(2)})`;
+
+        const selectedMethod = document.querySelector('input[name="shippingMethod"]:checked');
+        document.getElementById('shipping-cost').textContent = 
+          `$${parseFloat(selectedMethod.dataset.price).toFixed(2)}`;
+        updateTotals();
+      } else {
+        domesticFields.style.display = 'none';
+        internationalFields.style.display = 'flex';
+
+        if (country === 'CA') {
+          provinceSelect.style.display = 'block';
+          stateIntInput.style.display = 'none';
+          zipIntInput.placeholder = "Postal Code";
+        } else {
+          provinceSelect.style.display = 'none';
+          stateIntInput.style.display = 'block';
+          zipIntInput.placeholder = "Postal Code";
+        }
+
+        if (internationalShippingRates[country]) {
+          const rates = internationalShippingRates[country];
+          methodStandard.dataset.price = rates.standard;
+          methodExpress.dataset.price = rates.express;
+          document.querySelector('label[for="methodStandard"]').textContent = 
+            `Standard Shipping ($${rates.standard.toFixed(2)})`;
+          document.querySelector('label[for="methodExpress"]').textContent = 
+            `Express Shipping ($${rates.express.toFixed(2)})`;
+
+          const selectedMethod = document.querySelector('input[name="shippingMethod"]:checked');
+          document.getElementById('shipping-cost').textContent = 
+            `$${parseFloat(selectedMethod.dataset.price).toFixed(2)}`;
+          updateTotals();
+        }
+      }
+
+      document.getElementById('regional-fee-container').style.display = 'none';
+    });
+    document.getElementById('shipProvince').addEventListener('change', function() {
+      const country = document.getElementById('shipCountry').value;
+      const province = this.value;
+      const regionalFeeContainerEl = document.getElementById('regional-fee-container');
+      const regionalFeeEl = document.getElementById('regional-fee');
+
+      if (regionalFees[country] && regionalFees[country][province]) {
+        const fee = regionalFees[country][province];
+        regionalFeeEl.textContent = `$${fee.toFixed(2)}`;
+        regionalFeeContainerEl.style.display = 'flex';
+      } else {
+        regionalFeeContainerEl.style.display = 'none';
+      }
+
+      updateTotals();
+    });
+
+    document.querySelectorAll('.shipping-method').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const shippingCost = parseFloat(this.dataset.price);
+        document.getElementById('shipping-cost').textContent = `$${shippingCost.toFixed(2)}`;
+
+        updateTotals();
+      });
+    });
+
+    function updateTotals(cartSubtotal = null) {
+      let subtotal = cartSubtotal;
+
+      if (subtotal === null) {
+        subtotal = 0;
+        document.querySelectorAll('.cart-item-checkbox:checked').forEach(checkbox => {
+          subtotal += parseFloat(checkbox.dataset.price);
+        });
+        document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+      }
+
+      const shippingCost = parseFloat(document.getElementById('shipping-cost').textContent.replace('$', ''));
+      
+
+      let regionalFee = 0;
+      const regionalFeeContainer = document.getElementById('regional-fee-container');
+      if (regionalFeeContainer.style.display !== 'none') {
+        regionalFee = parseFloat(document.getElementById('regional-fee').textContent.replace('$', ''));
+      }
+      
+
+      const total = subtotal + shippingCost + regionalFee;
+      document.getElementById('total-cost').textContent = `$${total.toFixed(2)}`;
+    }
+
+    document.getElementById('place-order').addEventListener('click', function() {
+      const shippingForm = document.getElementById('shipping-form');
+      if (!shippingForm.checkValidity()) {
+        shippingForm.reportValidity();
+        return;
+      }
+      
+      const country = document.getElementById('shipCountry').value;
+      if (!country) {
+        alert('Please select a country.');
+        return;
+      }
+
+      const phone = document.getElementById('shipPhone').value.trim();
+      if (!/^\d{10,15}$/.test(phone)) {
+        alert('Please enter a valid phone number (10-15 digits).');
+        return;
+      }
+
+      let zip;
+      if (country === 'US') {
+        zip = document.getElementById('shipZip').value.trim();
+        if (!/^\d{5}$/.test(zip)) {
+          alert('Please enter a valid 5-digit ZIP code.');
+          return;
+        }
+      } else if (country === 'CA') {
+        zip = document.getElementById('shipZipInt').value.trim();
+        if (!/^[A-Za-z]\d[A-Za-z][ ]?\d[A-Za-z]\d$/.test(zip)) {
+          alert('Please enter a valid Canadian postal code (format: A1A 1A1).');
+          return;
+        }
+      } else {
+        zip = document.getElementById('shipZipInt').value.trim();
+        if (!zip) {
+          alert('Please enter a postal code.');
+          return;
+        }
+      }
+
+      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+      if (paymentMethod === 'card') {
+        const paymentForm = document.getElementById('payment-form');
+        if (!paymentForm.checkValidity()) {
+          paymentForm.reportValidity();
+          return;
+        }
+
+        const cardNumber = document.getElementById('cardNumber').value.trim();
+        if (!cardNumber.startsWith('*') && !/^\d{16}$/.test(cardNumber.replace(/\D/g, ''))) {
+          alert('Please enter a valid 16-digit card number.');
+          return;
+        }
+
+        const cardExpiry = document.getElementById('cardExpiry').value.trim();
+        if (!/^(0[1-9]|1[0-2])\/([0-9]{2})$/.test(cardExpiry)) {
+          alert('Please enter a valid expiry date in MM/YY format.');
+          return;
+        }
+
+        const cardCVV = document.getElementById('cardCVV').value.trim();
+        if (!/^\d{3}$/.test(cardCVV)) {
+          alert('Please enter a valid 3-digit CVV.');
+          return;
+        }
+      }
+
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+      const selectedItems = [];
+      document.querySelectorAll('.cart-item-checkbox:checked').forEach(checkbox => {
+        const index = parseInt(checkbox.dataset.index);
+        if (index >= 0 && index < cart.length) {
+          selectedItems.push(cart[index]);
+        }
+      });
+
+      if (selectedItems.length === 0) {
+        alert('Please select at least one item to place an order.');
+        return;
+      }
+
+      const selectedMethod = document.querySelector('input[name="shippingMethod"]:checked');
+      const shippingCost = parseFloat(selectedMethod.dataset.price);
+
+      let state, city;
+      if (country === 'US') {
+        state = document.getElementById('shipState').value;
+        city = document.getElementById('shipCity').value.trim();
+      } else if (country === 'CA') {
+        state = document.getElementById('shipProvince').value;
+        city = document.getElementById('shipCityInt').value.trim();
+      } else {
+        state = document.getElementById('shipStateInt').value.trim();
+        city = document.getElementById('shipCityInt').value.trim();
+      }
+
+      let regionalFee = 0;
+      const regionalFeeContainer = document.getElementById('regional-fee-container');
+      if (regionalFeeContainer.style.display !== 'none') {
+        regionalFee = parseFloat(document.getElementById('regional-fee').textContent.replace('$', ''));
+      }
+      
+      const totalCost = parseFloat(document.getElementById('total-cost').textContent.replace('$', ''));
+      
+      const shippingInfo = {
+        country: country,
+        name: document.getElementById('shipName').value.trim(),
+        address: document.getElementById('shipAddress').value.trim(),
+        address2: document.getElementById('shipAddress2').value.trim(),
+        city: city,
+        state: state,
+        zip: zip,
+        phone: document.getElementById('shipPhone').value.trim(),
+        method: selectedMethod.value,
+        shippingCost: shippingCost,
+        regionalFee: regionalFee,
+        totalCost: totalCost
+      };
+      localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
+      
+
+      let paymentInfo = {
+        method: paymentMethod
+      };
+      
+      if (paymentMethod === 'card') {
+        const cardNumber = document.getElementById('cardNumber').value.trim();
+        let lastFour;
+        if (cardNumber.startsWith('*')) {
+          const savedPaymentInfo = JSON.parse(localStorage.getItem('paymentInfo') || '{}');
+          lastFour = savedPaymentInfo.cardInfo?.lastFour || '0000';
+        } else {
+
+          lastFour = cardNumber.replace(/\D/g, '').slice(-4);
+        }
+        
+        paymentInfo.cardInfo = {
+          lastFour: lastFour,
+          expiry: document.getElementById('cardExpiry').value.trim(),
+          name: document.getElementById('cardName').value.trim()
+        };
+      }
+      localStorage.setItem('paymentInfo', JSON.stringify(paymentInfo));
+      
+
+      const orderId = 'ORD' + Date.now();
+
+      const estDate = new Date();
+      estDate.setDate(estDate.getDate() + (selectedMethod.value === 'express' ? 2 : 5));
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      const estimatedDelivery = estDate.toLocaleDateString(undefined, options);
+
+      const order = {
+        id: orderId,
+        items: selectedItems,
+        shipping: shippingInfo,
+        payment: paymentInfo,
+        subtotal: parseFloat(document.getElementById('subtotal').textContent.replace('$', '')),
+        shippingCost: shippingCost,
+        regionalFee: regionalFee,
+        total: totalCost,
+        orderDate: new Date().toISOString(),
+        estimatedDelivery: estimatedDelivery,
+        status: 'pending'
+      };
+
+      localStorage.setItem('lastOrder', JSON.stringify(order));
+      const orderHistory = JSON.parse(localStorage.getItem('orders') || '[]');
+      orderHistory.push(order);
+      localStorage.setItem('orders', JSON.stringify(orderHistory));
+
+      localStorage.setItem('cart', '[]');
+
+      window.location.href = 'order_confirm.html';
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

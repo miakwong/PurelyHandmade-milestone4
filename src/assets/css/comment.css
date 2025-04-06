@@ -1,0 +1,104 @@
+/* General Page Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #fef9f8;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+
+/* Comment Container */
+.comment-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    width: 60%;
+    margin: 20px auto;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Input Fields */
+input, textarea {
+    width: 80%;
+    padding: 10px;
+    border-radius: 15px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* Add Button */
+.add-btn {
+    background-color: rgb(169, 223, 242);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    border:#333;
+    cursor: pointer;
+    margin-top: 10px; 
+
+}
+
+
+.add-btn:hover {
+    background-color: #f5c8e9;
+}
+
+/* Comments Section */
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.comment-item {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+/* Comment Box  */
+.comment-box {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    width: 60%;
+    padding: 15px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    text-align: left;
+    position: relative; 
+}
+
+/* Comment Author */
+.comment-author {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+/* Comment Rating */
+.comment-rating {
+    color: gold;
+    margin-bottom: 5px;
+}
+
+/* Delete Button */
+.delete-btn {
+    background-color: rgba(245, 167, 167, 0.979);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background-color: rgb(166, 114, 114);
+}

@@ -1,0 +1,86 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #fef9f8;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+}
+
+.admin-section {
+    margin: 30px auto;
+    width: 80%;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background-color: #f4f4f4;
+}
+
+button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.enable-btn {
+    background-color: rgb(157, 228, 157);
+    color: white;
+}
+
+.enable-btn:hover {
+    background-color: rgb(94, 136, 94);
+   
+}
+
+.disable-btn {
+    background-color: rgb(238, 165, 165);
+    color: white;
+}
+
+.disable-btn:hover {
+    background-color: rgb(156, 105, 105);
+}
+.order-select {
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.delete-btn {
+    background-color: rgb(249, 209, 134);
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: rgb(183, 155, 102);
+}
+.view-more-btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 15px;
+    background-color: rgb(237, 151, 237);
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.view-more-btn:hover {
+    background-color: #816099;
+}

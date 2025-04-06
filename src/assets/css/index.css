@@ -1,0 +1,98 @@
+
+/* ====== Sidebar Styling ====== */
+.sidebar {
+  background: white;
+  padding: 15px;
+  border: 1px solid #ddd;
+}
+
+.sidebar ul li {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+#designerCarousel {
+  max-width: 1200px;
+  width: 70%;
+  height: auto;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  margin-top: 50px;
+}
+
+.carousel-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.carousel-item {
+  width: 80%;
+  max-width: 1000px;
+  aspect-ratio: 16 / 9;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin: 0 auto;
+  position: relative;
+}
+
+.carousel-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: white;
+  background: rgba(0, 0, 0, 0.5); /* 文字背景，增强可读性 */
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.custom-prev, .custom-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: transparent;
+  border: none;
+  padding: 15px;
+  border-radius: 90%;
+  cursor: pointer;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  filter: invert(100%);
+  opacity: 1;
+}
+
+.custom-prev {
+  left: 45px;
+}
+
+.custom-next {
+  right: 45px;
+}
+
+/* put discount badge absolute placed in pictures */
+.image-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: red;
+  color: white;
+  padding: 5px 10px;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
+
+

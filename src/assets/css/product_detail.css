@@ -1,0 +1,137 @@
+/* ========== Breadcrumb ========== */
+.breadcrumb {
+  background: none;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.breadcrumb-item a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.breadcrumb-item a:hover {
+  color: darkgray;
+  text-decoration: underline;
+}
+
+/* Left side */
+.product-images {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start; /* Align to the left */
+  width: 100%; /* Take full width */
+  margin-left: 0; /* Reset any margin */
+  padding-left: 0;
+}
+
+.container .row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.col-md-6 {
+  flex: 1;
+  min-width: 50%;
+  max-width: 50%;
+}
+
+/* Main Image */
+.main-image-container {
+  position: relative;
+  text-align: center;
+  width: 500px; /* Ensure proper width */
+  max-width: 100%;
+  margin-left: 0; /* Align main image to the left */
+}
+
+/* Main Image Container */
+.main-image-container {
+  position: relative;
+  text-align: center;
+  width: 450px;
+  height: 450px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: #f8f9fa;
+}
+
+.main-image-container img {
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Thumbnail column: Small images on the left */
+.thumbnail-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-right: 15px;
+  align-items: center; /* Center align thumbnails */
+}
+
+/* Thumbnails */
+.thumbnail-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease-in-out;
+}
+
+.thumbnail-img:hover,
+.thumbnail-img.active {
+  border-color: gray;
+}
+
+.thumbnail-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-right: 15px;
+  max-width: 100px;
+}
+
+.thumbnail-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s ease-in-out;
+}
+
+.thumbnail-img:hover,
+.thumbnail-img.active {
+  border-color: darkgray; /* Highlight active thumbnail */
+  transform: scale(1.1);
+}
+
+
+/*Customer review*/
+.customer-reviews {
+  max-width: 500px;
+  width: 100%;
+}
+
+.customer-reviews textarea {
+  max-width: 100%;
+  height: 100px;
+  resize: vertical;
+}
+
+
+
+
+
+

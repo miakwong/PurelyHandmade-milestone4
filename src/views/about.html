@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us - Purely Homemade</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/navbar.css">
+
+  <!-- Google Material Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    .section-title {
+      position: relative;
+      margin-bottom: 50px;
+      text-align: center;
+    }
+    
+    .section-title:after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 3px;
+      background-color: #0d6efd;
+      margin: 15px auto 0;
+    }
+    
+    .team-member {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .team-member img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 50%;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+      margin-bottom: 20px;
+      transition: transform 0.3s;
+    }
+    
+    .team-member:hover img {
+      transform: scale(1.05);
+    }
+    
+    .team-member h4 {
+      color: #333;
+      margin-bottom: 5px;
+    }
+    
+    .team-member p.position {
+      color: #0d6efd;
+      font-weight: 500;
+      margin-bottom: 15px;
+    }
+    
+    .social-icons {
+      margin-top: 15px;
+    }
+    
+    .social-icons a {
+      display: inline-block;
+      margin: 0 5px;
+      color: #6c757d;
+      font-size: 1.2rem;
+      transition: color 0.2s;
+    }
+    
+    .social-icons a:hover {
+      color: #0d6efd;
+    }
+    
+    .mission-vision {
+      padding: 30px;
+      border-radius: 10px;
+      background-color: #f8f9fa;
+      margin-bottom: 30px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .mission-vision-icon {
+      font-size: 2.5rem;
+      color: #0d6efd;
+      margin-bottom: 20px;
+    }
+    
+    .stat-card {
+      text-align: center;
+      padding: 30px 20px;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      height: 100%;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #0d6efd;
+      margin-bottom: 10px;
+    }
+    
+    .stat-label {
+      font-size: 1rem;
+      color: #6c757d;
+      margin-bottom: 0;
+    }
+    
+    .faq-item {
+      margin-bottom: 20px;
+    }
+    
+    .faq-question {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .faq-answer {
+      color: #6c757d;
+    }
+    
+    .contact-info {
+      padding: 30px;
+      border-radius: 10px;
+      background-color: #f8f9fa;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .contact-method {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .contact-icon {
+      font-size: 1.5rem;
+      color: #0d6efd;
+      margin-right: 15px;
+    }
+    
+    .contact-details {
+      flex: 1;
+    }
+    
+    .contact-details h5 {
+      margin-bottom: 5px;
+    }
+    
+    .contact-details p {
+      margin-bottom: 0;
+    }
+    
+    .map-container {
+      height: 300px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar Placeholder -->
+<div id="navbar-placeholder"></div>
+
+<!-- Hero Section -->
+<div class="container-fluid bg-light py-5">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <h1 class="display-4 fw-bold">About Us</h1>
+        <p class="lead">We connect artisans with people who appreciate handcrafted beauty.</p>
+        <p>Learn more about our company, our team, and our mission to support handmade craftsmanship around the world.</p>
+      </div>
+      <div class="col-md-6 text-center">
+        <img src="../assets/img/logo.jpg" class="img-fluid rounded" alt="About Us" style="max-height: 300px;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mission and Vision Section -->
+<div class="container mt-5">
+  <h2 class="section-title">Our Mission & Vision</h2>
+  
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="mission-vision">
+        <div class="mission-vision-icon">
+          <i class="bi bi-flag"></i>
+        </div>
+        <h3>Our Mission</h3>
+        <p>To preserve and promote the tradition of handmade craftsmanship by creating a sustainable marketplace that fairly compensates artisans while connecting them with appreciative customers worldwide.</p>
+        <p>We strive to make handmade goods accessible and valued in a world dominated by mass production, helping artisans earn a living wage for their skilled work.</p>
+      </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+      <div class="mission-vision">
+        <div class="mission-vision-icon">
+          <i class="bi bi-eye"></i>
+        </div>
+        <h3>Our Vision</h3>
+        <p>A world where handmade craftsmanship is valued and preserved, with artisans able to sustain their practices and pass traditions to future generations.</p>
+        <p>We envision a marketplace where consumers understand the value of handcrafted items, appreciate the stories behind them, and choose quality, meaning, and sustainability over mass-produced alternatives.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Section -->
+<div class="container-fluid bg-light py-5 mt-5">
+  <div class="container">
+    <h2 class="section-title">Our Impact</h2>
+    
+    <div class="row">
+      <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+          <div class="stat-number">50+</div>
+          <p class="stat-label">Artisans Supported</p>
+        </div>
+      </div>
+      
+      <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+          <div class="stat-number">5000+</div>
+          <p class="stat-label">Products Sold</p>
+        </div>
+      </div>
+      
+      <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+          <div class="stat-number">12</div>
+          <p class="stat-label">Countries Reached</p>
+        </div>
+      </div>
+      
+      <div class="col-md-3 col-sm-6">
+        <div class="stat-card">
+          <div class="stat-number">3</div>
+          <p class="stat-label">Years in Business</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Team Section -->
+<div class="container mt-5">
+  <h2 class="section-title">Meet Our Team</h2>
+  
+  <div class="row">
+    <!-- Founder & CEO -->
+    <div class="col-md-4">
+      <div class="team-member">
+        <img src="../assets/img/profile.png" alt="Sarah Johnson">
+        <h4>Sarah Johnson</h4>
+        <p class="position">Founder & CEO</p>
+        <p>Sarah's passion for handmade crafts began during her travels around the world, where she witnessed the incredible skill of local artisans and the challenges they faced in reaching broader markets.</p>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-linkedin"></i></a>
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Creative Director -->
+    <div class="col-md-4">
+      <div class="team-member">
+        <img src="../assets/img/profile.png" alt="David Chen">
+        <h4>David Chen</h4>
+        <p class="position">Creative Director</p>
+        <p>With a background in design and fine arts, David oversees product curation and works directly with artisans to develop exclusive collections that balance traditional techniques with contemporary aesthetics.</p>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-linkedin"></i></a>
+          <a href="#"><i class="fab fa-behance"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Operations Manager -->
+    <div class="col-md-4">
+      <div class="team-member">
+        <img src="../assets/img/profile.png" alt="Maya Rodriguez">
+        <h4>Maya Rodriguez</h4>
+        <p class="position">Operations Manager</p>
+        <p>Maya ensures that our supply chain remains ethical and sustainable, while maintaining the highest quality standards. She works tirelessly to ensure that artisans receive fair compensation for their work.</p>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-linkedin"></i></a>
+          <a href="#"><i class="fab fa-twitter"></i></a>
+          <a href="#"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ Section -->
+<div class="container my-5">
+  <h2 class="section-title">Frequently Asked Questions</h2>
+  
+  <div class="row">
+    <div class="col-lg-6">
+      <div class="faq-item">
+        <h4 class="faq-question">Are all your products really handmade?</h4>
+        <p class="faq-answer">Yes, absolutely. Every item we sell is 100% handcrafted by our network of artisans. We personally verify the production process for each product to ensure authenticity.</p>
+      </div>
+      
+      <div class="faq-item">
+        <h4 class="faq-question">How do you ensure fair compensation for artisans?</h4>
+        <p class="faq-answer">We work directly with our artisans to establish fair pricing that reflects their skill, time, and materials. On average, our artisans receive 60-70% of the final selling price, compared to the industry standard of 10-15%.</p>
+      </div>
+      
+      <div class="faq-item">
+        <h4 class="faq-question">Do you ship internationally?</h4>
+        <p class="faq-answer">Yes, we ship to over 30 countries worldwide. International shipping rates and delivery times vary depending on the destination. You can view specific shipping information during checkout.</p>
+      </div>
+    </div>
+    
+    <div class="col-lg-6">
+      <div class="faq-item">
+        <h4 class="faq-question">What is your return policy?</h4>
+        <p class="faq-answer">We accept returns within 30 days of delivery for most items in their original condition. Due to the handmade nature of our products, there may be slight variations in color, texture, or size, which are not considered defects.</p>
+      </div>
+      
+      <div class="faq-item">
+        <h4 class="faq-question">How can I become a Purely Homemade artisan?</h4>
+        <p class="faq-answer">We're always looking for talented craftspeople to join our community. Please visit our "Become an Artisan" page to learn about our selection criteria and application process.</p>
+      </div>
+      
+      <div class="faq-item">
+        <h4 class="faq-question">Do you offer gift wrapping?</h4>
+        <p class="faq-answer">Yes, we offer eco-friendly gift wrapping using handmade paper and natural materials for a small additional fee. You can select this option during checkout.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Section -->
+<div class="container-fluid bg-light py-5">
+  <div class="container">
+    <h2 class="section-title">Contact Us</h2>
+    
+    <div class="row">
+      <div class="col-lg-6 mb-4">
+        <div class="contact-info">
+          <div class="contact-method">
+            <div class="contact-icon">
+              <i class="bi bi-geo-alt"></i>
+            </div>
+            <div class="contact-details">
+              <h5>Visit Us</h5>
+              <p>123 Artisan Street, Craftville, CV 12345<br>United States</p>
+            </div>
+          </div>
+          
+          <div class="contact-method">
+            <div class="contact-icon">
+              <i class="bi bi-envelope"></i>
+            </div>
+            <div class="contact-details">
+              <h5>Email Us</h5>
+              <p>info@purelyhomemade.com<br>support@purelyhomemade.com</p>
+            </div>
+          </div>
+          
+          <div class="contact-method">
+            <div class="contact-icon">
+              <i class="bi bi-telephone"></i>
+            </div>
+            <div class="contact-details">
+              <h5>Call Us</h5>
+              <p>+1 (555) 123-4567<br>Monday - Friday, 9am - 5pm EST</p>
+            </div>
+          </div>
+          
+          <div class="contact-method">
+            <div class="contact-icon">
+              <i class="bi bi-chat-dots"></i>
+            </div>
+            <div class="contact-details">
+              <h5>Connect With Us</h5>
+              <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-pinterest"></i></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-6">
+        <form>
+          <div class="mb-3">
+            <label for="name" class="form-label">Your Name</label>
+            <input type="text" class="form-control" id="name" placeholder="Enter your name">
+          </div>
+          
+          <div class="mb-3">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="email" placeholder="Enter your email">
+          </div>
+          
+          <div class="mb-3">
+            <label for="subject" class="form-label">Subject</label>
+            <input type="text" class="form-control" id="subject" placeholder="Enter message subject">
+          </div>
+          
+          <div class="mb-3">
+            <label for="message" class="form-label">Message</label>
+            <textarea class="form-control" id="message" rows="5" placeholder="Enter your message"></textarea>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer Placeholder -->
+<div id="footer-placeholder"></div>
+
+<!-- Bootstrap JS and jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- 初始化数据脚本 -->
+<script src="../assets/js/init-data.js"></script>
+
+<script>
+  // Load navbar and footer
+  fetch('../assets/layout/navbar.html')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to load navbar (${response.status})`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      document.getElementById('navbar-placeholder').innerHTML = html;
+      console.log('Navbar loaded successfully');
+      
+      // Update cart count after navbar is loaded
+      if (typeof updateCartCount === 'function') {
+        updateCartCount();
+      }
+    })
+    .catch(error => {
+      console.error('Error loading navbar:', error);
+      document.getElementById('navbar-placeholder').innerHTML =
+        '<div class="alert alert-danger">Failed to load navigation bar. Please check console for details.</div>';
+    });
+
+  fetch('../assets/layout/footer.html')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Failed to load footer (${response.status})`);
+      }
+      return response.text();
+    })
+    .then(html => {
+      document.getElementById('footer-placeholder').innerHTML = html;
+      console.log('Footer loaded successfully');
+    })
+    .catch(error => {
+      console.error('Error loading footer:', error);
+      document.getElementById('footer-placeholder').innerHTML =
+        '<div class="alert alert-danger">Failed to load footer. Please check console for details.</div>';
+    });
+
+  document.addEventListener('DOMContentLoaded', function() {
+
+    if (typeof window.initializeData === 'function') {
+      window.initializeData();
+    }
+  });
+</script>
+</body>
+</html> 
