@@ -24,12 +24,18 @@ define('SITE_ROOT', dirname(dirname(__FILE__))); // Points to server directory
 define('PROJECT_ROOT', dirname(SITE_ROOT));     // Points to project root
 define('UPLOAD_PATH', SITE_ROOT . '/uploads');
 define('IMAGES_PATH', UPLOAD_PATH . '/images');
+define('ASSETS_PATH', UPLOAD_PATH . '/assets');
 define('API_PATH', '/api');
 
 // Frontend paths
-define('ASSETS_URL', BASE_URL . '/src/assets');
+define('PUBLIC_URL', BASE_URL . '/public');
+define('JS_URL', PUBLIC_URL . '/js');
+define('CSS_URL', PUBLIC_URL . '/css');
+define('VIEWS_URL', PUBLIC_URL . '/views');
 define('UPLOADS_URL', BASE_URL . '/server/uploads');
-define('API_URL', BASE_URL . API_PATH);
+define('IMAGES_URL', UPLOADS_URL . '/images');
+define('ASSETS_URL', UPLOADS_URL . '/assets');
+define('API_URL', BASE_URL . '/server/api');
 
 // Session Configuration
 define('SESSION_NAME', 'purely_handmade_session');

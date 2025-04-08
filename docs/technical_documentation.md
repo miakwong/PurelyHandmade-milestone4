@@ -1,372 +1,512 @@
 # Technical Documentation for PurelyHandmade-Clean Project
 
 ## Table of Contents
-1. [Current Project Structure](#1-current-project-structure)
-2. [Current Frontend Implementation](#2-current-frontend-implementation)
-3. [Simplified Backend Structure](#3-simplified-backend-structure)
-4. [Security Implementation](#4-security-implementation)
-5. [Minimum Requirements Implementation Plan](#5-minimum-requirements-implementation-plan)
-6. [Development Guidelines](#6-development-guidelines)
-7. [Deployment Configuration](#7-deployment-configuration)
+1. [Project Structure](#1-project-structure)
+2. [Frontend Architecture](#2-frontend-architecture)
+3. [Backend Design](#3-backend-design)
+4. [API Specification](#4-api-specification)
+5. [Data Model](#5-data-model)
+6. [Authentication](#6-authentication)
+7. [Development Guidelines](#7-development-guidelines)
+8. [Deployment Configuration](#8-deployment-configuration)
 
-## 1. Current Project Structure
+## 1. Project Structure
+
+This section outlines the organization of the project files and directories.
+
+### 1.1 Directory Structure
 
 ```
 PurelyHandmade-Clean/
-├── .idea/                 # IDE configuration files
-├── docs/                  # Project documentation
-├── src/                   # Source code
-│   ├── views/            # Frontend views
-│   ├── assets/           # Static assets
-│   └── .DS_Store         
-├── .gitignore            # Git ignore configuration
-├── check-localStorage.html    # Local storage debugging tool
-├── create-admin.html     # Admin creation tool
-└── index.html            # Main entry page
+├── .idea/                  # IDE configuration
+├── docs/                   # Documentation
+│   └── technical_documentation.md  # This file
+├── public/                 # Public frontend assets
+│   ├── css/                # CSS stylesheets
+│   │   ├── global.css      # Global styles
+│   │   ├── navbar.css      # Navigation styling
+│   │   ├── product_detail.css  # Product page styling
+│   │   └── style.css       # Main stylesheet
+│   ├── img/                # Images and assets
+│   ├── js/                 # JavaScript files
+│   │   ├── api-client.js   # API communication
+│   │   ├── init-data.js    # Initial data loading
+│   │   ├── product.js      # Product functionality
+│   │   └── product_detail.js  # Product detail page
+│   ├── layout/              # Page layout components
+│   │   ├── navbar.html     # Navigation bar
+│   │   └── footer.html     # Page footer
+│   ├── views/               # Page templates
+│   │   ├── product/        # Product pages
+│   │   ├── checkout/       # Checkout flow
+│   │   ├── auth/           # Authentication pages
+│   │   └── admin/          # Admin interfaces
+│   └── index.html          # Main store page
+├── server/                 # Backend code
+│   ├── api/                # API endpoints
+│   │   ├── auth.php        # Authentication API
+│   │   ├── cart.php        # Cart API
+│   │   ├── categories.php  # Categories API
+│   │   ├── products.php    # Products API
+│   │   ├── comments.php    # Comments API
+│   │   └── users.php       # Users API
+│   ├── config/             # Configuration files
+│   │   └── database.php    # Database connection
+│   ├── data/               # Data storage
+│   │   ├── products.json   # Product data
+│   │   └── categories.json # Category data
+│   ├── includes/           # Shared PHP files
+│   │   ├── functions.php   # Helper functions
+│   │   └── session.php     # Session handling
+│   └── uploads/            # User uploaded files
+│       └── images/         # Product images
 ```
 
-## 2. Current Frontend Implementation
+### 1.2 File Naming and Organization
 
-### 2.1 Key Features
-- Client-side user authentication using localStorage
-- Product catalog with categories
-- Shopping cart functionality
-- Admin interface for user management
-- Responsive design using Bootstrap
+- Files use lowercase with underscores (snake_case)
+- HTML files reflect page functionality (e.g., `product_detail.html`)
+- CSS files match their HTML counterparts
+- JS files correspond to specific page or component functionality
 
-### 2.2 Frontend Technologies
-- HTML5
-- CSS3 with Bootstrap 5.3.0
-- JavaScript (Vanilla)
-- Local Storage for data persistence
-- Bootstrap Icons
-- jQuery 3.6.0
+## 2. Frontend Architecture
 
-## 3. Simplified Backend Structure
+### 2.1 Overview
 
-### 3.1 Server Directory Structure
+The frontend is built using vanilla JavaScript with Bootstrap 5 for styling. It uses a client-side architecture where:
+
+- Data is initially loaded from the server and cached in localStorage
+- UI interactions are handled through event listeners
+- Products can be filtered, sorted, and paginated entirely on the client-side
+- Cart functionality is implemented using localStorage
+
+### 2.2 Key Features
+
+- **Product Catalog**: Display, filtering, sorting and pagination
+- **Category Filtering**: Filter products by category
+- **Price Filtering**: Filter products by price range
+- **Rating Filtering**: Filter products by star rating
+- **Shopping Cart**: Add/remove products, update quantities
+- **Responsive Design**: Mobile-friendly using Bootstrap 5
+
+### 2.3 JavaScript Components
+
+- **Data Management**
+  - `init-data.js`: Initializes product and category data
+  - Local storage for cart and product data caching
+
+- **UI Components**
+  - Dynamic loading of navbar and footer
+  - Product card generation
+  - Filter sidebar with accordion behavior
+  - Pagination controls
+  - Toast notifications
+
+- **Event Handling**
+  - Filter application and clearing
+  - Sort selection
+  - Pagination navigation
+  - Add-to-cart functionality
+
+### 2.4 HTML Structure
+
+The index.html file contains:
+- A Bootstrap-based responsive layout
+- Product filtering sidebar with multiple filter types
+- Product listing area with card-based display
+- Dynamic pagination controls
+- Toast notification system for cart updates
+
+## 3. Backend Design
+
+The backend should be simplified to provide just the necessary functionality to support the existing frontend.
+
+### 3.1 Core Components
+
+1. **Simple PHP API**: Lightweight endpoints that respond to frontend requests
+2. **JSON Data Storage**: Initially use JSON files for data storage for simplicity
+3. **Basic Authentication**: Simple session-based authentication
+4. **File Upload**: For product images
+
+### 3.2 Implementation Approach
+
+The backend will implement a minimal REST API supporting the current frontend functionality:
+
+- Return product and category data in JSON format
+- Support basic CRUD operations for products and categories
+- Handle filtering and sorting parameters (though client already does this)
+- Support cart operations for persistence beyond localStorage
+
+### 3.3 API Design Principles
+
+1. **Simplicity**: Each endpoint serves a single purpose
+2. **Statelessness**: No server-side session dependencies except for auth
+3. **JSON**: All requests and responses use JSON
+4. **Error Handling**: Consistent error response format
+
+## 4. API Specification
+
+### 4.1 Products API
+
 ```
-server/
-├── includes/            # Common functions and database connection
-│   ├── config.php      # Database configuration
-│   ├── db.php          # Database connection
-│   └── functions.php   # Helper functions
-├── api/                # PHP API endpoints
-│   ├── auth.php        # Authentication handlers
-│   ├── products.php    # Product handlers
-│   ├── users.php       # User handlers
-│   └── comments.php    # Comment handlers
-└── uploads/            # File upload directory
-    └── images/         # Product and user images
+GET /server/api/products.php
+- Returns all products
+- Optional query parameters: category, min_price, max_price, rating, on_sale
+
+GET /server/api/products.php?id={id}
+- Returns a single product by ID
+
+POST /server/api/products.php
+- Creates a new product
+- Requires authentication
+
+PUT /server/api/products.php?id={id}
+- Updates a product
+- Requires authentication
+
+DELETE /server/api/products.php?id={id}
+- Deletes a product
+- Requires authentication
 ```
 
-### 3.2 Database Schema
+### 4.2 Categories API
 
-```sql
--- Users Table
-CREATE TABLE users (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    first_name VARCHAR(50),
-    last_name VARCHAR(50),
-    image_path VARCHAR(255),
-    is_admin BOOLEAN DEFAULT FALSE,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+```
+GET /server/api/categories.php
+- Returns all categories
 
--- Products Table
-CREATE TABLE products (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    description TEXT,
-    price DECIMAL(10,2) NOT NULL,
-    category_id INT,
-    stock INT DEFAULT 0,
-    image_path VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+GET /server/api/categories.php?id={id}
+- Returns a single category and its products
 
--- Categories Table
-CREATE TABLE categories (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL,
-    description TEXT
-);
+POST /server/api/categories.php
+- Creates a new category
+- Requires authentication
 
--- Comments Table
-CREATE TABLE comments (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    product_id INT,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
-);
+PUT /server/api/categories.php?id={id}
+- Updates a category
+- Requires authentication
+
+DELETE /server/api/categories.php?id={id}
+- Deletes a category
+- Requires authentication
 ```
 
-### 3.3 Basic PHP Files Structure
+### 4.3 Authentication API
+
+```
+POST /server/api/auth.php?action=login
+- Authenticates a user
+- Accepts: username, password
+
+POST /server/api/auth.php?action=register
+- Registers a new user
+- Accepts: username, email, password
+
+GET /server/api/auth.php?action=logout
+- Logs out the current user
+
+GET /server/api/auth.php?action=status
+- Returns current authentication status
+```
+
+### 4.4 Cart API
+
+```
+GET /server/api/cart.php
+- Returns the current user's cart
+- Uses session if authenticated, otherwise relies on client
+
+POST /server/api/cart.php?action=add
+- Adds item to cart
+- Accepts: product_id, quantity
+
+POST /server/api/cart.php?action=update
+- Updates cart item quantity
+- Accepts: product_id, quantity
+
+POST /server/api/cart.php?action=remove
+- Removes item from cart
+- Accepts: product_id
+
+POST /server/api/cart.php?action=clear
+- Clears the entire cart
+```
+
+## 5. Data Model
+
+### 5.1 Products
+
+```json
+{
+  "id": 1,
+  "name": "Handwoven Basket",
+  "description": "Beautifully crafted handwoven basket...",
+  "price": 49.99,
+  "onSale": true,
+  "salePrice": 39.99,
+  "categoryId": 1,
+  "rating": 4.5,
+  "reviewCount": 12,
+  "stock": 8,
+  "images": [
+    "server/uploads/images/Handwoven_1.JPG",
+    "server/uploads/images/Handwoven_2.JPG"
+  ],
+  "created_at": "2023-04-15T10:30:00Z"
+}
+```
+
+### 5.2 Categories
+
+```json
+{
+  "id": 1,
+  "name": "Handwoven Items",
+  "description": "Handcrafted woven products made by skilled artisans"
+}
+```
+
+### 5.3 Cart Items
+
+```json
+{
+  "id": 1,
+  "name": "Handwoven Basket",
+  "price": 39.99,
+  "image": "server/uploads/images/Handwoven_1.JPG",
+  "quantity": 2
+}
+```
+
+### 5.4 Users
+
+```json
+{
+  "id": 1,
+  "username": "user123",
+  "email": "user@example.com",
+  "password_hash": "$2y$10$...",
+  "is_admin": false
+}
+```
+
+## 6. Authentication
+
+For simplicity, the authentication system will use:
+
+1. **PHP Sessions**: For maintaining login state
+2. **Password Hashing**: Using password_hash() and password_verify()
+3. **Basic Access Control**: Admin vs. regular user roles
 
 ```php
-// config.php
-<?php
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'purely_handmade');
-
-// db.php
-<?php
-function getConnection() {
-    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-    return $conn;
-}
-
-// functions.php
-<?php
+// Simple authentication mechanism
 session_start();
 
+function login($username, $password) {
+  // Load users from JSON file (or database in production)
+  $users = json_decode(file_get_contents('users.json'), true);
+  
+  $user = array_filter($users, function($u) use ($username) {
+    return $u['username'] === $username;
+  });
+  
+  if (count($user) === 1 && password_verify($password, $user[0]['password_hash'])) {
+    $_SESSION['user_id'] = $user[0]['id'];
+    $_SESSION['is_admin'] = $user[0]['is_admin'];
+    return true;
+  }
+  
+  return false;
+}
+
 function isLoggedIn() {
-    return isset($_SESSION['user_id']);
+  return isset($_SESSION['user_id']);
 }
 
 function isAdmin() {
-    return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
-}
-
-function checkAuth() {
-    if (!isLoggedIn()) {
-        header('HTTP/1.1 401 Unauthorized');
-        exit('Not authorized');
-    }
-}
-
-// Example API endpoint (auth.php)
-<?php
-require_once '../includes/config.php';
-require_once '../includes/db.php';
-require_once '../includes/functions.php';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $username = $data['username'];
-    $password = $data['password'];
-    
-    $conn = getConnection();
-    $stmt = $conn->prepare("SELECT id, password_hash, is_admin FROM users WHERE username = ?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($user = $result->fetch_assoc()) {
-        if (password_verify($password, $user['password_hash'])) {
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['is_admin'] = $user['is_admin'];
-            echo json_encode(['success' => true]);
-        }
-    }
-    $conn->close();
+  return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 }
 ```
 
-### 3.4 API Endpoints
+## 7. Development Guidelines
 
-```
-auth.php
-- POST /api/auth.php?action=login     # User login
-- POST /api/auth.php?action=register  # User registration
-- GET  /api/auth.php?action=logout    # User logout
+### 7.1 Frontend Development
 
-products.php
-- GET  /api/products.php              # Get all products
-- GET  /api/products.php?id=1         # Get single product
-- POST /api/products.php              # Create product (admin)
+1. **Use Vanilla JavaScript**: Keep dependencies minimal
+2. **Follow Bootstrap Conventions**: Use Bootstrap components and utilities
+3. **Separate Concerns**: Keep HTML structure, CSS styling, and JS behavior separate
+4. **Error Handling**: Gracefully handle network errors and empty states
+5. **Mobile-First**: Design for mobile devices first, then enhance for larger screens
 
-users.php
-- GET  /api/users.php                 # Get users (admin)
-- PUT  /api/users.php?id=1            # Update user
-- POST /api/users.php?action=delete   # Delete user (admin)
+### 7.2 Backend Development 
 
-comments.php
-- POST /api/comments.php              # Create comment
-- GET  /api/comments.php?product=1    # Get comments for product
-```
+1. **Keep It Simple**: Start with the minimal functionality needed
+2. **JSON First**: Use JSON files for data storage initially
+3. **Security First**: Validate all inputs, sanitize outputs
+4. **RESTful Design**: Maintain clear conventions for API endpoints
+5. **Error Handling**: Return appropriate HTTP status codes and error messages
 
-## 4. Security Implementation
+### 7.3 Testing
 
-### 4.1 Authentication
-- PHP session-based authentication
-- Password hashing using password_hash()
-- Basic input validation
+1. **Manual Testing**: Test all functionality in major browsers
+2. **Validate Forms**: Check all form inputs for validation
+3. **Responsive Testing**: Test on various device sizes
+4. **Offline Testing**: Test localStorage functionality
+5. **Error Scenarios**: Test API error responses
 
-### 4.2 Data Protection
-- Prepared statements for SQL queries
-- Basic input sanitization
-- Simple file upload validation
+## 8. Deployment Configuration
 
-## 5. Minimum Requirements Implementation Plan
-
-### 5.1 User Authentication
-- Convert localStorage auth to PHP sessions
-- Implement basic login/register system
-- Add password hashing
-
-### 5.2 Database Integration
-- Set up MySQL connection
-- Create basic database operations
-- Implement simple error handling
-
-### 5.3 Security Features
-- Basic session management
-- Simple input validation
-- File upload restrictions
-
-### 5.4 AJAX Implementation
-- Comment system updates
-- Product list filtering
-- Cart updates
-
-### 5.5 Responsive Design
-- Already implemented with Bootstrap
-- Enhance for different screen sizes
-
-## 6. Development Guidelines
-
-### 6.1 Code Organization
-- Keep PHP files simple and focused
-- Use includes for common functions
-- Maintain consistent file structure
-
-### 6.2 Security Practices
-- Validate user inputs
-- Use prepared statements
-- Implement basic error handling
-
-### 6.3 Performance
-- Keep queries simple
-- Optimize image uploads
-- Basic error logging
-
-## 7. Deployment Configuration
-
-### 7.1 Path Configuration
-
-```php
-// includes/config.php
-<?php
-// Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'purely_handmade');
-
-// Path Configuration
-define('BASE_URL', 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade'); // School server path
-define('SITE_ROOT', dirname(dirname(__FILE__))); // Points to project root
-define('UPLOAD_PATH', SITE_ROOT . '/uploads');
-define('API_PATH', '/api');
-
-// Frontend paths for JavaScript
-define('ASSETS_URL', BASE_URL . '/src/assets');
-define('API_URL', BASE_URL . API_PATH);
-```
-
-### 7.2 Frontend Path Configuration
-
-```javascript
-// src/assets/js/config.js
-const config = {
-    baseUrl: 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade', // School server path
-    apiUrl: 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/api',
-    assetsUrl: 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/src/assets',
-    uploadsUrl: 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/uploads'
-};
-
-// Example usage in other JS files
-function loadImage(path) {
-    return `${config.assetsUrl}/img/${path}`;
-}
-
-function apiCall(endpoint) {
-    return fetch(`${config.apiUrl}/${endpoint}`);
-}
-```
-
-### 7.3 HTML Path Updates
-
-```html
-<!-- Update all HTML files to use dynamic paths -->
-<link rel="stylesheet" href="<?php echo ASSETS_URL; ?>/css/style.css">
-<script src="<?php echo ASSETS_URL; ?>/js/script.js"></script>
-<img src="<?php echo ASSETS_URL; ?>/img/logo.png">
-
-<!-- For static HTML files, use the config.js approach -->
-<script src="src/assets/js/config.js"></script>
-<script>
-document.getElementById('myImage').src = `${config.assetsUrl}/img/logo.png`;
-</script>
-```
-
-### 7.4 .htaccess Configuration
+### 8.1 .htaccess Configuration
 
 ```apache
-# Root .htaccess
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /~miakuang/PurelyHandmade/
-    
-    # Handle API requests
-    RewriteRule ^api/(.*)$ server/api/$1 [L]
-    
-    # Handle static files
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php [L]
+  RewriteEngine On
+  RewriteBase /~username/PurelyHandmade/
+  
+  # Handle API requests
+  RewriteRule ^api/(.*)$ server/api/$1 [L]
+  
+  # Handle static files
+  RewriteRule ^uploads/(.*)$ server/uploads/$1 [L]
+  
+  # Default to index.html
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ public/index.html [L]
 </IfModule>
 
-# Add CORS headers if needed
+# Enable CORS if needed
 <IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "*"
+  Header set Access-Control-Allow-Origin "*"
+  Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE"
+  Header set Access-Control-Allow-Headers "Content-Type"
 </IfModule>
+
+# Error Pages
+ErrorDocument 404 /public/views/errors/404.html
+ErrorDocument 500 /public/views/errors/500.html
 ```
 
-### 7.5 Development vs Production Configuration
+### 8.2 Configuration Settings
 
-为了方便本地开发和服务器部署，建议创建配置切换机制：
+Create a simple configuration mechanism for different environments:
 
 ```php
-// includes/config.php
+// server/config/app.php
 <?php
-// Environment Detection
-$isProduction = (strpos($_SERVER['HTTP_HOST'], 'cosc360.ok.ubc.ca') !== false);
+$config = [
+  'production' => false, // Set to true in production
+  'base_url' => '',      // Base URL (empty for development)
+  'api_url' => '/server/api',
+  'uploads_url' => '/server/uploads'
+];
 
-// Base URL Configuration
-if ($isProduction) {
-    define('BASE_URL', 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade');
-} else {
-    define('BASE_URL', ''); // Local development
+// For production (detect automatically or set manually)
+if ($_SERVER['HTTP_HOST'] === 'cosc360.ok.ubc.ca') {
+  $config['production'] = true;
+  $config['base_url'] = 'https://cosc360.ok.ubc.ca/~username/PurelyHandmade';
+  $config['api_url'] = $config['base_url'] . '/server/api';
+  $config['uploads_url'] = $config['base_url'] . '/server/uploads';
 }
 
-// Other configurations...
+return $config;
 ```
 
+### 8.3 JavaScript Configuration
+
 ```javascript
-// src/assets/js/config.js
-const isProduction = window.location.hostname.includes('cosc360.ok.ubc.ca');
+// public/js/config.js
 const config = {
-    baseUrl: isProduction 
-        ? 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade'
-        : '',
-    // Other paths...
+  // Detect environment
+  production: window.location.hostname === 'cosc360.ok.ubc.ca',
+  
+  // Set URLs based on environment
+  get baseUrl() {
+    return this.production ? 'https://cosc360.ok.ubc.ca/~username/PurelyHandmade' : '';
+  },
+  
+  get apiUrl() {
+    return this.baseUrl + '/server/api';
+  },
+  
+  get uploadsUrl() {
+    return this.baseUrl + '/server/uploads';
+  },
+  
+  get imagesUrl() {
+    return this.uploadsUrl + '/images';
+  }
 };
+
+// Helper functions
+function getApiUrl(endpoint) {
+  return `${config.apiUrl}/${endpoint}`;
+}
+
+function getImageUrl(filename) {
+  return `${config.imagesUrl}/${filename}`;
+}
 ```
 
 ---
 
-*Note: This documentation outlines a simplified implementation that meets the minimum requirements while maintaining basic security and functionality. The path configuration section provides flexibility for deployment to different environments.* 
+## Implementation Plan
+
+1. **Phase 1: Setup**
+   - Create directory structure
+   - Configure .htaccess
+   - Setup configuration files
+
+2. **Phase 2: Backend Basics**
+   - Implement basic API endpoints
+   - Create JSON storage files
+   - Setup authentication
+
+3. **Phase 3: Frontend Integration**
+   - Update frontend to use API instead of localStorage
+   - Implement proper error handling
+   - Update paths and configuration
+
+4. **Phase 4: Testing & Refinement**
+   - Test all functionality
+   - Optimize performance
+   - Document any issues
+
+5. **Phase 5: Additional Features**
+   - Add checkout process
+   - Implement user profiles
+   - Add image upload functionality
+
+---
+
+This documentation provides a blueprint for implementing a simple but functional e-commerce system that works with the existing frontend code while requiring minimal backend complexity. 
+
+### Server API Endpoints
+
+#### Authentication API (`server/api/auth.php`)
+- Handles user login, registration, and session management
+- Implements password hashing and validation
+- Returns JSON responses with success/error messages
+
+#### Products API (`server/api/products.php`)
+- Handles CRUD operations for products
+- Supports filtering by category, search terms
+- Handles product image uploads
+- Returns JSON responses with product data
+
+#### Categories API (`server/api/categories.php`)
+- Handles CRUD operations for product categories
+- Supports listing all categories or getting a single category
+- Can include associated products in response data
+- Returns JSON responses with category data
+
+#### Cart API (`server/api/cart.php`)
+- Handles shopping cart operations 
+- Requires user authentication for all operations
+- Key functionalities:
+  - Get cart contents with product details and calculated totals
+  - Add products to cart with quantity validation
+  - Update product quantities in cart
+  - Remove products from cart
+  - Clear all items from cart
+- Returns JSON responses with cart data and operation status 

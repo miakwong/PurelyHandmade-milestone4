@@ -1,18 +1,48 @@
 <?php
 /**
- * Helper Functions
- * Contains utility functions used throughout the application
+ * Common Functions
+ * 
+ * Contains helper functions used throughout the application
  */
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
-    session_name(SESSION_NAME);
     session_start();
+}
+
+// Load application configuration
+$config = require_once __DIR__ . '/../config/app.php';
+$db_config = require_once __DIR__ . '/../config/database.php';
+
+/**
+ * Return JSON response
+ * 
+ * @param array $data Data to return
+ * @param int $status HTTP status code
+ * @return void
+ */
+function jsonResponse($data, $status = 200) {
+    http_response_code($status);
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit;
+}
+
+/**
+ * Return error response
+ * 
+ * @param string $message Error message
+ * @param int $status HTTP status code
+ * @return void
+ */
+function errorResponse($message, $status = 400) {
+    jsonResponse(['error' => $message], $status);
 }
 
 /**
  * Check if user is logged in
- * @return bool True if user is logged in, false otherwise
+ * 
+ * @return bool True if logged in
  */
 function isLoggedIn() {
     return isset($_SESSION['user_id']);
@@ -20,32 +50,159 @@ function isLoggedIn() {
 
 /**
  * Check if user is admin
- * @return bool True if user is admin, false otherwise
+ * 
+ * @return bool True if admin
  */
 function isAdmin() {
     return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 }
 
 /**
- * Check if user is authenticated
- * Redirects to login page if not authenticated
+ * Require user to be logged in
+ * 
+ * @return void
  */
-function checkAuth() {
+function requireLogin() {
     if (!isLoggedIn()) {
-        header('HTTP/1.1 401 Unauthorized');
-        exit('Not authorized');
+        errorResponse('Authentication required', 401);
     }
 }
 
 /**
- * Check if user is admin
- * Redirects with error if not admin
+ * Require user to be admin
+ * 
+ * @return void
  */
-function checkAdmin() {
+function requireAdmin() {
+    requireLogin();
     if (!isAdmin()) {
-        header('HTTP/1.1 403 Forbidden');
-        exit('Admin access required');
+        errorResponse('Admin privileges required', 403);
     }
+}
+
+/**
+ * Get current user ID
+ * 
+ * @return int|null User ID or null if not logged in
+ */
+function getCurrentUserId() {
+    return $_SESSION['user_id'] ?? null;
+}
+
+/**
+ * Get JSON data from request body
+ * 
+ * @return array Parsed JSON data
+ */
+function getJsonInput() {
+    $json = file_get_contents('php://input');
+    $data = json_decode($json, true);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        errorResponse('Invalid JSON input', 400);
+    }
+    
+    return $data;
+}
+
+/**
+ * Sanitize input data
+ * 
+ * @param string $data Data to sanitize
+ * @return string Sanitized data
+ */
+function sanitize($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+    return $data;
+}
+
+/**
+ * Validate required fields
+ * 
+ * @param array $data Data to validate
+ * @param array $fields Required fields
+ * @return void
+ */
+function validateRequired($data, $fields) {
+    foreach ($fields as $field) {
+        if (!isset($data[$field]) || empty($data[$field])) {
+            errorResponse("Field '{$field}' is required", 400);
+        }
+    }
+}
+
+/**
+ * Load data from JSON file
+ * 
+ * @param string $file JSON file path
+ * @return array Data from file
+ */
+function loadJsonData($file) {
+    if (!file_exists($file)) {
+        return [];
+    }
+    
+    $json = file_get_contents($file);
+    $data = json_decode($json, true);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        errorResponse('Error reading data file', 500);
+    }
+    
+    return $data;
+}
+
+/**
+ * Save data to JSON file
+ * 
+ * @param string $file JSON file path
+ * @param array $data Data to save
+ * @return bool True if successful
+ */
+function saveJsonData($file, $data) {
+    $json = json_encode($data, JSON_PRETTY_PRINT);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return false;
+    }
+    
+    return file_put_contents($file, $json) !== false;
+}
+
+/**
+ * Generate a unique ID
+ * 
+ * @param array $existingIds Existing IDs to avoid
+ * @return int New unique ID
+ */
+function generateId($existingIds) {
+    if (empty($existingIds)) {
+        return 1;
+    }
+    
+    return max($existingIds) + 1;
+}
+
+/**
+ * Get base URL
+ * 
+ * @return string Base URL
+ */
+function getBaseUrl() {
+    global $config;
+    return $config['base_url'];
+}
+
+/**
+ * Get full URL for a path
+ * 
+ * @param string $path Path to append to base URL
+ * @return string Full URL
+ */
+function url($path) {
+    return rtrim(getBaseUrl(), '/') . '/' . ltrim($path, '/');
 }
 
 /**
@@ -58,30 +215,6 @@ function sanitizeInput($data) {
     $data = stripslashes($data);
     $data = htmlspecialchars($data);
     return $data;
-}
-
-/**
- * Generate JSON response
- * @param bool $success Whether the request was successful
- * @param string $message Message to include in response
- * @param mixed $data Data to include in response
- * @param int $status HTTP status code
- */
-function jsonResponse($success, $message = '', $data = null, $status = 200) {
-    header('Content-Type: application/json');
-    http_response_code($status);
-    
-    $response = [
-        'success' => $success,
-        'message' => $message
-    ];
-    
-    if ($data !== null) {
-        $response['data'] = $data;
-    }
-    
-    echo json_encode($response);
-    exit;
 }
 
 /**

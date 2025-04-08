@@ -5,18 +5,41 @@
     # Handle API requests
     RewriteRule ^api/(.*)$ server/api/$1 [L]
     
-    # Handle static files
+    # Handle static files from server/uploads
+    RewriteRule ^uploads/(.*)$ server/uploads/$1 [L]
+    
+    # Handle public frontend files
+    RewriteRule ^$ public/index.html [L]
+    RewriteRule ^index\.html$ public/index.html [L]
+    
+    # If the requested file exists in public/ serve it directly
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php [L]
+    RewriteCond %{DOCUMENT_ROOT}/~miakuang/PurelyHandmade/public%{REQUEST_URI} -f
+    RewriteRule ^(.*)$ public/$1 [L]
+    
+    # Default to index.php for any other requests
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/index.html [L]
 </IfModule>
 
 # Add CORS headers if needed
 <IfModule mod_headers.c>
     Header set Access-Control-Allow-Origin "*"
     Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header set Access-Control-Allow-Headers "Content-Type"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
 </IfModule>
+
+# Enable PHP error reporting
+php_flag display_errors on
+php_value error_reporting E_ALL
+
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Set default index files
+DirectoryIndex public/index.html index.php index.html
 
 # PHP settings
 <IfModule mod_php7.c>
@@ -28,5 +51,5 @@
 </IfModule>
 
 # Error handling
-ErrorDocument 404 /src/views/errors/404.html
-ErrorDocument 500 /src/views/errors/500.html 
+ErrorDocument 404 /public/views/errors/404.html
+ErrorDocument 500 /public/views/errors/500.html 

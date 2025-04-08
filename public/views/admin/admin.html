@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="../../assets/css/admin.css">
-<link rel="stylesheet" href="../../assets/css/navbar.css">
-<script defer src="../../assets/js/admin.js"></script>
-
+    <link rel="stylesheet" href="../../assets/css/navbar.css">
+    <script defer src="../../assets/js/admin.js"></script>
+    <script defer src="../../assets/js/pageComponents.js"></script>
 </head>
 <body>
 
-  
     <div id="navbar-placeholder"></div>
 
     <h1>Admin Dashboard</h1>
@@ -59,12 +58,11 @@
         <a href="comment.html" class="view-more-btn">View More</a>
     </section>
 
-    
     <div id="footer-placeholder" class="mt-5"></div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            fetch("../../assets/layout/navbar.html") 
+            fetch("/PurelyHandmade-milestone4/src/assets/layout/navbar.html") 
                 .then(response => {
                     if (!response.ok) {
                         throw new Error("Navbar HTML not found!");
@@ -76,7 +74,7 @@
                 })
                 .catch(error => console.error("Error loading navbar:", error));
 
-            fetch("../../assets/layout/footer.html")
+            fetch("/PurelyHandmade-milestone4/src/assets/layout/footer.html")
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById("footer-placeholder").innerHTML = data;

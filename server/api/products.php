@@ -1,424 +1,318 @@
 <?php
 /**
  * Products API
- * Handles product listing, retrieval, creation, and update
+ * 
+ * Handles CRUD operations for products
  */
 
-require_once '../includes/config.php';
-require_once '../includes/db.php';
+// Include common functions
 require_once '../includes/functions.php';
 
-// Set headers
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+// Get database configuration
+$db_config = require_once '../config/database.php';
 
-// Handle preflight requests
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit;
-}
+// Get the HTTP method
+$method = $_SERVER['REQUEST_METHOD'];
 
-// Get product ID if provided
-$productId = isset($_GET['id']) ? (int)$_GET['id'] : null;
+// Get product ID from query string if available
+$id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
-// Handle request methods
-switch ($_SERVER['REQUEST_METHOD']) {
+// Load products from JSON file
+$products = loadJsonData($db_config['files']['products']);
+
+// Handle request based on HTTP method
+switch ($method) {
     case 'GET':
-        if ($productId) {
-            getProduct($productId);
-        } else {
-            getProducts();
-        }
+        handleGetRequest($products, $id);
         break;
         
     case 'POST':
-        checkAuth(); // Require authentication
-        checkAdmin(); // Require admin access
-        createProduct();
+        // Require admin for creating products
+        requireAdmin();
+        handlePostRequest($products);
         break;
         
     case 'PUT':
-        checkAuth(); // Require authentication
-        checkAdmin(); // Require admin access
-        if (!$productId) {
-            jsonResponse(false, 'Product ID is required', null, 400);
-        }
-        updateProduct($productId);
+        // Require admin for updating products
+        requireAdmin();
+        handlePutRequest($products, $id);
         break;
         
     case 'DELETE':
-        checkAuth(); // Require authentication
-        checkAdmin(); // Require admin access
-        if (!$productId) {
-            jsonResponse(false, 'Product ID is required', null, 400);
-        }
-        deleteProduct($productId);
+        // Require admin for deleting products
+        requireAdmin();
+        handleDeleteRequest($products, $id);
         break;
         
     default:
-        jsonResponse(false, 'Method not allowed', null, 405);
+        // Method not allowed
+        errorResponse('Method not allowed', 405);
+        break;
 }
 
 /**
- * Get all products
- * Optional filters: category_id, search, limit, offset
+ * Handle GET request
+ * 
+ * @param array $products Products data
+ * @param int|null $id Product ID
+ * @return void
  */
-function getProducts() {
-    $categoryId = isset($_GET['category']) ? (int)$_GET['category'] : null;
-    $search = isset($_GET['search']) ? sanitizeInput($_GET['search']) : null;
-    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
-    $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-    
-    // Base query
-    $sql = "SELECT p.*, c.name as category_name 
-            FROM products p 
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE 1=1";
-    $params = [];
-    $types = "";
-    
-    // Add category filter
-    if ($categoryId) {
-        $sql .= " AND p.category_id = ?";
-        $params[] = $categoryId;
-        $types .= "i";
-    }
-    
-    // Add search filter
-    if ($search) {
-        $sql .= " AND (p.name LIKE ? OR p.description LIKE ?)";
-        $searchParam = "%" . $search . "%";
-        $params[] = $searchParam;
-        $params[] = $searchParam;
-        $types .= "ss";
-    }
-    
-    // Add sorting
-    $sql .= " ORDER BY p.created_at DESC";
-    
-    // Add limit and offset
-    $sql .= " LIMIT ? OFFSET ?";
-    $params[] = $limit;
-    $params[] = $offset;
-    $types .= "ii";
-    
-    // Execute query
-    $conn = getConnection();
-    $stmt = $conn->prepare($sql);
-    
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $products = [];
-    while ($row = $result->fetch_assoc()) {
-        // Get product images
-        $row['images'] = getProductImages($row['id']);
-        $products[] = $row;
-    }
-    
-    // Count total products for pagination
-    $countSql = "SELECT COUNT(*) as total FROM products WHERE 1=1";
-    $countParams = [];
-    $countTypes = "";
-    
-    if ($categoryId) {
-        $countSql .= " AND category_id = ?";
-        $countParams[] = $categoryId;
-        $countTypes .= "i";
-    }
-    
-    if ($search) {
-        $countSql .= " AND (name LIKE ? OR description LIKE ?)";
-        $searchParam = "%" . $search . "%";
-        $countParams[] = $searchParam;
-        $countParams[] = $searchParam;
-        $countTypes .= "ss";
-    }
-    
-    $countStmt = $conn->prepare($countSql);
-    
-    if (!empty($countParams)) {
-        $countStmt->bind_param($countTypes, ...$countParams);
-    }
-    
-    $countStmt->execute();
-    $countResult = $countStmt->get_result();
-    $totalCount = $countResult->fetch_assoc()['total'];
-    
-    jsonResponse(true, 'Products retrieved successfully', [
-        'products' => $products,
-        'pagination' => [
-            'total' => (int)$totalCount,
-            'limit' => $limit,
-            'offset' => $offset
-        ]
-    ]);
-}
-
-/**
- * Get a single product by ID
- * @param int $productId Product ID
- */
-function getProduct($productId) {
-    $conn = getConnection();
-    $sql = "SELECT p.*, c.name as category_name 
-            FROM products p 
-            LEFT JOIN categories c ON p.category_id = c.id
-            WHERE p.id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $productId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($product = $result->fetch_assoc()) {
-        // Get product images
-        $product['images'] = getProductImages($product['id']);
+function handleGetRequest($products, $id) {
+    // Get a single product by ID
+    if ($id !== null) {
+        $product = findProductById($products, $id);
         
-        // Get product comments
-        $product['comments'] = getProductComments($product['id']);
-        
-        jsonResponse(true, 'Product retrieved successfully', $product);
-    } else {
-        jsonResponse(false, 'Product not found', null, 404);
-    }
-}
-
-/**
- * Create a new product
- */
-function createProduct() {
-    // Get JSON data
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    // Validate input
-    if (!isset($data['name']) || !isset($data['price'])) {
-        jsonResponse(false, 'Name and price are required', null, 400);
-    }
-    
-    $name = sanitizeInput($data['name']);
-    $price = (float)$data['price'];
-    $description = sanitizeInput($data['description'] ?? '');
-    $categoryId = isset($data['category_id']) ? (int)$data['category_id'] : null;
-    $stock = isset($data['stock']) ? (int)$data['stock'] : 0;
-    
-    // Insert product
-    $conn = getConnection();
-    $sql = "INSERT INTO products (name, description, price, category_id, stock) 
-            VALUES (?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssdii", $name, $description, $price, $categoryId, $stock);
-    
-    if ($stmt->execute()) {
-        $productId = $conn->insert_id;
-        
-        // Handle image upload if provided
-        if (isset($_FILES['image'])) {
-            $imagePath = uploadProductImage($productId, $_FILES['image']);
-            
-            if ($imagePath) {
-                // Update product with image path
-                $updateSql = "UPDATE products SET image_path = ? WHERE id = ?";
-                $updateStmt = $conn->prepare($updateSql);
-                $updateStmt->bind_param("si", $imagePath, $productId);
-                $updateStmt->execute();
-            }
+        if ($product === null) {
+            errorResponse('Product not found', 404);
         }
         
-        jsonResponse(true, 'Product created successfully', [
-            'id' => $productId,
-            'name' => $name
-        ]);
-    } else {
-        jsonResponse(false, 'Failed to create product', null, 500);
+        jsonResponse($product);
     }
+    
+    // Filter products based on query parameters
+    $filteredProducts = filterProducts($products);
+    
+    // Return all products (or filtered subset)
+    jsonResponse($filteredProducts);
 }
 
 /**
- * Update an existing product
- * @param int $productId Product ID
+ * Handle POST request
+ * 
+ * @param array $products Products data
+ * @return void
  */
-function updateProduct($productId) {
-    // Get JSON data
-    $data = json_decode(file_get_contents('php://input'), true);
+function handlePostRequest($products) {
+    global $db_config;
     
-    // Validate input
-    if (empty($data)) {
-        jsonResponse(false, 'No data provided', null, 400);
+    // Get JSON input data
+    $data = getJsonInput();
+    
+    // Validate required fields
+    validateRequired($data, ['name', 'price', 'description', 'categoryId']);
+    
+    // Generate new product ID
+    $existingIds = array_column($products, 'id');
+    $newId = generateId($existingIds);
+    
+    // Create new product
+    $newProduct = [
+        'id' => $newId,
+        'name' => sanitize($data['name']),
+        'description' => sanitize($data['description']),
+        'price' => (float)$data['price'],
+        'categoryId' => (int)$data['categoryId'],
+        'onSale' => isset($data['onSale']) ? (bool)$data['onSale'] : false,
+        'salePrice' => isset($data['salePrice']) ? (float)$data['salePrice'] : null,
+        'rating' => isset($data['rating']) ? (float)$data['rating'] : 0,
+        'reviewCount' => isset($data['reviewCount']) ? (int)$data['reviewCount'] : 0,
+        'stock' => isset($data['stock']) ? (int)$data['stock'] : 0,
+        'images' => isset($data['images']) ? $data['images'] : [],
+        'created_at' => date('c')
+    ];
+    
+    // Add new product to array
+    $products[] = $newProduct;
+    
+    // Save updated products data
+    if (!saveJsonData($db_config['files']['products'], $products)) {
+        errorResponse('Failed to save product', 500);
     }
     
-    // Check if product exists
-    $conn = getConnection();
-    $checkSql = "SELECT id FROM products WHERE id = ?";
-    $checkStmt = $conn->prepare($checkSql);
-    $checkStmt->bind_param("i", $productId);
-    $checkStmt->execute();
+    // Return the new product
+    jsonResponse($newProduct, 201);
+}
+
+/**
+ * Handle PUT request
+ * 
+ * @param array $products Products data
+ * @param int $id Product ID
+ * @return void
+ */
+function handlePutRequest($products, $id) {
+    global $db_config;
     
-    if ($checkStmt->get_result()->num_rows === 0) {
-        jsonResponse(false, 'Product not found', null, 404);
+    // Check if ID is provided
+    if ($id === null) {
+        errorResponse('Product ID is required', 400);
     }
     
-    // Build update query
-    $updateFields = [];
-    $params = [];
-    $types = "";
+    // Find product index
+    $index = findProductIndexById($products, $id);
     
+    if ($index === null) {
+        errorResponse('Product not found', 404);
+    }
+    
+    // Get JSON input data
+    $data = getJsonInput();
+    
+    // Update product fields
     if (isset($data['name'])) {
-        $updateFields[] = "name = ?";
-        $params[] = sanitizeInput($data['name']);
-        $types .= "s";
+        $products[$index]['name'] = sanitize($data['name']);
     }
     
     if (isset($data['description'])) {
-        $updateFields[] = "description = ?";
-        $params[] = sanitizeInput($data['description']);
-        $types .= "s";
+        $products[$index]['description'] = sanitize($data['description']);
     }
     
     if (isset($data['price'])) {
-        $updateFields[] = "price = ?";
-        $params[] = (float)$data['price'];
-        $types .= "d";
+        $products[$index]['price'] = (float)$data['price'];
     }
     
-    if (isset($data['category_id'])) {
-        $updateFields[] = "category_id = ?";
-        $params[] = (int)$data['category_id'];
-        $types .= "i";
+    if (isset($data['categoryId'])) {
+        $products[$index]['categoryId'] = (int)$data['categoryId'];
+    }
+    
+    if (isset($data['onSale'])) {
+        $products[$index]['onSale'] = (bool)$data['onSale'];
+    }
+    
+    if (isset($data['salePrice'])) {
+        $products[$index]['salePrice'] = (float)$data['salePrice'];
+    }
+    
+    if (isset($data['rating'])) {
+        $products[$index]['rating'] = (float)$data['rating'];
+    }
+    
+    if (isset($data['reviewCount'])) {
+        $products[$index]['reviewCount'] = (int)$data['reviewCount'];
     }
     
     if (isset($data['stock'])) {
-        $updateFields[] = "stock = ?";
-        $params[] = (int)$data['stock'];
-        $types .= "i";
+        $products[$index]['stock'] = (int)$data['stock'];
     }
     
-    if (empty($updateFields)) {
-        jsonResponse(false, 'No fields to update', null, 400);
+    if (isset($data['images'])) {
+        $products[$index]['images'] = $data['images'];
     }
     
-    // Add product ID to params
-    $params[] = $productId;
-    $types .= "i";
+    // Save updated products data
+    if (!saveJsonData($db_config['files']['products'], $products)) {
+        errorResponse('Failed to update product', 500);
+    }
     
-    // Execute update
-    $sql = "UPDATE products SET " . implode(", ", $updateFields) . " WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
+    // Return the updated product
+    jsonResponse($products[$index]);
+}
+
+/**
+ * Handle DELETE request
+ * 
+ * @param array $products Products data
+ * @param int $id Product ID
+ * @return void
+ */
+function handleDeleteRequest($products, $id) {
+    global $db_config;
     
-    if ($stmt->execute()) {
-        // Handle image upload if provided
-        if (isset($_FILES['image'])) {
-            $imagePath = uploadProductImage($productId, $_FILES['image']);
-            
-            if ($imagePath) {
-                // Update product with image path
-                $updateSql = "UPDATE products SET image_path = ? WHERE id = ?";
-                $updateStmt = $conn->prepare($updateSql);
-                $updateStmt->bind_param("si", $imagePath, $productId);
-                $updateStmt->execute();
-            }
+    // Check if ID is provided
+    if ($id === null) {
+        errorResponse('Product ID is required', 400);
+    }
+    
+    // Find product index
+    $index = findProductIndexById($products, $id);
+    
+    if ($index === null) {
+        errorResponse('Product not found', 404);
+    }
+    
+    // Remove product from array
+    array_splice($products, $index, 1);
+    
+    // Save updated products data
+    if (!saveJsonData($db_config['files']['products'], $products)) {
+        errorResponse('Failed to delete product', 500);
+    }
+    
+    // Return success response
+    jsonResponse(['message' => 'Product deleted successfully']);
+}
+
+/**
+ * Find product by ID
+ * 
+ * @param array $products Products data
+ * @param int $id Product ID
+ * @return array|null Product data or null if not found
+ */
+function findProductById($products, $id) {
+    foreach ($products as $product) {
+        if ($product['id'] === $id) {
+            return $product;
         }
-        
-        jsonResponse(true, 'Product updated successfully');
-    } else {
-        jsonResponse(false, 'Failed to update product', null, 500);
     }
+    
+    return null;
 }
 
 /**
- * Delete a product
- * @param int $productId Product ID
+ * Find product index by ID
+ * 
+ * @param array $products Products data
+ * @param int $id Product ID
+ * @return int|null Product index or null if not found
  */
-function deleteProduct($productId) {
-    $conn = getConnection();
-    $sql = "DELETE FROM products WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $productId);
-    
-    if ($stmt->execute() && $stmt->affected_rows > 0) {
-        jsonResponse(true, 'Product deleted successfully');
-    } else {
-        jsonResponse(false, 'Product not found or could not be deleted', null, 404);
-    }
-}
-
-/**
- * Get product images
- * @param int $productId Product ID
- * @return array Array of image paths
- */
-function getProductImages($productId) {
-    // In a real implementation, you would fetch images from a separate table
-    // For simplicity, we're returning the main image and a placeholder
-    $conn = getConnection();
-    $sql = "SELECT image_path FROM products WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $productId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($product = $result->fetch_assoc()) {
-        $images = [];
-        
-        if ($product['image_path']) {
-            $images[] = UPLOADS_URL . '/images/' . $product['image_path'];
-        } else {
-            // Add placeholder image
-            $images[] = ASSETS_URL . '/img/placeholder.jpg';
+function findProductIndexById($products, $id) {
+    foreach ($products as $index => $product) {
+        if ($product['id'] === $id) {
+            return $index;
         }
-        
-        return $images;
     }
     
-    return [];
+    return null;
 }
 
 /**
- * Get product comments
- * @param int $productId Product ID
- * @return array Array of comments
+ * Filter products based on query parameters
+ * 
+ * @param array $products Products data
+ * @return array Filtered products
  */
-function getProductComments($productId) {
-    $conn = getConnection();
-    $sql = "SELECT c.*, u.username 
-            FROM comments c 
-            LEFT JOIN users u ON c.user_id = u.id
-            WHERE c.product_id = ? 
-            ORDER BY c.created_at DESC";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $productId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    $comments = [];
-    while ($row = $result->fetch_assoc()) {
-        $comments[] = $row;
+function filterProducts($products) {
+    // Category filter
+    if (isset($_GET['category']) && !empty($_GET['category'])) {
+        $categoryId = (int)$_GET['category'];
+        $products = array_filter($products, function($product) use ($categoryId) {
+            return $product['categoryId'] === $categoryId;
+        });
     }
     
-    return $comments;
-}
-
-/**
- * Upload a product image
- * @param int $productId Product ID
- * @param array $file File from $_FILES
- * @return string|false Filename on success, false on failure
- */
-function uploadProductImage($productId, $file) {
-    // Allowed image types
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    
-    // Upload the file
-    $filename = uploadFile($file, IMAGES_PATH, $allowedTypes, 5 * 1024 * 1024); // 5MB limit
-    
-    if ($filename) {
-        return $filename;
+    // Price range filter
+    if (isset($_GET['min_price']) && !empty($_GET['min_price'])) {
+        $minPrice = (float)$_GET['min_price'];
+        $products = array_filter($products, function($product) use ($minPrice) {
+            $price = $product['onSale'] && isset($product['salePrice']) ? $product['salePrice'] : $product['price'];
+            return $price >= $minPrice;
+        });
     }
     
-    return false;
+    if (isset($_GET['max_price']) && !empty($_GET['max_price'])) {
+        $maxPrice = (float)$_GET['max_price'];
+        $products = array_filter($products, function($product) use ($maxPrice) {
+            $price = $product['onSale'] && isset($product['salePrice']) ? $product['salePrice'] : $product['price'];
+            return $price <= $maxPrice;
+        });
+    }
+    
+    // Rating filter
+    if (isset($_GET['rating']) && !empty($_GET['rating'])) {
+        $rating = (float)$_GET['rating'];
+        $products = array_filter($products, function($product) use ($rating) {
+            return $product['rating'] >= $rating;
+        });
+    }
+    
+    // On sale filter
+    if (isset($_GET['on_sale']) && $_GET['on_sale'] === '1') {
+        $products = array_filter($products, function($product) {
+            return $product['onSale'] === true;
+        });
+    }
+    
+    // Re-index array
+    return array_values($products);
 } 

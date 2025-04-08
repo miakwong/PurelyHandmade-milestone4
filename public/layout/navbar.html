@@ -1,23 +1,22 @@
-
 <head>
   <!-- Google Material Icons -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <link rel="stylesheet" href="/src/assets/css/navbar.css">
+  <link rel="stylesheet" href="/PurelyHandmade-milestone4/src/assets/css/navbar.css">
 </head>
 <!-- Top Navigation Bar -->
 <nav class="navbar navbar-light bg-light p-3">
   <div class="container d-flex justify-content-between">
-    <a class="navbar-brand d-flex align-items-center" href="../../../index.html">
-      <img src="/src/assets/img/logo.jpg" alt="Logo" width="50">
+    <a class="navbar-brand d-flex align-items-center" href="/PurelyHandmade-milestone4/">
+      <img src="/PurelyHandmade-milestone4/src/assets/img/logo.jpg" alt="Logo" width="50">
       <span class="ms-2 fs-4">Purely Homemade</span>
     </a>
 
     <!-- Search Bar -->
-    <form class="d-flex" action="search.php" method="GET">
-      <input class="form-control me-2" type="search" placeholder="Search products...">
-      <button class="btn btn-outline-primary">🔍</button>
+    <form class="d-flex" action="/PurelyHandmade-milestone4/src/views/product/product-list.html" method="GET">
+      <input class="form-control me-2" type="search" name="search" placeholder="Search products...">
+      <button class="btn btn-outline-primary" type="submit">🔍</button>
     </form>
 
     <!-- Login & Cart -->
@@ -28,12 +27,12 @@
           <i class="material-icons-outlined">account_circle</i>
         </a>
         <ul class="dropdown-menu" aria-labelledby="userDropdown">
-          <li><a class="dropdown-item" href="/src/views/auth/login.html" id="login-link">Login</a></li>
-          <li><a class="dropdown-item" href="/src/views/auth/register.html" id="register-link">Register</a></li>
+          <li><a class="dropdown-item" href="/PurelyHandmade-milestone4/src/views/auth/login.html" id="login-link">Login</a></li>
+          <li><a class="dropdown-item" href="/PurelyHandmade-milestone4/src/views/auth/register.html" id="register-link">Register</a></li>
         </ul>
       </div>
       <!-- Cart Icon -->
-      <a href="/src/views/checkout/cart.html" class="btn btn-outline-primary" id="cart-link">
+      <a href="/PurelyHandmade-milestone4/src/views/checkout/cart.html" class="btn btn-outline-primary" id="cart-link">
         <i class="material-icons-outlined">shopping_bag</i>
       </a>
     </div>
@@ -49,15 +48,7 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav w-100 d-flex justify-content-around">
-          <li class="nav-item"><a class="nav-link" href="../../../index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="/src/views/designers.html">Designers</a></li>
-          <li class="nav-item">
-            <a class="nav-link" href="/src/views/new-arrivals.html">New Arrivals</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/src/views/on-sale.html">On Sale</a></li>
-          <li class="nav-item"><a class="nav-link" href="/src/views/our-story.html">Our Story</a></li>
-          <li class="nav-item"><a class="nav-link" href="/src/views/about.html">About</a></li>
+          <!-- Navigation items removed, using only the brand link in the top navbar -->
         </ul>
       </div>
     </div>
@@ -65,28 +56,23 @@
 </div>
 
 <script>
-
   (function() {
     const loginButton = document.getElementById('login-button');
     const logoutButton = document.getElementById('logout-button');
     const ordersMenuItem = document.getElementById('orders-menu-item');
     const accountButton = document.getElementById('account-button');
 
-
     const currentUser = localStorage.getItem('currentUser');
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
     if (currentUser) {
-
       loginButton.style.display = 'none';
       logoutButton.style.display = 'inline-block';
       accountButton.style.display = 'inline-block';
 
-
       if (isAdmin) {
         ordersMenuItem.style.display = 'inline-block';
       }
-
 
       logoutButton.addEventListener('click', function(e) {
         e.preventDefault();
@@ -94,10 +80,9 @@
         localStorage.removeItem('currentUser');
         localStorage.removeItem('isAdmin');
 
-        window.location.href = '/index.html';
+        window.location.href = '/PurelyHandmade-milestone4/';
       });
     } else {
-
       loginButton.style.display = 'inline-block';
       logoutButton.style.display = 'none';
       accountButton.style.display = 'none';
