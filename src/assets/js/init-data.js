@@ -1,5 +1,11 @@
 // Initialize product data in localStorage
 window.initializeData = function() {
+  // Check if data is already initialized
+  if (localStorage.getItem('dataInitialized')) {
+    console.log('Data already initialized');
+    return JSON.parse(localStorage.getItem('dataInitialized'));
+  }
+
   // Categories
   const categories = [
     { id: 1, name: 'Ceramics', slug: 'ceramics', description: 'Handcrafted ceramic items' },
@@ -145,7 +151,7 @@ window.initializeData = function() {
       stock: 2,
       reviews: [
         { name: 'Emily R.', rating: 5, comment: 'This wall hanging is even more beautiful in person! The craftsmanship is incredible.', date: '2023-10-25' },
-        { name: 'Thomas N.', rating: 4, comment: 'Love the natural colors and texture. It's the perfect addition to my living room.', date: '2023-09-18' }
+        { name: 'Thomas N.', rating: 4, comment: 'Love the natural colors and texture. It\'s the perfect addition to my living room.', date: '2023-09-18' }
       ]
     },
     {
@@ -171,6 +177,7 @@ window.initializeData = function() {
   localStorage.setItem('categories', JSON.stringify(categories));
   localStorage.setItem('products', JSON.stringify(products));
   localStorage.setItem('designers', JSON.stringify(designers));
+  localStorage.setItem('dataInitialized', JSON.stringify({ products, categories, designers }));
   
   console.log('Data initialized successfully:', 
     products.length, 'products,', 
@@ -181,5 +188,7 @@ window.initializeData = function() {
   return { products, categories, designers };
 };
 
-// Call initialization function
-window.initializeData(); 
+// Only initialize if not already done
+if (!localStorage.getItem('dataInitialized')) {
+  window.initializeData();
+} 
