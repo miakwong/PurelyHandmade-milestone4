@@ -11,9 +11,6 @@ vcs.xml
 # VSCode
 .vscode/
 
-# Node modules (if applicable)
-node_modules/
-
 # Python
 __pycache__/
 
