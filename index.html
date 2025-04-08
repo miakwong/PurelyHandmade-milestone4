@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Purely Homemade - Handcrafted with Love</title>
+  <title>Purely Homemade - Products</title>
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -13,78 +13,40 @@
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="./src/assets/css/style.css">
-  <link rel="stylesheet" href="./src/assets/css/index.css">
   <link rel="stylesheet" href="./src/assets/css/navbar.css">
 
   <style>
-    .hero-section {
-      background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('./src/assets/img/hero-bg.jpg');
-      background-size: cover;
-      background-position: center;
-      color: white;
-      padding: 150px 0;
-      margin-bottom: 40px;
-      text-align: center;
-    }
-    
-    .hero-content {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    
-    .hero-title {
-      font-size: 3.5rem;
-      font-weight: 700;
-      margin-bottom: 20px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-    }
-    
-    .hero-subtitle {
-      font-size: 1.5rem;
-      margin-bottom: 30px;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-    }
-
-    .category-card {
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 30px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .category-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-    }
-    
-    .category-img-container {
-      height: 200px;
-      overflow: hidden;
-    }
-    
-    .category-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.5s ease;
-    }
-    
-    .category-card:hover .category-img {
-      transform: scale(1.1);
-    }
-    
-    .category-overlay {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    /* 筛选栏样式 */
+    .filter-sidebar {
+      background-color: #f8f9fa;
+      border-radius: 8px;
       padding: 20px;
-      color: white;
     }
     
-
+    .filter-group {
+      margin-bottom: 20px;
+    }
+    
+    .filter-group-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    .price-range-inputs {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .price-range-inputs input {
+      width: 80px;
+    }
+    
+    /* 产品卡片样式 */
     .product-card {
       border-radius: 8px;
       overflow: hidden;
@@ -128,46 +90,7 @@
       margin-left: 5px;
     }
     
-
-    .designer-section {
-      background-color: #f8f9fa;
-      padding: 60px 0;
-      margin: 40px 0;
-    }
-    
-    .designer-card {
-      display: flex;
-      background-color: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .designer-img {
-      width: 40%;
-      object-fit: cover;
-    }
-    
-    .designer-content {
-      width: 60%;
-      padding: 30px;
-    }
-    
-
-    .subscribe-section {
-      background-color: #0d6efd;
-      color: white;
-      padding: 60px 0;
-      text-align: center;
-      margin: 40px 0;
-    }
-    
-    .subscribe-form {
-      max-width: 500px;
-      margin: 30px auto 0;
-    }
-    
-
+    /* 产品定位 */
     .product-item {
       position: relative;
     }
@@ -178,31 +101,61 @@
       right: 15px;
       z-index: 10;
     }
-
-    @media (max-width: 768px) {
-      .hero-title {
-        font-size: 2.5rem;
+    
+    /* 产品卡片链接 */
+    .product-card-link {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+    }
+    
+    /* 分页样式 */
+    .pagination .page-item.active .page-link {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+    
+    .pagination .page-link {
+      color: #0d6efd;
+    }
+    
+    /* 排序下拉框 */
+    .sort-select {
+      width: auto;
+      min-width: 150px;
+    }
+    
+    /* 面包屑导航 */
+    .breadcrumb {
+      margin-bottom: 20px;
+    }
+    
+    /* Toast 通知样式 */
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
       }
-      
-      .hero-subtitle {
-        font-size: 1.2rem;
+      to {
+        transform: translateX(0);
+        opacity: 1;
       }
-      
-      .hero-section {
-        padding: 100px 0;
+    }
+    
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
       }
-      
-      .designer-card {
-        flex-direction: column;
+      to {
+        opacity: 0;
       }
-      
-      .designer-img, .designer-content {
-        width: 100%;
-      }
-      
-      .designer-img {
-        height: 250px;
-      }
+    }
+    
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
     }
   </style>
 </head>
@@ -211,141 +164,194 @@
 <!-- Navbar Placeholder -->
 <div id="navbar-placeholder"></div>
 
-<!-- Hero Section -->
-<section class="hero-section">
-  <div class="hero-content">
-    <h1 class="hero-title">Handcrafted with Love</h1>
-    <p class="hero-subtitle">Discover unique, artisan-made products that bring warmth and character to your home</p>
-    <a href="./src/views/designers.html" class="btn btn-light btn-lg">Explore Our Collections</a>
-  </div>
-</section>
+<!-- 面包屑导航 -->
+<div class="container mt-3">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item active" id="breadcrumb-category">All Products</li>
+    </ol>
+  </nav>
+</div>
 
-<!-- Featured Categories -->
-<section class="container mb-5">
-  <h2 class="text-center mb-4">Shop by Category</h2>
+<!-- 产品列表主体 -->
+<div class="container mb-5">
   <div class="row">
-    <div class="col-md-3 col-sm-6">
-      <a href="./src/views/product/product-list.html?category=1" class="text-decoration-none">
-        <div class="category-card">
-          <div class="category-img-container position-relative">
-            <img src="./src/assets/img/category-soaps.jpg" alt="Handmade Soaps" class="category-img">
-            <div class="category-overlay">
-              <h4 class="m-0">Handmade Soaps</h4>
+    <!-- 左侧筛选栏 -->
+    <div class="col-lg-3">
+      <div class="filter-sidebar">
+        <h4 class="mb-4">Filter Products</h4>
+        
+        <!-- 分类筛选 -->
+        <div class="filter-group">
+          <div class="filter-group-title">
+            <span>Categories</span>
+            <i class="bi bi-chevron-down"></i>
+          </div>
+          <div class="filter-group-content" id="category-filters">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="all" id="category-all" checked>
+              <label class="form-check-label" for="category-all">
+                All Categories
+              </label>
+            </div>
+            <!-- 分类选项将在这里动态生成 -->
+          </div>
+        </div>
+        
+        <!-- 价格筛选 -->
+        <div class="filter-group">
+          <div class="filter-group-title">
+            <span>Price Range</span>
+            <i class="bi bi-chevron-down"></i>
+          </div>
+          <div class="filter-group-content">
+            <div class="price-range-inputs">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" id="price-min" min="0" placeholder="Min">
+              </div>
+              <span>-</span>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" id="price-max" min="0" placeholder="Max">
+              </div>
+            </div>
+            <button class="btn btn-sm btn-outline-primary w-100 mt-2" id="apply-price-filter">Apply</button>
+          </div>
+        </div>
+        
+        <!-- 评分筛选 -->
+        <div class="filter-group">
+          <div class="filter-group-title">
+            <span>Rating</span>
+            <i class="bi bi-chevron-down"></i>
+          </div>
+          <div class="filter-group-content">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="rating-filter" id="rating-all" value="0" checked>
+              <label class="form-check-label" for="rating-all">
+                All Ratings
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="rating-filter" id="rating-4plus" value="4">
+              <label class="form-check-label" for="rating-4plus">
+                4+ <i class="bi bi-star-fill text-warning"></i> & up
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="rating-filter" id="rating-3plus" value="3">
+              <label class="form-check-label" for="rating-3plus">
+                3+ <i class="bi bi-star-fill text-warning"></i> & up
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="rating-filter" id="rating-2plus" value="2">
+              <label class="form-check-label" for="rating-2plus">
+                2+ <i class="bi bi-star-fill text-warning"></i> & up
+              </label>
             </div>
           </div>
         </div>
-      </a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="./src/views/product/product-list.html?category=2" class="text-decoration-none">
-        <div class="category-card">
-          <div class="category-img-container position-relative">
-            <img src="./src/assets/img/category-oils.jpg" alt="Essential Oils" class="category-img">
-            <div class="category-overlay">
-              <h4 class="m-0">Essential Oils</h4>
+        
+        <!-- 特惠筛选 -->
+        <div class="filter-group">
+          <div class="filter-group-title">
+            <span>Deals</span>
+            <i class="bi bi-chevron-down"></i>
+          </div>
+          <div class="filter-group-content">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="filter-sale">
+              <label class="form-check-label" for="filter-sale">
+                On Sale
+              </label>
             </div>
           </div>
         </div>
-      </a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="./src/views/product/product-list.html?category=3" class="text-decoration-none">
-        <div class="category-card">
-          <div class="category-img-container position-relative">
-            <img src="./src/assets/img/category-candles.jpg" alt="Candles" class="category-img">
-            <div class="category-overlay">
-              <h4 class="m-0">Candles</h4>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <a href="./src/views/product/product-list.html?category=4" class="text-decoration-none">
-        <div class="category-card">
-          <div class="category-img-container position-relative">
-            <img src="./src/assets/img/category-bath.jpg" alt="Bath Products" class="category-img">
-            <div class="category-overlay">
-              <h4 class="m-0">Bath Products</h4>
-            </div>
-          </div>
-        </div>
-      </a>
-    </div>
-  </div>
-  <div class="text-center mt-4">
-    <a href="./src/views/product/product-list.html" class="btn btn-outline-primary">View All Categories</a>
-  </div>
-</section>
-
-<!-- New Arrivals -->
-<section class="container mb-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>New Arrivals</h2>
-    <a href="./src/views/product/product-list.html" class="btn btn-link">View All</a>
-  </div>
-  <div class="row" id="new-arrivals-container">
-    <!-- Products will be loaded dynamically -->
-  </div>
-</section>
-
-<!-- Featured Designer -->
-<section class="designer-section">
-  <div class="container">
-    <div class="designer-card">
-      <img src="./src/assets/img/designer-feature.jpg" alt="Featured Designer" class="designer-img">
-      <div class="designer-content">
-        <h3>Meet Our Featured Artisan</h3>
-        <h5 class="text-primary mb-3">Emma Johnson</h5>
-        <p>Emma creates handcrafted soaps and bath products using traditional methods passed down through generations. Each product is made with natural ingredients sourced from local suppliers.</p>
-        <p>Her passion for sustainability and natural wellness has led her to develop a unique line of products that are not only good for you but also for the environment.</p>
-        <a href="#" class="btn btn-outline-primary mt-3">Explore Emma's Collection</a>
+        
+        <!-- 重置筛选按钮 -->
+        <button class="btn btn-outline-secondary w-100 mt-3" id="reset-filters">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset Filters
+        </button>
       </div>
     </div>
-  </div>
-</section>
-
-<!-- Best Sellers -->
-<section class="container mb-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Best Sellers</h2>
-    <a href="./src/views/product/product-list.html" class="btn btn-link">View All</a>
-  </div>
-  <div class="row" id="best-sellers-container">
-    <!-- Products will be loaded dynamically -->
-  </div>
-</section>
-
-<!-- Subscribe Section -->
-<section class="subscribe-section">
-  <div class="container">
-    <h2>Stay Updated</h2>
-    <p>Subscribe to our newsletter for exclusive offers and updates on new products</p>
-    <div class="subscribe-form">
-      <form class="d-flex">
-        <input type="email" class="form-control me-2" placeholder="Your email address">
-        <button type="submit" class="btn btn-light">Subscribe</button>
-      </form>
+    
+    <!-- 右侧产品列表 -->
+    <div class="col-lg-9">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 id="product-list-title">All Products</h2>
+        <div class="d-flex align-items-center">
+          <label for="sort-select" class="me-2">Sort By:</label>
+          <select class="form-select sort-select" id="sort-select">
+            <option value="featured">Featured</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="rating">Highest Rated</option>
+            <option value="newest">Newest</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- 产品计数和分页信息 -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div id="product-count">Showing 0 products</div>
+        <div class="d-flex align-items-center">
+          <label for="products-per-page" class="me-2">Show:</label>
+          <select class="form-select form-select-sm" id="products-per-page" style="width: 70px;">
+            <option value="8">8</option>
+            <option value="12" selected>12</option>
+            <option value="24">24</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- 产品网格 -->
+      <div class="row" id="products-container">
+        <!-- 产品将在这里动态加载 -->
+      </div>
+      
+      <!-- 分页控件 -->
+      <nav aria-label="Products pagination" class="mt-4">
+        <ul class="pagination justify-content-center" id="pagination">
+          <!-- 分页将在这里动态生成 -->
+        </ul>
+      </nav>
     </div>
   </div>
-</section>
+</div>
+
+<!-- Toast通知容器 -->
+<div class="toast-container" id="toast-container"></div>
 
 <!-- Footer Placeholder -->
 <div id="footer-placeholder"></div>
 
-<!-- Toast-->
-<div class="toast-container" id="toast-container"></div>
-
-<!-- Bootstrap JS -->
+<!-- Bootstrap JS and jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-
+<!-- 初始化数据脚本 -->
 <script src="./src/assets/js/init-data.js"></script>
 
 <script>
-  // Load navbar and footer
-  fetch('./src/assets/layout/navbar.html')
+  // 页面变量
+  let products = [];
+  let categories = [];
+  let filteredProducts = [];
+  let currentPage = 1;
+  let productsPerPage = 12;
+  let activeCategoryId = null;
+  let filterCriteria = {
+    categories: [],
+    priceMin: null,
+    priceMax: null,
+    rating: 0,
+    onSale: false
+  };
+  
+  // 加载导航栏和页脚
+  fetch('src/assets/layout/navbar.html')
     .then(response => {
       if (!response.ok) {
         throw new Error(`Failed to load navbar (${response.status})`);
@@ -355,14 +361,17 @@
     .then(html => {
       document.getElementById('navbar-placeholder').innerHTML = html;
       console.log('Navbar loaded successfully');
+      
+      // 加载导航栏后更新购物车计数
+      updateCartCount();
     })
     .catch(error => {
       console.error('Error loading navbar:', error);
       document.getElementById('navbar-placeholder').innerHTML =
-              '<div class="alert alert-danger">Failed to load navigation bar. Please check console for details.</div>';
+        '<div class="alert alert-danger">Failed to load navigation bar. Please check console for details.</div>';
     });
 
-  fetch('./src/assets/layout/footer.html')
+  fetch('src/assets/layout/footer.html')
     .then(response => {
       if (!response.ok) {
         throw new Error(`Failed to load footer (${response.status})`);
@@ -376,55 +385,249 @@
     .catch(error => {
       console.error('Error loading footer:', error);
       document.getElementById('footer-placeholder').innerHTML =
-              '<div class="alert alert-danger">Failed to load footer. Please check console for details.</div>';
+        '<div class="alert alert-danger">Failed to load footer. Please check console for details.</div>';
     });
-
+  
+  // 页面加载完成后执行
   document.addEventListener('DOMContentLoaded', function() {
+    // 确保数据初始化
     if (typeof window.initializeData === 'function') {
       window.initializeData();
     }
     
-
-    loadNewArrivals();
+    // 加载分类
+    loadCategories();
     
-
-    loadBestSellers();
+    // 加载产品
+    loadProducts();
+    
+    // 初始化筛选器折叠功能
+    initializeFilterAccordion();
+    
+    // 添加事件监听器
+    document.getElementById('sort-select').addEventListener('change', applyFiltersAndSort);
+    document.getElementById('products-per-page').addEventListener('change', function() {
+      productsPerPage = parseInt(this.value);
+      currentPage = 1;
+      applyFiltersAndSort();
+    });
+    document.getElementById('apply-price-filter').addEventListener('click', applyFiltersAndSort);
+    document.getElementById('reset-filters').addEventListener('click', resetFilters);
+    
+    // 设置评分筛选事件
+    document.querySelectorAll('input[name="rating-filter"]').forEach(input => {
+      input.addEventListener('change', applyFiltersAndSort);
+    });
+    
+    // 设置特惠筛选事件
+    document.getElementById('filter-sale').addEventListener('change', applyFiltersAndSort);
+    
+    // 检查URL参数中的分类ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get('category');
+    if (categoryParam) {
+      activeCategoryId = parseInt(categoryParam);
+    }
   });
   
-
-  function loadNewArrivals() {
-    const container = document.getElementById('new-arrivals-container');
-    const productsData = localStorage.getItem('products');
-    
-    if (productsData) {
-      const products = JSON.parse(productsData);
-
-      const newProducts = products.slice(0, 4);
+  // 加载分类
+  function loadCategories() {
+    const categoriesData = localStorage.getItem('categories');
+    if (categoriesData) {
+      categories = JSON.parse(categoriesData);
       
-      renderProducts(newProducts, container);
+      // 生成分类筛选选项
+      const categoryFiltersContainer = document.getElementById('category-filters');
+      const allCategoriesCheckbox = document.getElementById('category-all');
+      
+      // 监听全部分类复选框
+      allCategoriesCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+          // 取消选中其他所有分类
+          document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+          });
+          filterCriteria.categories = [];
+        }
+        applyFiltersAndSort();
+      });
+      
+      // 添加各个分类复选框
+      categories.forEach(category => {
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'form-check';
+        
+        const checkbox = document.createElement('input');
+        checkbox.className = 'form-check-input category-checkbox';
+        checkbox.type = 'checkbox';
+        checkbox.id = `category-${category.id}`;
+        checkbox.value = category.id;
+        
+        // 如果URL参数中指定了此分类，选中它
+        if (activeCategoryId === category.id) {
+          checkbox.checked = true;
+          allCategoriesCheckbox.checked = false;
+          filterCriteria.categories.push(category.id);
+          
+          // 更新面包屑和标题
+          document.getElementById('breadcrumb-category').textContent = category.name;
+          document.getElementById('product-list-title').textContent = category.name;
+        }
+        
+        checkbox.addEventListener('change', function() {
+          if (this.checked) {
+            // 取消选中"全部分类"
+            document.getElementById('category-all').checked = false;
+            
+            // 添加到筛选分类
+            filterCriteria.categories.push(parseInt(this.value));
+          } else {
+            // 从筛选分类中移除
+            const index = filterCriteria.categories.indexOf(parseInt(this.value));
+            if (index !== -1) {
+              filterCriteria.categories.splice(index, 1);
+            }
+            
+            // 如果没有选中任何分类，自动选中"全部分类"
+            if (document.querySelectorAll('.category-checkbox:checked').length === 0) {
+              document.getElementById('category-all').checked = true;
+            }
+          }
+          
+          applyFiltersAndSort();
+        });
+        
+        const label = document.createElement('label');
+        label.className = 'form-check-label';
+        label.htmlFor = `category-${category.id}`;
+        label.textContent = category.name;
+        
+        checkboxDiv.appendChild(checkbox);
+        checkboxDiv.appendChild(label);
+        categoryFiltersContainer.appendChild(checkboxDiv);
+      });
     }
   }
   
-
-  function loadBestSellers() {
-    const container = document.getElementById('best-sellers-container');
+  // 加载产品
+  function loadProducts() {
     const productsData = localStorage.getItem('products');
-    
     if (productsData) {
-      const products = JSON.parse(productsData);
-
-      const bestSellers = [...products].sort((a, b) => b.rating - a.rating).slice(0, 4);
-      
-      renderProducts(bestSellers, container);
+      products = JSON.parse(productsData);
+      applyFiltersAndSort();
+    } else {
+      document.getElementById('products-container').innerHTML = '<p class="text-center w-100">No products found. Please try again later.</p>';
     }
   }
   
-
-  function renderProducts(products, container) {
-    container.innerHTML = '';
+  // 应用筛选和排序
+  function applyFiltersAndSort() {
+    // 获取价格范围
+    const minPrice = document.getElementById('price-min').value;
+    const maxPrice = document.getElementById('price-max').value;
+    filterCriteria.priceMin = minPrice ? parseFloat(minPrice) : null;
+    filterCriteria.priceMax = maxPrice ? parseFloat(maxPrice) : null;
     
-    products.forEach(product => {
-
+    // 获取评分筛选
+    const ratingValue = document.querySelector('input[name="rating-filter"]:checked').value;
+    filterCriteria.rating = parseFloat(ratingValue);
+    
+    // 获取特惠筛选
+    filterCriteria.onSale = document.getElementById('filter-sale').checked;
+    
+    // 应用筛选
+    filteredProducts = products.filter(product => {
+      // 分类筛选
+      if (filterCriteria.categories.length > 0 && !filterCriteria.categories.includes(product.categoryId)) {
+        return false;
+      }
+      
+      // 价格筛选
+      if (filterCriteria.priceMin !== null) {
+        const price = product.onSale && product.salePrice ? product.salePrice : product.price;
+        if (price < filterCriteria.priceMin) {
+          return false;
+        }
+      }
+      
+      if (filterCriteria.priceMax !== null) {
+        const price = product.onSale && product.salePrice ? product.salePrice : product.price;
+        if (price > filterCriteria.priceMax) {
+          return false;
+        }
+      }
+      
+      // 评分筛选
+      if (filterCriteria.rating > 0 && product.rating < filterCriteria.rating) {
+        return false;
+      }
+      
+      // 特惠筛选
+      if (filterCriteria.onSale && !product.onSale) {
+        return false;
+      }
+      
+      return true;
+    });
+    
+    // 应用排序
+    const sortOption = document.getElementById('sort-select').value;
+    
+    switch (sortOption) {
+      case 'price-low':
+        filteredProducts.sort((a, b) => {
+          const priceA = a.onSale && a.salePrice ? a.salePrice : a.price;
+          const priceB = b.onSale && b.salePrice ? b.salePrice : b.price;
+          return priceA - priceB;
+        });
+        break;
+      case 'price-high':
+        filteredProducts.sort((a, b) => {
+          const priceA = a.onSale && a.salePrice ? a.salePrice : a.price;
+          const priceB = b.onSale && b.salePrice ? b.salePrice : b.price;
+          return priceB - priceA;
+        });
+        break;
+      case 'rating':
+        filteredProducts.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'newest':
+        // 假设产品ID越大越新
+        filteredProducts.sort((a, b) => b.id - a.id);
+        break;
+      case 'featured':
+      default:
+        // 保持原顺序或根据某些特征排序
+        break;
+    }
+    
+    // 更新产品计数
+    document.getElementById('product-count').textContent = `Showing ${filteredProducts.length} products`;
+    
+    // 显示分页后的产品
+    displayPaginatedProducts();
+    
+    // 更新分页控件
+    updatePagination();
+  }
+  
+  // 显示分页后的产品
+  function displayPaginatedProducts() {
+    const productsContainer = document.getElementById('products-container');
+    productsContainer.innerHTML = '';
+    
+    if (filteredProducts.length === 0) {
+      productsContainer.innerHTML = '<p class="text-center w-100">No products found matching your criteria. Please try different filters.</p>';
+      return;
+    }
+    
+    const startIndex = (currentPage - 1) * productsPerPage;
+    const endIndex = Math.min(startIndex + productsPerPage, filteredProducts.length);
+    
+    const productsToShow = filteredProducts.slice(startIndex, endIndex);
+    
+    productsToShow.forEach(product => {
+      // 生成星级评分HTML
       const fullStars = Math.floor(product.rating);
       const hasHalfStar = product.rating % 1 >= 0.5;
       
@@ -441,7 +644,7 @@
       }
       starsHtml += `<span class="text-muted ms-1">(${product.reviewCount})</span></span>`;
       
-
+      // 价格显示
       let priceHtml = '';
       if (product.onSale && product.salePrice) {
         priceHtml = `
@@ -452,11 +655,11 @@
         priceHtml = `<span class="product-price">$${product.price.toFixed(2)}</span>`;
       }
       
-
+      // 创建产品卡片HTML
       const productHtml = `
-        <div class="col-lg-3 col-md-6 col-sm-6 product-item">
+        <div class="col-lg-4 col-md-6 col-sm-6 product-item">
           <div class="product-card">
-            <a href="src/views/product/product_detail.html?id=${product.id}" class="text-decoration-none text-dark">
+            <a href="./src/views/product/product_detail.html?id=${product.id}" class="product-card-link">
               <img src="${product.images[0]}" class="card-img-top product-img" alt="${product.name}">
               ${product.onSale ? '<div class="product-badge">Sale</div>' : ''}
               <div class="card-body">
@@ -473,19 +676,179 @@
         </div>
       `;
       
-      container.innerHTML += productHtml;
+      productsContainer.innerHTML += productHtml;
     });
     
-
+    // 添加Add to Cart按钮事件
     document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-      button.addEventListener('click', function() {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         const productId = parseInt(this.getAttribute('data-product-id'));
         addToCart(productId, 1);
       });
     });
   }
   
-
+  // 更新分页控件
+  function updatePagination() {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    
+    const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+    
+    if (totalPages <= 1) {
+      return;
+    }
+    
+    // 上一页按钮
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    
+    const prevLink = document.createElement('a');
+    prevLink.className = 'page-link';
+    prevLink.href = '#';
+    prevLink.setAttribute('aria-label', 'Previous');
+    prevLink.innerHTML = '<span aria-hidden="true">&laquo;</span>';
+    
+    if (currentPage > 1) {
+      prevLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        currentPage--;
+        displayPaginatedProducts();
+        updatePagination();
+        window.scrollTo(0, 0);
+      });
+    }
+    
+    prevLi.appendChild(prevLink);
+    pagination.appendChild(prevLi);
+    
+    // 页码按钮
+    // 最多显示5个页码
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      const pageLi = document.createElement('li');
+      pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+      
+      const pageLink = document.createElement('a');
+      pageLink.className = 'page-link';
+      pageLink.href = '#';
+      pageLink.textContent = i;
+      
+      if (i !== currentPage) {
+        pageLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          currentPage = i;
+          displayPaginatedProducts();
+          updatePagination();
+          window.scrollTo(0, 0);
+        });
+      }
+      
+      pageLi.appendChild(pageLink);
+      pagination.appendChild(pageLi);
+    }
+    
+    // 下一页按钮
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    
+    const nextLink = document.createElement('a');
+    nextLink.className = 'page-link';
+    nextLink.href = '#';
+    nextLink.setAttribute('aria-label', 'Next');
+    nextLink.innerHTML = '<span aria-hidden="true">&raquo;</span>';
+    
+    if (currentPage < totalPages) {
+      nextLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        currentPage++;
+        displayPaginatedProducts();
+        updatePagination();
+        window.scrollTo(0, 0);
+      });
+    }
+    
+    nextLi.appendChild(nextLink);
+    pagination.appendChild(nextLi);
+  }
+  
+  // 初始化筛选器折叠功能
+  function initializeFilterAccordion() {
+    const filterTitles = document.querySelectorAll('.filter-group-title');
+    
+    filterTitles.forEach(title => {
+      title.addEventListener('click', function() {
+        const content = this.nextElementSibling;
+        
+        // 切换箭头方向
+        const arrow = this.querySelector('i');
+        arrow.classList.toggle('bi-chevron-down');
+        arrow.classList.toggle('bi-chevron-up');
+        
+        // 切换内容显示
+        if (content.style.maxHeight) {
+          content.style.maxHeight = null;
+        } else {
+          content.style.maxHeight = content.scrollHeight + 'px';
+        }
+      });
+    });
+  }
+  
+  // 重置筛选器
+  function resetFilters() {
+    // 重置分类
+    document.getElementById('category-all').checked = true;
+    document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    filterCriteria.categories = [];
+    
+    // 重置价格
+    document.getElementById('price-min').value = '';
+    document.getElementById('price-max').value = '';
+    filterCriteria.priceMin = null;
+    filterCriteria.priceMax = null;
+    
+    // 重置评分
+    document.getElementById('rating-all').checked = true;
+    filterCriteria.rating = 0;
+    
+    // 重置特惠
+    document.getElementById('filter-sale').checked = false;
+    filterCriteria.onSale = false;
+    
+    // 重置排序
+    document.getElementById('sort-select').value = 'featured';
+    
+    // 重置分页
+    currentPage = 1;
+    
+    // 更新产品显示
+    applyFiltersAndSort();
+    
+    // 更新面包屑和标题
+    if (activeCategoryId) {
+      activeCategoryId = null;
+      document.getElementById('breadcrumb-category').textContent = 'All Products';
+      document.getElementById('product-list-title').textContent = 'All Products';
+      
+      // 移除URL参数
+      const url = new URL(window.location);
+      url.searchParams.delete('category');
+      window.history.replaceState({}, '', url);
+    }
+  }
+  
+  // 添加到购物车
   function addToCart(productId, quantity) {
     const productsData = localStorage.getItem('products');
     if (!productsData) return;
@@ -494,14 +857,14 @@
     const product = products.find(p => p.id === productId);
     if (!product) return;
     
-
+    // 获取现有购物车
     let cart = [];
     const cartData = localStorage.getItem('cart');
     if (cartData) {
       cart = JSON.parse(cartData);
     }
     
-
+    // 检查产品是否已在购物车中
     const existingItem = cart.find(item => item.id === productId);
     if (existingItem) {
       existingItem.quantity += quantity;
@@ -515,21 +878,40 @@
       });
     }
     
-
+    // 保存到localStorage
     localStorage.setItem('cart', JSON.stringify(cart));
     
-
+    // 显示成功消息
     showToast(`${product.name} added to your cart!`, 'success');
     
-
+    // 更新导航栏购物车计数
     updateCartCount();
   }
-
+  
+  // 更新购物车计数
+  function updateCartCount() {
+    const cartData = localStorage.getItem('cart');
+    const cartCount = document.getElementById('cart-count');
+    
+    if (!cartCount) return;
+    
+    if (cartData) {
+      const cart = JSON.parse(cartData);
+      const count = cart.reduce((total, item) => total + item.quantity, 0);
+      cartCount.textContent = count;
+      cartCount.style.display = count > 0 ? 'inline-block' : 'none';
+    } else {
+      cartCount.style.display = 'none';
+    }
+  }
+  
+  // 显示Toast通知
   function showToast(message, type = 'success') {
     const toastContainer = document.getElementById('toast-container');
     
     if (!toastContainer) return;
-
+    
+    // 创建toast元素
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.style.backgroundColor = '#fff';
@@ -546,75 +928,30 @@
     
     if (type === 'success') {
       toast.style.borderLeft = '4px solid #198754';
+    } else if (type === 'error') {
+      toast.style.borderLeft = '4px solid #dc3545';
     }
     
-
+    // 添加内容
     toast.innerHTML = `
       <div style="flex: 1; padding-right: 10px;">${message}</div>
       <div style="cursor: pointer; font-size: 16px; color: #999;">&times;</div>
     `;
     
-
+    // 添加到容器
     toastContainer.appendChild(toast);
     
-
+    // 添加关闭按钮事件
     const closeBtn = toast.querySelector('div:last-child');
     closeBtn.addEventListener('click', function() {
       toast.remove();
     });
     
-
+    // 自动3秒后移除
     setTimeout(() => {
       toast.remove();
     }, 3000);
   }
-  
-
-  function updateCartCount() {
-    const cartData = localStorage.getItem('cart');
-    const cartCount = document.getElementById('cart-count');
-    
-    if (!cartCount) return;
-    
-    if (cartData) {
-      const cart = JSON.parse(cartData);
-      const count = cart.reduce((total, item) => total + item.quantity, 0);
-      cartCount.textContent = count;
-      cartCount.style.display = count > 0 ? 'inline-block' : 'none';
-    } else {
-      cartCount.style.display = 'none';
-    }
-  }
 </script>
-
-<style>
-  /* Toast */
-  @keyframes slideIn {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-  
-  @keyframes fadeOut {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-    }
-  }
-  
-  .toast-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 9999;
-  }
-</style>
 </body>
 </html>
