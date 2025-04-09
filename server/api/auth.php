@@ -4,15 +4,22 @@
  * Handles user registration, login, and logout
  */
 
-ini_set('display_errors', 1); // 显示错误
-ini_set('display_startup_errors', 1); // 显示启动错误
-error_reporting(E_ALL); // 显示所有错误
+// Enable error reporting and logging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Set error logging
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../../logs/php_errors.log');
 
 // Ensure session is started
 if (session_status() === PHP_SESSION_NONE) {
     try {
         session_start();
+        error_log("Session started successfully");
     } catch (Exception $e) {
+        error_log("Session start failed: " . $e->getMessage());
         jsonResponse(false, 'Session start failed', null, 500);
         exit;
     }
@@ -23,13 +30,16 @@ error_log("Session started", 0);
 
 try {
     // Include necessary files
-    // require_once '../includes/config.php';
-    require_once '../includes/db.php';
-    require_once '../includes/functions.php';
+    require_once __DIR__ . '/../includes/db_credentials.php';
+    require_once __DIR__ . '/../includes/db.php';
+    require_once __DIR__ . '/../includes/functions.php';
+    
+    error_log("Required files loaded successfully");
 } catch (Exception $e) {
+    error_log("Failed to load required files: " . $e->getMessage());
     http_response_code(500);
     header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'message' => 'Failed to load required files']);
+    echo json_encode(['success' => false, 'message' => 'Failed to load required files: ' . $e->getMessage()]);
     exit;
 }
 
@@ -67,10 +77,12 @@ try {
             break;
             
         default:
+            error_log("Invalid action: " . $action);
             jsonResponse(false, 'Invalid action', null, 400);
     }
 } catch (Exception $e) {
-    jsonResponse(false, 'Internal server error', null, 500);
+    error_log("Unhandled exception: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+    jsonResponse(false, 'Internal server error: ' . $e->getMessage(), null, 500);
 }
 
 /**
@@ -79,6 +91,7 @@ try {
 function handleLogin() {
     // Only accept POST requests
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        error_log("Invalid request method for login: " . $_SERVER['REQUEST_METHOD']);
         jsonResponse(false, 'Method not allowed', null, 405);
     }
     
@@ -87,15 +100,18 @@ function handleLogin() {
         $jsonInput = file_get_contents('php://input');
         error_log("Login Request: " . $jsonInput, 0); // Debug the incoming request
         $data = json_decode($jsonInput, true);
+        
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new Exception("JSON decode error: " . json_last_error_msg());
         }
     } catch (Exception $e) {
+        error_log("JSON decode error: " . $e->getMessage());
         jsonResponse(false, 'Invalid JSON input', null, 400);
     }
     
     // Validate input
     if (!isset($data['username']) || !isset($data['password'])) {
+        error_log("Missing username or password in login request");
         jsonResponse(false, 'Username and password are required', null, 400);
     }
     
@@ -111,24 +127,40 @@ function handleLogin() {
         
         // Prepare query based on whether username is an email
         if ($isEmail) {
-            $sql = "SELECT id, username, password_hash, is_admin FROM users WHERE email = ? AND is_active = TRUE";
+            $sql = "SELECT id, username, password, is_admin FROM users WHERE email = ? AND is_active = TRUE";
         } else {
-            $sql = "SELECT id, username, password_hash, is_admin FROM users WHERE username = ? AND is_active = TRUE";
+            $sql = "SELECT id, username, password, is_admin FROM users WHERE username = ? AND is_active = TRUE";
         }
         
-        // Execute query
-        $conn = getConnection();
-        
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([$username]);
+        // Execute query using PDO
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in login");
+            jsonResponse(false, 'Database connection failed', null, 500);
+            return;
+        }
+
+        $stmt = $pdo->prepare($sql);
+        if (!$stmt) {
+            error_log("Failed to prepare statement: " . print_r($pdo->errorInfo(), true));
+            jsonResponse(false, 'Failed to prepare statement', null, 500);
+            return;
+        }
+
+        if (!$stmt->execute([$username])) {
+            error_log("Failed to execute query: " . print_r($stmt->errorInfo(), true));
+            jsonResponse(false, 'Failed to execute query', null, 500);
+            return;
+        }
+
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($user) {
             // Debug user info
-            error_log("Found user: " . print_r($user, true), 0);
+            error_log("Found user: " . print_r($user, true));
             
             // Verify password
-            if (password_verify($password, $user['password_hash'])) {
+            if (password_verify($password, $user['password'])) {
                 // Set session variables
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
@@ -140,11 +172,17 @@ function handleLogin() {
                     'username' => $user['username'],
                     'isAdmin' => $user['is_admin'] ? true : false
                 ]);
+            } else {
+                error_log("Password verification failed for user: " . $username);
             }
+        } else {
+            error_log("No user found with username/email: " . $username);
         }
+        
         // Invalid credentials
         jsonResponse(false, 'Invalid username or password', null, 401);
     } catch (Exception $e) {
+        error_log("Login error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
         jsonResponse(false, 'Login processing error', null, 500);
     }
 }
@@ -177,6 +215,7 @@ function handleRegister() {
     $password = $data['password'];
     $firstName = sanitize($data['firstName'] ?? '');
     $lastName = sanitize($data['lastName'] ?? '');
+    $name = trim($firstName . ' ' . $lastName); // Combine first and last name
     $birthday = sanitize($data['birthday'] ?? null);
     $gender = sanitize($data['gender'] ?? null);
     $role = sanitize($data['role'] ?? 'user');
@@ -192,10 +231,10 @@ function handleRegister() {
         jsonResponse(false, 'Password must be at least 6 characters', null, 400);
     }
 
-    $conn = getConnection();
+    $pdo = getConnection();
 
     // Check if username or email exists
-    $checkStmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+    $checkStmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
     $checkStmt->execute([$username, $email]);
     if ($checkStmt->fetch()) {
         jsonResponse(false, 'Username or email already exists', null, 409);
@@ -205,13 +244,14 @@ function handleRegister() {
     $passwordHash = password_hash($password, PASSWORD_DEFAULT, ['cost' => PASSWORD_COST]);
 
     // Insert new user
-    $insertStmt = $conn->prepare("INSERT INTO users (username, email, password_hash, first_name, last_name, avatar, birthday, gender, role)
-                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    if (!$insertStmt->execute([$username, $email, $passwordHash, $firstName, $lastName, $avatarBlob, $birthday, $gender, $role])) {
+    $insertStmt = $pdo->prepare("INSERT INTO users (username, email, password, name, avatar, birthday, gender, role)
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!$insertStmt->execute([$username, $email, $passwordHash, $name, $avatarBlob, $birthday, $gender, $role])) {
+        error_log("Failed to insert user: " . print_r($insertStmt->errorInfo(), true));
         jsonResponse(false, 'Registration failed', null, 500);
     }
 
-    $userId = $conn->lastInsertId();
+    $userId = $pdo->lastInsertId();
 
     $_SESSION['user_id'] = $userId;
     $_SESSION['username'] = $username;

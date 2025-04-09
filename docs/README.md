@@ -7,7 +7,7 @@ COSC 360 Project
 To access the admin panel, use the following credentials:
 
 - **Username:** `admin`
-- **Password:** `admin123`
+- **Password:** `Aa123123`
 
 Simply enter these credentials on the **login page** (`login.html`) to access the admin dashboard.
 
