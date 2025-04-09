@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail - Purely Homemade</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/product_detail.css">
+</head>
+
+<body>
+<!-- Navbar Placeholder -->
+<div id="navbar-placeholder"></div>
+
+<!-- Main Content -->
+<div class="container my-5">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/~miakuang/PurelyHandmade/public/index.html">Home</a></li>
+            <li class="breadcrumb-item"><a href="#" id="breadcrumb-category-link">Category</a></li>
+            <li class="breadcrumb-item active" id="breadcrumb-item" aria-current="page">Product</li>
+        </ol>
+    </nav>
+
+    <!-- Product Information Bar -->
+    <div class="product-info mb-5">
+        <div class="row">
+            <!-- Product Image Section -->
+            <div class="col-md-6">
+                <div class="product-gallery">
+                    <div class="main-image-container">
+                        <img src="/~miakuang/PurelyHandmade/server/uploads/images/category-ceramics.jpg" alt="Product Main Image"
+                             id="main-product-image" class="main-product-image">
+                    </div>
+                    <div class="thumbnail-container mt-3" id="thumbnail-container">
+                        <!-- Thumbnails will be dynamically generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Details Section -->
+            <div class="col-md-6">
+                <div class="product-details">
+                    <h1 id="product-name">Loading product...</h1>
+                    <div class="mb-3">
+                        <div class="product-rating">
+                <span class="text-warning" id="product-rating">
+                  <!-- Star rating will be dynamically generated here -->
+                </span>
+                            <span class="text-muted ms-2" id="review-count">(0 reviews)</span>
+                        </div>
+                    </div>
+
+                    <div class="product-price-container mb-4">
+                        <span class="product-price" id="product-price">$0.00</span>
+                        <span class="product-original-price" id="product-original-price">$0.00</span>
+                        <span class="badge bg-danger ms-2" id="sale-badge" style="display: none;">Sale</span>
+                    </div>
+
+                    <div class="product-description mb-4" id="product-description">
+                        Loading product description...
+                    </div>
+
+                    <div class="mb-4">
+                        <h6>Quantity:</h6>
+                        <div class="quantity-control">
+                            <button class="quantity-btn" id="decrease-quantity">-</button>
+                            <input type="number" id="product-quantity" class="quantity-input" value="1" min="1" max="10">
+                            <button class="quantity-btn" id="increase-quantity">+</button>
+                        </div>
+                        <small class="text-muted" id="stock-info">Checking stock...</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <button id="add-to-cart-btn" class="btn btn-primary add-to-cart-btn" disabled>
+                            <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                        </button>
+                        <button id="buy-now-btn" class="btn btn-outline-primary ms-2" disabled>
+                            Buy Now
+                        </button>
+                        <button id="add-to-wishlist-btn" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-heart"></i>
+                        </button>
+                    </div>
+
+                    <div class="product-meta">
+                        <p><strong>Category:</strong> <a href="#" id="product-category">-</a></p>
+                    </div>
+
+                    <div class="social-share mt-4">
+                        <span>Share: </span>
+                        <a href="#" class="social-icon"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-pinterest"></i></a>
+                        <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Details Tab Bar -->
+    <div class="product-tabs mb-5">
+        <ul class="nav nav-tabs" id="product-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details-content"
+                        type="button" role="tab" aria-controls="details-content" aria-selected="true">Details</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-content" type="button"
+                        role="tab" aria-controls="reviews-content" aria-selected="false">Reviews</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="shipping-tab" data-bs-toggle="tab" data-bs-target="#shipping-content"
+                        type="button" role="tab" aria-controls="shipping-content" aria-selected="false">Shipping & Returns</button>
+            </li>
+        </ul>
+        <div class="tab-content p-4 border border-top-0 rounded-bottom" id="product-tab-content">
+            <div class="tab-pane fade show active" id="details-content" role="tabpanel" aria-labelledby="details-tab">
+                <!-- Details content will be displayed here -->
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading product details...</p>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="reviews-content" role="tabpanel" aria-labelledby="reviews-tab">
+                <div id="reviews-container">
+                    <div class="reviews-summary mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 text-center">
+                                <h2 class="rating-average mb-0" id="average-rating">0.0</h2>
+                                <div class="text-warning mb-2" id="average-stars">
+                                    <!-- Average star rating will be displayed here -->
+                                </div>
+                                <p class="text-muted" id="total-reviews">Based on 0 reviews</p>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="rating-breakdown">
+                                    <!-- Rating distribution will be dynamically generated here -->
+                                    <div class="rating-bar-container">
+                                        <span class="rating-label">5 <i class="bi bi-star-fill text-warning"></i></span>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" id="five-star-bar" role="progressbar" style="width: 0%"
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="rating-count" id="five-star-count">0</span>
+                                    </div>
+
+                                    <div class="rating-bar-container">
+                                        <span class="rating-label">4 <i class="bi bi-star-fill text-warning"></i></span>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" id="four-star-bar" role="progressbar" style="width: 0%"
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="rating-count" id="four-star-count">0</span>
+                                    </div>
+
+                                    <div class="rating-bar-container">
+                                        <span class="rating-label">3 <i class="bi bi-star-fill text-warning"></i></span>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" id="three-star-bar" role="progressbar" style="width: 0%"
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="rating-count" id="three-star-count">0</span>
+                                    </div>
+
+                                    <div class="rating-bar-container">
+                                        <span class="rating-label">2 <i class="bi bi-star-fill text-warning"></i></span>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" id="two-star-bar" role="progressbar" style="width: 0%"
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="rating-count" id="two-star-count">0</span>
+                                    </div>
+
+                                    <div class="rating-bar-container">
+                                        <span class="rating-label">1 <i class="bi bi-star-fill text-warning"></i></span>
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" id="one-star-bar" role="progressbar" style="width: 0%"
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <span class="rating-count" id="one-star-count">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="review-list mb-4" id="review-list">
+                        <!-- Review list will be dynamically generated here -->
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading reviews...</p>
+                        </div>
+                    </div>
+
+                    <div class="write-review">
+                        <h4>Write a Review</h4>
+                        <form id="review-form">
+                            <div class="mb-3">
+                                <label for="review-name" class="form-label">Your Name</label>
+                                <input type="text" class="form-control" id="review-name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="review-email" class="form-label">Your Email</label>
+                                <input type="email" class="form-control" id="review-email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Rating</label>
+                                <div class="rating-input">
+                                    <i class="bi bi-star rating-star" data-rating="1"></i>
+                                    <i class="bi bi-star rating-star" data-rating="2"></i>
+                                    <i class="bi bi-star rating-star" data-rating="3"></i>
+                                    <i class="bi bi-star rating-star" data-rating="4"></i>
+                                    <i class="bi bi-star rating-star" data-rating="5"></i>
+                                    <input type="hidden" id="rating-value" value="0">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="review-text" class="form-label">Your Review</label>
+                                <textarea class="form-control" id="review-text" rows="4" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit Review</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="shipping-content" role="tabpanel" aria-labelledby="shipping-tab">
+                <h4>Shipping Information</h4>
+                <p>We ship to most countries worldwide via standard and express delivery services.</p>
+                <ul>
+                    <li>Standard Shipping: 5-7 business days</li>
+                    <li>Express Shipping: 2-3 business days</li>
+                </ul>
+
+                <h4 class="mt-4">Return Policy</h4>
+                <p>We accept returns within 30 days of delivery for a full refund or exchange.</p>
+                <p>Items must be unused and in their original packaging. Custom or personalized items cannot be returned
+                    unless damaged or defective.</p>
+
+                <h4 class="mt-4">Shipping Costs</h4>
+                <table class="table table-bordered mt-3">
+                    <thead>
+                    <tr>
+                        <th>Destination</th>
+                        <th>Standard Shipping</th>
+                        <th>Express Shipping</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>United States</td>
+                        <td>$5.99</td>
+                        <td>$12.99</td>
+                    </tr>
+                    <tr>
+                        <td>Canada & Mexico</td>
+                        <td>$9.99</td>
+                        <td>$19.99</td>
+                    </tr>
+                    <tr>
+                        <td>International</td>
+                        <td>$14.99</td>
+                        <td>$29.99</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Viewed -->
+    <div class="recently-viewed mt-5" id="recently-viewed-section" style="display: none;">
+        <h3 class="mb-4">Recently Viewed</h3>
+        <div class="row" id="recently-viewed-container">
+            <!-- Recently viewed products will be dynamically generated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Footer Placeholder -->
+<div id="footer-placeholder"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="../../js/config.js"></script>
+<script src="../../js/api-client.js"></script>
+<script src="../../js/cart.js"></script>
+<script src="../../js/product_detail.js"></script>
+<script src="../../js/ui.js"></script>
+
+<script>
+    // Load navbar and footer
+    loadLayoutComponents();
+</script>
+</body>
+
+</html>

@@ -55,6 +55,9 @@ try {
         email VARCHAR(100) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         name VARCHAR(100),
+        avatar LONGBLOB DEFAULT NULL,
+        birthday DATE,
+        gender ENUM('male', 'female', 'other') DEFAULT 'other',
         role ENUM('user', 'admin') DEFAULT 'user',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -150,8 +153,8 @@ try {
         $passwordHash = password_hash($password, PASSWORD_DEFAULT, ['cost' => PASSWORD_COST]);
 
         $stmt = $pdo->prepare("INSERT INTO users
-            (username, email, password, name, role)
-            VALUES (?, ?, ?, 'Mia Kuang', 'admin')");
+            (username, email, password, name, role, avatar, birthday, gender)
+            VALUES (?, ?, ?, 'Mia Kuang', 'admin', NULL, '1990-01-01', 'female')");
 
         $stmt->execute([$username, $email, $passwordHash]);
 
@@ -160,20 +163,20 @@ try {
         // Create additional test users for review data
         // User ID 2
         $stmt = $pdo->prepare("INSERT INTO users
-            (id, username, email, password, name, role)
-            VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user')");
+            (id, username, email, password, name, role, avatar, birthday, gender)
+            VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user', NULL, '1990-01-15', 'male')");
         $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
 
         // User ID 3
         $stmt = $pdo->prepare("INSERT INTO users
-            (id, username, email, password, name, role)
-            VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user')");
+            (id, username, email, password, name, role, avatar, birthday, gender)
+            VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user', NULL, '1992-05-20', 'female')");
         $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
 
         // User ID 4
         $stmt = $pdo->prepare("INSERT INTO users
-            (id, username, email, password, name, role)
-            VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user')");
+            (id, username, email, password, name, role, avatar, birthday, gender)
+            VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user', NULL, '1995-11-30', 'other')");
         $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
 
         echo "Created 3 additional test users for review data\n";
@@ -188,22 +191,22 @@ try {
             // Create missing test users
             if (!userExists($pdo, 2)) {
                 $stmt = $pdo->prepare("INSERT INTO users
-                    (id, username, email, password, name, role)
-                    VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user')");
+                    (id, username, email, password, name, role, avatar, birthday, gender)
+                    VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user', NULL, '1990-01-15', 'male')");
                 $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
             }
 
             if (!userExists($pdo, 3)) {
                 $stmt = $pdo->prepare("INSERT INTO users
-                    (id, username, email, password, name, role)
-                    VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user')");
+                    (id, username, email, password, name, role, avatar, birthday, gender)
+                    VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user', NULL, '1992-05-20', 'female')");
                 $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
             }
 
             if (!userExists($pdo, 4)) {
                 $stmt = $pdo->prepare("INSERT INTO users
-                    (id, username, email, password, name, role)
-                    VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user')");
+                    (id, username, email, password, name, role, avatar, birthday, gender)
+                    VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user', NULL, '1995-11-30', 'other')");
                 $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
             }
 
