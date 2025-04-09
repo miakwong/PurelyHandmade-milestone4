@@ -127,9 +127,9 @@ function handleLogin() {
         
         // Prepare query based on whether username is an email
         if ($isEmail) {
-            $sql = "SELECT id, username, password, is_admin FROM users WHERE email = ? AND is_active = TRUE";
+            $sql = "SELECT id, username, password, role FROM users WHERE email = ?";
         } else {
-            $sql = "SELECT id, username, password, is_admin FROM users WHERE username = ? AND is_active = TRUE";
+            $sql = "SELECT id, username, password, role FROM users WHERE username = ?";
         }
         
         // Execute query using PDO
@@ -140,6 +140,8 @@ function handleLogin() {
             return;
         }
 
+        error_log("Executing SQL: " . $sql . " with parameter: " . $username);
+        
         $stmt = $pdo->prepare($sql);
         if (!$stmt) {
             error_log("Failed to prepare statement: " . print_r($pdo->errorInfo(), true));
@@ -164,26 +166,25 @@ function handleLogin() {
                 // Set session variables
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
-                $_SESSION['is_admin'] = $user['is_admin'] ? true : false;
+                $_SESSION['is_admin'] = ($user['role'] === 'admin');
                 
                 // Return success response
                 jsonResponse(true, 'Login successful', [
                     'id' => $user['id'],
                     'username' => $user['username'],
-                    'isAdmin' => $user['is_admin'] ? true : false
+                    'isAdmin' => ($user['role'] === 'admin')
                 ]);
             } else {
                 error_log("Password verification failed for user: " . $username);
+                jsonResponse(false, 'Invalid password', null, 401);
             }
         } else {
             error_log("No user found with username/email: " . $username);
+            jsonResponse(false, 'User not found', null, 401);
         }
-        
-        // Invalid credentials
-        jsonResponse(false, 'Invalid username or password', null, 401);
     } catch (Exception $e) {
         error_log("Login error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
-        jsonResponse(false, 'Login processing error', null, 500);
+        jsonResponse(false, 'Login processing error: ' . $e->getMessage(), null, 500);
     }
 }
 
@@ -261,5 +262,85 @@ function handleRegister() {
         'id' => $userId,
         'username' => $username
     ], 201);
+}
+
+/**
+ * Handle user status check
+ */
+function handleStatus() {
+    if (!isset($_SESSION['user_id'])) {
+        jsonResponse(true, 'Not logged in', ['isLoggedIn' => false]);
+        return;
+    }
+
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in status check");
+            jsonResponse(false, 'Database connection failed', null, 500);
+            return;
+        }
+
+        $stmt = $pdo->prepare("SELECT id, username, email, name, avatar, birthday, gender, role, created_at FROM users WHERE id = ?");
+        if (!$stmt->execute([$_SESSION['user_id']])) {
+            error_log("Failed to execute query: " . print_r($stmt->errorInfo(), true));
+            jsonResponse(false, 'Failed to fetch user data', null, 500);
+            return;
+        }
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$user) {
+            session_destroy();
+            jsonResponse(true, 'User not found', ['isLoggedIn' => false]);
+            return;
+        }
+
+        // Convert avatar blob to base64 if exists
+        if ($user['avatar']) {
+            $user['avatar'] = base64_encode($user['avatar']);
+        }
+
+        jsonResponse(true, 'User is logged in', [
+            'isLoggedIn' => true,
+            'user' => [
+                'id' => $user['id'],
+                'username' => $user['username'],
+                'email' => $user['email'],
+                'name' => $user['name'],
+                'avatar' => $user['avatar'],
+                'birthday' => $user['birthday'],
+                'gender' => $user['gender'],
+                'isAdmin' => ($user['role'] === 'admin'),
+                'joinDate' => $user['created_at']
+            ]
+        ]);
+    } catch (Exception $e) {
+        error_log("Status check error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+        jsonResponse(false, 'Status check failed', null, 500);
+    }
+}
+
+/**
+ * Handle user logout
+ */
+function handleLogout() {
+    // Clear session data
+    $_SESSION = array();
+    
+    // Destroy the session
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+    
+    // Clear session cookie
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params["path"], $params["domain"],
+            $params["secure"], $params["httponly"]
+        );
+    }
+    
+    jsonResponse(true, 'Logout successful');
 }
 
