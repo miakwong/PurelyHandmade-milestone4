@@ -1,150 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Purely Homemade</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="../../css/styles.css" rel="stylesheet">
+    <!-- Google Material Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="/~miakuang/PurelyHandmade/css/navbar.css" id="navbar-css">
 </head>
+<!-- Top Navigation Bar -->
+<nav class="navbar navbar-light bg-light p-3">
+    <div class="container d-flex justify-content-between">
+        <a class="navbar-brand d-flex align-items-center" href="/~miakuang/PurelyHandmade/public/index.html">
+            <img src="/~miakuang/PurelyHandmade/server/uploads/images/logo.jpg" alt="Logo" width="50" id="navbar-logo">
+            <span class="ms-2 fs-4">Purely Homemade</span>
+        </a>
 
-<body>
-<!-- Navbar Placeholder -->
-<div id="navbar-placeholder"></div>
+        <!-- Search Bar -->
+        <form class="d-flex" action="/~miakuang/PurelyHandmade/public/index.html" method="GET">
+            <input class="form-control me-2" type="search" name="search" placeholder="Search products...">
+            <button class="btn btn-outline-primary" type="submit">🔍</button>
+        </form>
 
-<!-- Main Content -->
-<div id="main-content">
-    <div class="container my-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h2 class="card-title text-center mb-4">Login</h2>
-                        <form id="login-form" novalidate>
-                            <div class="mb-3">
-                                <input type="text" class="form-control" id="loginIdentifier" placeholder="Username or Email address"
-                                       required />
-                            </div>
-                            <input type="password" class="form-control mb-3" id="loginPassword" placeholder="Password" required
-                                   minlength="6" />
-                            <button type="submit" class="btn btn-primary w-100">Login</button>
-                        </form>
-                        <div class="mt-3 text-center">
-                            <p>Don't have an account? <a href="../auth/register.html">Register</a></p>
-                        </div>
-                        <div class="text-end mt-2">
-                            <a href="#" id="forgot-password">Forgot Password?</a>
-                        </div>
-                    </div>
-                </div>
+        <!-- Login & Cart -->
+        <div class="d-flex align-items-center">
+            <!-- User Dropdown Menu -->
+            <div class="dropdown me-3">
+                <a href="#" class="btn btn-outline-secondary dropdown-toggle" id="userDropdown">
+                    <i class="material-icons-outlined">account_circle</i>
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/auth/login.html"
+                           id="login-link">Login</a></li>
+                    <li><a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/auth/register.html"
+                           id="register-link">Register</a></li>
+                </ul>
             </div>
+            <!-- Cart Icon -->
+            <a href="/~miakuang/PurelyHandmade/public/views/checkout/cart.html" class="btn btn-outline-primary"
+               id="cart-link">
+                <i class="material-icons-outlined">shopping_bag</i>
+                <span class="badge bg-danger rounded-pill" id="cart-count" style="display: none;">0</span>
+            </a>
         </div>
     </div>
+</nav>
+
+<!-- Main Navigation Menu -->
+<div class="container-wrapper">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav w-100 d-flex justify-content-around">
+                    <!-- Navigation items removed, using only the brand link in the top navbar -->
+                </ul>
+            </div>
+        </div>
+    </nav>
 </div>
 
-<!-- Footer Placeholder -->
-<div id="footer-placeholder"></div>
-
 <script>
-    // Load navbar and footer content dynamically
-    fetch('../../layout/navbar.html').then(r => r.text()).then(html => document.getElementById('navbar-placeholder').innerHTML = html);
-    fetch('../../layout/footer.html').then(r => r.text()).then(html => document.getElementById('footer-placeholder').innerHTML = html);
-
-    // Ensure `admin` account exists
     document.addEventListener('DOMContentLoaded', function () {
-        ensureAdminAccount();
-    });
+        const userDropdown = document.getElementById('userDropdown');
+        const loginLink = document.getElementById('login-link');
+        const registerLink = document.getElementById('register-link');
+        const cartLink = document.getElementById('cart-link');
+        const navbarLogo = document.getElementById('navbar-logo');
+        const navbarCss = document.getElementById('navbar-css');
 
-    function ensureAdminAccount() {
-        let users = JSON.parse(localStorage.getItem('users') || '[]');
+        // get the base URL and API URL from the config object
+        const apiUrl = window.config ? window.config.apiUrl : 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/api';
+        const baseUrl = window.config ? window.config.baseUrl : 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade';
 
-        // If `admin` account does not exist, create it
-        if (!users.some(user => user.username === "admin")) {
-            const adminUser = {
-                id: 1,
-                username: "admin",
-                email: "admin@example.com",
-                password: "admin123",  // Default password
-                isAdmin: true,
-                createdAt: new Date().toISOString()
-            };
-
-            users.push(adminUser);
-            localStorage.setItem('users', JSON.stringify(users));
-            console.log("✅ Default admin account has been created!");
-        }
-    }
-
-    // Login logic
-    document.getElementById('login-form').addEventListener('submit', function (e) {
-        e.preventDefault();
-        const form = e.target;
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
+        // css path
+        if (window.config && window.config.production) {
+            navbarCss.href = `${baseUrl}/css/navbar.css`;
         }
 
-        const identifier = document.getElementById('loginIdentifier').value.trim();
-        const password = document.getElementById('loginPassword').value;
-
-        function isEmail(input) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
+        // logo path
+        if (window.config && window.config.imagesUrl) {
+            navbarLogo.src = `${window.config.imagesUrl}/logo.jpg`;
         }
 
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        // check user status
+        fetch(`${apiUrl}/auth.php?action=status`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.loggedIn) {
+                    // user is logged in
+                    loginLink.parentElement.style.display = 'none';
+                    registerLink.parentElement.style.display = 'none';
 
-        // Find matching user
-        const user = users.find(u =>
-            (isEmail(identifier) ? u.email === identifier : u.username === identifier) &&
-            u.password === password
-        );
+                    const profileItem = document.createElement('li');
+                    profileItem.innerHTML = `<a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/auth/profile.html">My Profile</a>`;
 
-        if (user) {
-            // Store current user info
-            localStorage.setItem('currentUser', JSON.stringify({
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                isAdmin: user.isAdmin || false
-            }));
+                    const logoutItem = document.createElement('li');
+                    logoutItem.innerHTML = `<a class="dropdown-item" href="#" id="logout-link">Logout</a>`;
 
-            if (user.isAdmin) {
-                localStorage.setItem('isAdmin', 'true');
-            }
+                    // if the user is an admin, add the admin panel link
+                    if (data.isAdmin) {
+                        const adminItem = document.createElement('li');
+                        adminItem.innerHTML = `<a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/admin/dashboard.html">Admin Panel</a>`;
+                        loginLink.parentElement.parentElement.appendChild(adminItem);
+                    }
 
-            // Check if there are pending items to add to the cart
-            const pendingCart = localStorage.getItem('pendingAddToCart');
-            if (pendingCart) {
-                try {
-                    const { productId, quantity } = JSON.parse(pendingCart);
-                    // Clear pending record
-                    localStorage.removeItem('pendingAddToCart');
+                    loginLink.parentElement.parentElement.appendChild(profileItem);
+                    loginLink.parentElement.parentElement.appendChild(logoutItem);
 
-                    // Redirect to the homepage and automatically add the product after login
-                    alert(`Successfully logged in! Welcome, ${user.username}!`);
-                    window.location.href = '../../index.html';
-                    return;
-                } catch (error) {
-                    console.error('Error processing pending cart item:', error);
+                    //logout
+                    document.getElementById('logout-link').addEventListener('click', function (e) {
+                        e.preventDefault();
+                        fetch(`${apiUrl}/auth.php?action=logout`)
+                            .then(response => response.json())
+                            .then(() => {
+                                window.location.reload();
+                            });
+                    });
                 }
-            }
+            })
+            .catch(error => {
+                console.error('Error checking authentication status:', error);
+            });
 
-            alert(`Successfully logged in! Welcome, ${user.username}!`);
-            window.location.href = 'profile.html';
-        } else {
-            alert('Invalid username/email or password. Please try again.');
+        // boostrap dropdown initialization
+        if (typeof bootstrap !== 'undefined') {
+            const dropdown = new bootstrap.Dropdown(userDropdown);
         }
-    });
-
-    // Forgot password functionality
-    document.getElementById('forgot-password').addEventListener('click', function (e) {
-        e.preventDefault();
-        alert('Password reset instructions would be sent to your email.');
     });
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>

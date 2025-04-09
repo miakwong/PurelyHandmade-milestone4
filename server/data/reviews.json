@@ -1,0 +1,162 @@
+[
+    {
+      "id": 1,
+      "product_id": 1,
+      "user_id": 1,
+      "rating": 5.0,
+      "review_text": "Absolutely love this handwoven basket! The craftsmanship is impeccable and it's exactly what I needed for my home decor.",
+      "created_at": "2023-05-10T14:30:00Z"
+    },
+    {
+      "id": 2,
+      "product_id": 1,
+      "user_id": 2,
+      "rating": 4.5,
+      "review_text": "Beautiful product with great attention to detail. Slightly smaller than I expected, but still very pleased with it.",
+      "created_at": "2023-05-15T09:45:00Z"
+    },
+    {
+      "id": 3,
+      "product_id": 1,
+      "user_id": 3,
+      "rating": 5.0,
+      "review_text": "The colors are vibrant and the material is very durable. This is my second purchase from this collection!",
+      "created_at": "2023-06-02T16:22:00Z"
+    },
+    {
+      "id": 4,
+      "product_id": 2,
+      "user_id": 1,
+      "rating": 4.0,
+      "review_text": "This handwoven scarf is so soft and comfortable. The pattern is exactly as shown in the pictures.",
+      "created_at": "2023-04-22T11:15:00Z"
+    },
+    {
+      "id": 5,
+      "product_id": 2,
+      "user_id": 4,
+      "rating": 4.5,
+      "review_text": "Wonderful quality and the colors are even more beautiful in person. I've received many compliments.",
+      "created_at": "2023-05-05T18:30:00Z"
+    },
+    {
+      "id": 6,
+      "product_id": 3,
+      "user_id": 2,
+      "rating": 5.0,
+      "review_text": "This wood carving art piece is stunning! It's become the focal point of my living room. Highly recommend!",
+      "created_at": "2023-06-10T13:40:00Z"
+    },
+    {
+      "id": 7,
+      "product_id": 3,
+      "user_id": 3,
+      "rating": 4.0,
+      "review_text": "Beautiful craftsmanship and unique design. Arrived well-packaged and in perfect condition.",
+      "created_at": "2023-06-18T10:25:00Z"
+    },
+    {
+      "id": 8,
+      "product_id": 3,
+      "user_id": 1,
+      "rating": 4.5,
+      "review_text": "The detail in this wood carving is incredible. Every visitor to my home has asked about it!",
+      "created_at": "2023-07-05T15:50:00Z"
+    },
+    {
+      "id": 9,
+      "product_id": 4,
+      "user_id": 4,
+      "rating": 3.5,
+      "review_text": "Good quality product. Shipping was faster than expected which was a pleasant surprise.",
+      "created_at": "2023-04-30T09:15:00Z"
+    },
+    {
+      "id": 10,
+      "product_id": 4,
+      "user_id": 2,
+      "rating": 4.0,
+      "review_text": "Exactly as described. The material feels premium and it's clear that a lot of care went into making it.",
+      "created_at": "2023-05-12T14:20:00Z"
+    },
+    {
+      "id": 11,
+      "product_id": 5,
+      "user_id": 3,
+      "rating": 5.0,
+      "review_text": "Absolutely perfect! The size is just right and the quality exceeds my expectations. Will definitely purchase again.",
+      "created_at": "2023-05-20T16:30:00Z"
+    },
+    {
+      "id": 12,
+      "product_id": 6,
+      "user_id": 1,
+      "rating": 4.0,
+      "review_text": "Very unique piece. I appreciate the handmade quality and the sustainable materials used.",
+      "created_at": "2023-06-08T12:45:00Z"
+    },
+    {
+      "id": 13,
+      "product_id": 7,
+      "user_id": 4,
+      "rating": 4.5,
+      "review_text": "Excellent craftsmanship! This makes for a perfect gift. I'm ordering more for friends and family.",
+      "created_at": "2023-06-15T10:10:00Z"
+    },
+    {
+      "id": 14,
+      "product_id": 8,
+      "user_id": 2,
+      "rating": 5.0,
+      "review_text": "The attention to detail is amazing. I can tell this was made with love and care. Highly recommended!",
+      "created_at": "2023-07-01T17:25:00Z"
+    },
+    {
+      "id": 15,
+      "product_id": 9,
+      "user_id": 3,
+      "rating": 4.0,
+      "review_text": "Beautiful item that exceeded my expectations. The photos don't do it justice - it's even better in person.",
+      "created_at": "2023-05-25T13:55:00Z"
+    },
+    {
+      "id": 16,
+      "product_id": 10,
+      "user_id": 1,
+      "rating": 4.5,
+      "review_text": "Such a unique find! I love supporting handmade artists, and this piece definitely shows the skill involved.",
+      "created_at": "2023-06-22T11:40:00Z"
+    },
+    {
+      "id": 17,
+      "product_id": 10,
+      "user_id": 4,
+      "rating": 5.0,
+      "review_text": "Absolutely stunning! The colors are vibrant and the quality is exceptional. Worth every penny.",
+      "created_at": "2023-07-10T15:05:00Z"
+    },
+    {
+      "id": 18,
+      "product_id": 2,
+      "user_id": 3,
+      "rating": 3.5,
+      "review_text": "Very nice product. The only reason I'm not giving 5 stars is that it took a bit longer to arrive than expected.",
+      "created_at": "2023-05-30T09:20:00Z"
+    },
+    {
+      "id": 19,
+      "product_id": 5,
+      "user_id": 2,
+      "rating": 4.0,
+      "review_text": "Great addition to my collection. The artisan clearly knows their craft well.",
+      "created_at": "2023-06-05T16:35:00Z"
+    },
+    {
+      "id": 20,
+      "product_id": 7,
+      "user_id": 1,
+      "rating": 5.0,
+      "review_text": "Perfection! This handmade item has surpassed all my expectations. I'll definitely be a returning customer.",
+      "created_at": "2023-07-15T10:50:00Z"
+    }
+  ] 
