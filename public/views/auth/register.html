@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Purely Homemade</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" href="../../css/styles.css">
+
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --primary-light: rgba(13, 110, 253, 0.25);
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --bg-light: #f8f9fa;
+            --success-color: #198754;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            background-color: #f9f9f9;
+        }
+
+        .register-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 1.5rem 1rem;
+            border-bottom: none;
+        }
+
+        .card-header h2 {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        /* Avatar Upload */
+        .avatar-container {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .avatar-wrapper:hover {
+            transform: scale(1.05);
+        }
+
+        .avatar-preview {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            background-color: var(--bg-light);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .avatar-wrapper:hover .avatar-preview {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px var(--primary-light);
+        }
+
+        .avatar-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .avatar-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            font-size: 40px;
+            color: var(--text-muted);
+        }
+
+        .avatar-camera-icon {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+            transition: background-color 0.2s ease;
+        }
+
+        .avatar-wrapper:hover .avatar-camera-icon {
+            background-color: #0b5ed7;
+        }
+
+        .avatar-input {
+            display: none;
+        }
+
+        /* Form fields */
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+
+        .form-control {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-field-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .gender-options {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .gender-option {
+            flex: 1;
+            text-align: center;
+        }
+
+        .gender-option input[type="radio"] {
+            display: none;
+        }
+
+        .gender-option label {
+            display: block;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .gender-option input[type="radio"]:checked+label {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .gender-option i {
+            display: block;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .submit-btn {
+            padding: 0.75rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .login-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Password strength indicator */
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            background-color: #e9ecef;
+            overflow: hidden;
+        }
+
+        .password-strength-meter {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .strength-weak {
+            width: 33%;
+            background-color: var(--danger-color);
+        }
+
+        .strength-medium {
+            width: 66%;
+            background-color: #ffc107;
+        }
+
+        .strength-strong {
+            width: 100%;
+            background-color: var(--success-color);
+        }
+    </style>
+</head>
+
+<body>
+<!-- Navbar Placeholder -->
+<div id="navbar-placeholder"></div>
+
+<!-- Main Content -->
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card register-card">
+                <div class="card-header">
+                    <h2>Create Your Account</h2>
+                    <p class="mb-0">Join our community of handmade crafts lovers</p>
+                </div>
+                <div class="card-body">
+                    <form id="register-form" novalidate>
+                        <!-- Avatar Upload -->
+                        <div class="avatar-container">
+                            <div class="avatar-wrapper" id="avatar-wrapper">
+                                <div class="avatar-preview">
+                                    <div class="avatar-placeholder">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                </div>
+                                <div class="avatar-camera-icon">
+                                    <i class="bi bi-camera"></i>
+                                </div>
+                                <input type="file" id="avatar-input" class="avatar-input" accept="image/jpeg, image/png">
+                            </div>
+                            <p class="text-center text-muted mt-2">Profile Photo (Optional)</p>
+                        </div>
+
+                        <!-- Form Fields -->
+                        <div class="row">
+                            <div class="col-md-6 form-field-group">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstName" required>
+                                <div class="invalid-feedback">Please enter your first name.</div>
+                            </div>
+                            <div class="col-md-6 form-field-group">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" required>
+                                <div class="invalid-feedback">Please enter your last name.</div>
+                            </div>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" required>
+                            <div class="invalid-feedback">Please enter a valid email address.</div>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" required>
+                            <div class="invalid-feedback">Please choose a username.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-field-group">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" required minlength="8">
+                                <div class="invalid-feedback">Password must be at least 8 characters long.</div>
+                            </div>
+                            <div class="col-md-6 form-field-group">
+                                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="confirmPassword" required>
+                                <div class="invalid-feedback">Passwords do not match.</div>
+                            </div>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label for="birthday" class="form-label">Birthday</label>
+                            <input type="date" class="form-control" id="birthday" required>
+                            <div class="invalid-feedback">Please enter your birthday.</div>
+                        </div>
+
+                        <div class="form-field-group">
+                            <label class="form-label">Gender</label>
+                            <div class="gender-options">
+                                <div class="gender-option">
+                                    <input type="radio" name="gender" id="gender-male" value="male" required>
+                                    <label for="gender-male">
+                                        <i class="bi bi-gender-male"></i>
+                                        Male
+                                    </label>
+                                </div>
+                                <div class="gender-option">
+                                    <input type="radio" name="gender" id="gender-female" value="female" required>
+                                    <label for="gender-female">
+                                        <i class="bi bi-gender-female"></i>
+                                        Female
+                                    </label>
+                                </div>
+                                <div class="gender-option">
+                                    <input type="radio" name="gender" id="gender-other" value="other" required>
+                                    <label for="gender-other">
+                                        <i class="bi bi-asterisk"></i>
+                                        Other
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="invalid-feedback">Please select your gender.</div>
+                        </div>
+
+                        <div class="form-field-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    I agree to the <a href="#" class="login-link">Terms of Service</a> and <a href="#"
+                                                                                                              class="login-link">Privacy Policy</a>
+                                </label>
+                                <div class="invalid-feedback">You must agree to the terms.</div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 submit-btn mt-3">Create Account</button>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <p>Already have an account? <a href="login.html" class="login-link">Login</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer Placeholder -->
+<div id="footer-placeholder"></div>
+
+<script>
+    // Load navbar and footer content dynamically
+    fetch('../../layout/navbar.html').then(response => response.text())
+        .then(html => {
+            document.getElementById('navbar-placeholder').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading navbar:', error);
+        });
+
+    fetch('../../layout/footer.html').then(response => response.text())
+        .then(html => {
+            document.getElementById('footer-placeholder').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading footer:', error);
+        });
+
+    // Avatar upload preview
+    document.getElementById('avatar-wrapper').addEventListener('click', function () {
+        document.getElementById('avatar-input').click();
+    });
+
+    document.getElementById('avatar-input').addEventListener('change', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const imgUrl = event.target.result;
+                document.querySelector('.avatar-placeholder').innerHTML = `<img src="${imgUrl}" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Form validation
+    const form = document.getElementById('register-form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        // Check if passwords match
+        if (password.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity("Passwords don't match");
+        } else {
+            confirmPassword.setCustomValidity("");
+        }
+
+        if (!form.checkValidity()) {
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+
+        // Get form data
+        const firstName = document.getElementById('firstName').value;
+        const lastName = document.getElementById('lastName').value;
+        const email = document.getElementById('email').value;
+        const username = document.getElementById('username').value;
+        const birthday = document.getElementById('birthday').value;
+        const gender = document.querySelector('input[name="gender"]:checked').value;
+        const avatarImg = document.querySelector('.avatar-placeholder img');
+        const avatar = avatarImg ? avatarImg.src : null;
+
+        // Get existing users
+        let users = JSON.parse(localStorage.getItem('users') || '[]');
+
+        // Check if username or email already exists
+        if (users.some(user => user.username === username)) {
+            alert('Username already exists. Please choose another one.');
+            return;
+        }
+
+        if (users.some(user => user.email === email)) {
+            alert('Email already registered. Please use another email or login.');
+            return;
+        }
+
+        // Create new user
+        const newUser = {
+            id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+            firstName,
+            lastName,
+            email,
+            username,
+            password: password.value,
+            birthday,
+            gender,
+            avatar,
+            isAdmin: false,
+            createdAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        localStorage.setItem('users', JSON.stringify(users));
+
+        // Create profile object for the user
+        const userProfile = {
+            ...newUser,
+            fullName: `${firstName} ${lastName}`,
+        };
+        delete userProfile.password; // Don't store password in profile
+
+        localStorage.setItem('user', JSON.stringify(userProfile));
+
+        // Set as current user
+        localStorage.setItem('currentUser', JSON.stringify({
+            id: newUser.id,
+            username: newUser.username,
+            email: newUser.email,
+            isAdmin: newUser.isAdmin
+        }));
+
+        alert('Account created successfully! Welcome to Purely Homemade!');
+        window.location.href = 'profile.html';
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
