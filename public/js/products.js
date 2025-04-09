@@ -18,8 +18,8 @@ let filterCriteria = {
 function loadProducts() {
   // Use API to get products
   products.getProducts()
-    .then(data => {
-      productsList = data;
+    .then(res => {
+      productsList = res.data;
       applyFiltersAndSort();
     })
     .catch(error => {
@@ -33,8 +33,8 @@ function loadProducts() {
 function loadCategories() {
   // Use API to get categories
   categories.getCategories()
-    .then(data => {
-      categoriesList = data;
+    .then(res => {
+      categoriesList = res.data;
       
       // Generate category filter options
       const categoryFiltersContainer = document.getElementById('category-filters');

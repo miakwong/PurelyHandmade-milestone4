@@ -365,23 +365,14 @@
   <!-- Footer Placeholder -->
   <div id="footer-placeholder"></div>
 
+  <!-- Configuration and API -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api-client.js"></script>
+  <script src="../../js/ui.js"></script>
+
   <script>
     // Load navbar and footer content dynamically
-    fetch('../../layout/navbar.html').then(response => response.text())
-      .then(html => {
-        document.getElementById('navbar-placeholder').innerHTML = html;
-      })
-      .catch(error => {
-        console.error('Error loading navbar:', error);
-      });
-
-    fetch('../../layout/footer.html').then(response => response.text())
-      .then(html => {
-        document.getElementById('footer-placeholder').innerHTML = html;
-      })
-      .catch(error => {
-        console.error('Error loading footer:', error);
-      });
+    loadLayoutComponents();
 
     // Avatar upload preview
     document.getElementById('avatar-wrapper').addEventListener('click', function () {
@@ -400,88 +391,236 @@
       }
     });
 
-    // Form validation
+    // Form validation and submission
     const form = document.getElementById('register-form');
     const password = document.getElementById('password');
     const confirmPassword = document.getElementById('confirmPassword');
+    const emailInput = document.getElementById('email');
+    const usernameInput = document.getElementById('username');
 
-    form.addEventListener('submit', function (event) {
+    //check email
+    emailInput.addEventListener('blur', async function () {
+      const email = this.value.trim();
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        this.classList.add('is-invalid');
+        this.nextElementSibling.textContent = 'Please enter a valid email address.';
+        return;
+      }
+
+      try {
+        const emailCheck = await fetch(getApiUrl(`users.php?action=check_email&email=${encodeURIComponent(email)}`), {
+          method: 'GET'
+        });
+
+        if (!emailCheck.ok) {
+          throw new Error(`HTTP error! status: ${emailCheck.status}`);
+        }
+
+        const responseText = await emailCheck.text();
+        let emailResult;
+        try {
+          emailResult = JSON.parse(responseText);
+        } catch (e) {
+          console.error('JSON parse error:', e);
+          throw new Error('Invalid response from server');
+        }
+
+        if (!emailResult.success) {
+          this.classList.add('is-invalid');
+          this.nextElementSibling.textContent = emailResult.data?.message || 'Email check failed';
+          return;
+        }
+
+        if (!emailResult.data.available) {
+          this.classList.add('is-invalid');
+          this.nextElementSibling.textContent = emailResult.data.message;
+        } else {
+          this.classList.remove('is-invalid');
+        }
+      } catch (error) {
+        console.error('Email check error:', error);
+        this.classList.add('is-invalid');
+        this.nextElementSibling.textContent = 'Failed to check email availability. Please try again.';
+      }
+    });
+
+    // Add username validation on blur
+    usernameInput.addEventListener('blur', async function () {
+      const username = this.value.trim();
+      if (!username) return;
+
+      try {
+        const usernameCheck = await fetch(getApiUrl(`users.php?action=check_username&username=${encodeURIComponent(username)}`), {
+          method: 'GET'
+        });
+
+        if (!usernameCheck.ok) {
+          throw new Error(`HTTP error! status: ${usernameCheck.status}`);
+        }
+
+        const responseText = await usernameCheck.text();
+        let usernameResult;
+        try {
+          usernameResult = JSON.parse(responseText);
+        } catch (e) {
+          console.error('JSON parse error:', e);
+          throw new Error('Invalid response from server');
+        }
+
+        if (!usernameResult.success) {
+          this.classList.add('is-invalid');
+          this.nextElementSibling.textContent = usernameResult.data?.message || 'Username check failed';
+          return;
+        }
+
+        if (!usernameResult.data.available) {
+          this.classList.add('is-invalid');
+          this.nextElementSibling.textContent = usernameResult.data.message;
+        } else {
+          this.classList.remove('is-invalid');
+        }
+      } catch (error) {
+        console.error('Username check error:', error);
+        this.classList.add('is-invalid');
+        this.nextElementSibling.textContent = 'Failed to check username availability. Please try again.';
+      }
+    });
+
+    form.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        console.log('Enter key press prevented.');
+      }
+    });
+
+    form.addEventListener('submit', async function (event) {
       event.preventDefault();
 
-      // Check if passwords match
-      if (password.value !== confirmPassword.value) {
-        confirmPassword.setCustomValidity("Passwords don't match");
-      } else {
-        confirmPassword.setCustomValidity("");
-      }
+      form.classList.add('was-validated');
 
-      if (!form.checkValidity()) {
-        event.stopPropagation();
-        form.classList.add('was-validated');
-        return;
-      }
-
-      // Get form data
-      const firstName = document.getElementById('firstName').value;
-      const lastName = document.getElementById('lastName').value;
-      const email = document.getElementById('email').value;
-      const username = document.getElementById('username').value;
-      const birthday = document.getElementById('birthday').value;
-      const gender = document.querySelector('input[name="gender"]:checked').value;
-      const avatarImg = document.querySelector('.avatar-placeholder img');
-      const avatar = avatarImg ? avatarImg.src : null;
-
-      // Get existing users
-      let users = JSON.parse(localStorage.getItem('users') || '[]');
-
-      // Check if username or email already exists
-      if (users.some(user => user.username === username)) {
-        alert('Username already exists. Please choose another one.');
-        return;
-      }
-
-      if (users.some(user => user.email === email)) {
-        alert('Email already registered. Please use another email or login.');
-        return;
-      }
-
-      // Create new user
-      const newUser = {
-        id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
-        firstName,
-        lastName,
-        email,
-        username,
+      // Get all form values
+      const formData = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        username: document.getElementById('username').value.trim(),
         password: password.value,
-        birthday,
-        gender,
-        avatar,
-        isAdmin: false,
-        createdAt: new Date().toISOString()
+        confirmPassword: confirmPassword.value,
+        birthday: document.getElementById('birthday').value,
+        gender: document.querySelector('input[name="gender"]:checked')?.value,
+        avatar: document.querySelector('.avatar-placeholder img')?.src
       };
 
-      users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
+      // Clear previous errors
+      form.querySelectorAll('.is-invalid').forEach(el => {
+        el.classList.remove('is-invalid');
+      });
 
-      // Create profile object for the user
-      const userProfile = {
-        ...newUser,
-        fullName: `${firstName} ${lastName}`,
-      };
-      delete userProfile.password; // Don't store password in profile
+      // Validate all fields
+      let hasError = false;
 
-      localStorage.setItem('user', JSON.stringify(userProfile));
+      if (!formData.firstName) {
+        document.getElementById('firstName').classList.add('is-invalid');
+        hasError = true;
+      }
+      if (!formData.lastName) {
+        document.getElementById('lastName').classList.add('is-invalid');
+        hasError = true;
+      }
+      if (!formData.email) {
+        document.getElementById('email').classList.add('is-invalid');
+        hasError = true;
+      }
+      if (!formData.username) {
+        document.getElementById('username').classList.add('is-invalid');
+        hasError = true;
+      }
+      if (!formData.birthday) {
+        document.getElementById('birthday').classList.add('is-invalid');
+        hasError = true;
+      }
+      if (!formData.gender) {
+        const genderContainer = document.querySelector('.gender-options');
+        const genderFeedback = genderContainer.nextElementSibling;
 
-      // Set as current user
-      localStorage.setItem('currentUser', JSON.stringify({
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-        isAdmin: newUser.isAdmin
-      }));
+        genderContainer.classList.add('is-invalid');
+        genderFeedback.style.display = 'block';
+        hasError = true;
+      } else {
+        const genderContainer = document.querySelector('.gender-options');
+        const genderFeedback = genderContainer.nextElementSibling;
 
-      alert('Account created successfully! Welcome to Purely Homemade!');
-      window.location.href = 'profile.html';
+        genderContainer.classList.remove('is-invalid');
+        genderFeedback.style.display = 'none';
+      }
+      if (!document.getElementById('terms').checked) {
+        document.getElementById('terms').classList.add('is-invalid');
+        hasError = true;
+      }
+
+      if (formData.password.length < 8) {
+        password.classList.add('is-invalid');
+        password.nextElementSibling.textContent = 'Password must be at least 8 characters long';
+        hasError = true;
+      } else if (!/[A-Z]/.test(formData.password) || !/\d/.test(formData.password)) {
+        password.classList.add('is-invalid');
+        password.nextElementSibling.textContent = 'Password must contain at least one uppercase letter and one number';
+        hasError = true;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        confirmPassword.classList.add('is-invalid');
+        hasError = true;
+      }
+
+      if (hasError) {
+        return;
+      }
+
+      try {
+        // Prepare user data for registration
+        const userData = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          name: `${formData.firstName} ${formData.lastName}`,
+          avatar: formData.avatar ? formData.avatar.replace(/^data:image\/[a-z]+;base64,/, '') : null,
+          birthday: formData.birthday,
+          gender: formData.gender,
+          role: 'user'
+        };
+
+        // Call register API
+        const response = await fetch(getApiUrl('auth.php?action=register'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData)
+        });
+
+        const responseText = await response.text();
+
+        let result;
+        try {
+          result = JSON.parse(responseText);
+        } catch (e) {
+          console.error("JSON parse error:", e);
+          console.error("Raw response:", responseText);
+          throw new Error("Invalid JSON response");
+        }
+
+        if (result.success) {
+          window.location.href = 'login.html';
+        } else {
+          document.getElementById('username').classList.add('is-invalid');
+          document.getElementById('username').nextElementSibling.textContent = result.message || 'Registration failed. Please try again.';
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        document.getElementById('username').classList.add('is-invalid');
+        document.getElementById('username').nextElementSibling.textContent = 'An error occurred during registration. Please try again.';
+      }
     });
   </script>
 

@@ -4,6 +4,8 @@
  * Handles user registration, login, and logout
  */
 
+
+
 // Create a custom error log function
 function authErrorLog($message, $level = 'ERROR') {
     $logPath = __DIR__ . '/../logs/auth_errors.log';
@@ -150,7 +152,7 @@ function handleLogin() {
     }
     
     try {
-        $username = sanitizeInput($data['username']);
+        $username = sanitize($data['username']);
         $password = $data['password'];
         
         // Check if username is an email
@@ -218,11 +220,11 @@ function handleRegister() {
         customJsonResponse(false, 'Username, email, and password are required', null, 400);
     }
     
-    $username = sanitizeInput($data['username']);
-    $email = sanitizeInput($data['email']);
+    $username = sanitize($data['username']);
+    $email = sanitize($data['email']);
     $password = $data['password'];
-    $firstName = sanitizeInput($data['firstName'] ?? '');
-    $lastName = sanitizeInput($data['lastName'] ?? '');
+    $firstName = sanitize($data['firstName'] ?? '');
+    $lastName = sanitize($data['lastName'] ?? '');
     
     // Validate email
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {

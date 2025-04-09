@@ -3,7 +3,9 @@
  * Comments API
  * Handles comment creation, retrieval, and deletion
  */
-
+ini_set('display_errors', 1); // 显示错误
+ini_set('display_startup_errors', 1); // 显示启动错误
+error_reporting(E_ALL); // 显示所有错误
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
@@ -71,7 +73,7 @@ function getProductComments($productId) {
         $comments[] = $row;
     }
     
-    jsonResponse(true, 'Comments retrieved successfully', $comments);
+    jsonResponse(true, 'Comments retrieved successfully', $comments, 200);
 }
 
 /**
@@ -87,7 +89,7 @@ function createComment() {
     }
     
     $productId = (int)$data['product_id'];
-    $content = sanitizeInput($data['content']);
+    $content = sanitize($data['content']);
     $userId = $_SESSION['user_id'];
     
     // Check if product exists
@@ -119,7 +121,7 @@ function createComment() {
         $selectStmt->execute();
         $comment = $selectStmt->get_result()->fetch_assoc();
         
-        jsonResponse(true, 'Comment created successfully', $comment);
+        jsonResponse(true, 'Comment created successfully', $comment, 201);
     } else {
         jsonResponse(false, 'Failed to create comment', null, 500);
     }
@@ -158,7 +160,7 @@ function deleteComment($commentId) {
     $stmt->bind_param("i", $commentId);
     
     if ($stmt->execute() && $stmt->affected_rows > 0) {
-        jsonResponse(true, 'Comment deleted successfully');
+        jsonResponse(true, 'Comment deleted successfully', null, 200);
     } else {
         jsonResponse(false, 'Comment could not be deleted', null, 500);
     }

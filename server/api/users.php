@@ -1,8 +1,6 @@
 <?php
-/**
- * Users API
- * Handles user listing, retrieval, update, and deletion
- */
+// Users API
+
 
 require_once '../includes/config.php';
 require_once '../includes/db.php';
@@ -21,13 +19,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Get user ID if provided
 $userId = isset($_GET['id']) ? (int)$_GET['id'] : null;
-$action = isset($_GET['action']) ? sanitizeInput($_GET['action']) : '';
+$action = isset($_GET['action']) ? sanitize($_GET['action']) : '';
 
 // Handle request methods
 switch ($_SERVER['REQUEST_METHOD']) {
     case 'GET':
         if ($userId) {
+            checkAuth();
             getUser($userId);
+        } else if ($action === 'check_email') {
+            checkEmail();
+        } else if ($action === 'check_username') {
+            checkUsername();
         } else {
             // Admin access required for listing all users
             checkAuth();
@@ -51,35 +54,37 @@ switch ($_SERVER['REQUEST_METHOD']) {
         break;
         
     case 'POST':
-        checkAuth(); // Require authentication
-        
         // Handle specific actions
         if ($action === 'delete') {
-            checkAdmin(); // Only admin can delete users
+            checkAuth(); // Only admin can delete users
+            checkAdmin();
             if (!$userId) {
                 jsonResponse(false, 'User ID is required', null, 400);
             }
             deleteUser($userId);
         } else if ($action === 'toggle_status') {
-            checkAdmin(); // Only admin can change user status
+            checkAuth(); // Only admin can change user status
+            checkAdmin();
             if (!$userId) {
                 jsonResponse(false, 'User ID is required', null, 400);
             }
             toggleUserStatus($userId);
         } else if ($action === 'make_admin') {
-            checkAdmin(); // Only admin can make other users admin
+            checkAuth(); // Only admin can make other users admin
+            checkAdmin();
             if (!$userId) {
                 jsonResponse(false, 'User ID is required', null, 400);
             }
             toggleAdminStatus($userId, true);
         } else if ($action === 'remove_admin') {
-            checkAdmin(); // Only admin can remove admin status
+            checkAuth(); // Only admin can remove admin status
+            checkAdmin();
             if (!$userId) {
                 jsonResponse(false, 'User ID is required', null, 400);
             }
             toggleAdminStatus($userId, false);
         } else if ($action === 'upload_image') {
-            // Check if user is updating their own profile or is admin
+            checkAuth(); // Check if user is updating their own profile or is admin
             if ($userId != $_SESSION['user_id'] && !$_SESSION['is_admin']) {
                 jsonResponse(false, 'You are not authorized to update this user', null, 403);
             }
@@ -98,7 +103,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
  * Optional filters: search, limit, offset
  */
 function getUsers() {
-    $search = isset($_GET['search']) ? sanitizeInput($_GET['search']) : null;
+    $search = isset($_GET['search']) ? sanitize($_GET['search']) : null;
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
     $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
     
@@ -255,7 +260,7 @@ function updateUser($userId) {
     // Only allow admin to update username and email
     if (isAdmin()) {
         if (isset($data['username'])) {
-            $username = sanitizeInput($data['username']);
+            $username = sanitize($data['username']);
             
             // Check if username is already taken
             $checkUsernameSql = "SELECT id FROM users WHERE username = ? AND id != ?";
@@ -273,7 +278,7 @@ function updateUser($userId) {
         }
         
         if (isset($data['email'])) {
-            $email = sanitizeInput($data['email']);
+            $email = sanitize($data['email']);
             
             // Validate email
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -299,13 +304,13 @@ function updateUser($userId) {
     // Allow users to update their profile information
     if (isset($data['first_name'])) {
         $updateFields[] = "first_name = ?";
-        $params[] = sanitizeInput($data['first_name']);
+        $params[] = sanitize($data['first_name']);
         $types .= "s";
     }
     
     if (isset($data['last_name'])) {
         $updateFields[] = "last_name = ?";
-        $params[] = sanitizeInput($data['last_name']);
+        $params[] = sanitize($data['last_name']);
         $types .= "s";
     }
     
@@ -471,5 +476,127 @@ function uploadProfileImage($userId) {
         }
     } else {
         jsonResponse(false, 'Failed to upload image', null, 500);
+    }
+}
+
+/**
+ * Check if username is available
+ */
+function checkUsername() {
+    try {
+        // Log the start of the function
+        error_log("Starting username check...");
+        
+        // Get username from GET parameters
+        $username = isset($_GET['username']) ? sanitize($_GET['username']) : null;
+        error_log("Checking username: " . $username);
+        
+        if (!$username) {
+            error_log("Username is empty");
+            jsonResponse(false, 'Username is required', null, 400);
+            return;
+        }
+        
+        // Validate username format
+        if (!preg_match('/^[a-zA-Z0-9_]{3,20}$/', $username)) {
+            error_log("Invalid username format: " . $username);
+            jsonResponse(false, 'Username must be 3-20 characters long and contain only letters, numbers, and underscores', null, 400);
+            return;
+        }
+        
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed");
+            jsonResponse(false, 'Database connection failed', null, 500);
+            return;
+        }
+
+        $sql = "SELECT id FROM users WHERE username = ?";
+        error_log("Preparing SQL: " . $sql);
+        
+        $stmt = $pdo->prepare($sql);
+        if (!$stmt) {
+            error_log("Failed to prepare statement: " . $pdo->errorInfo()[2]);
+            jsonResponse(false, 'Failed to prepare statement: ' . $pdo->errorInfo()[2], null, 500);
+            return;
+        }
+
+        if (!$stmt->execute([$username])) {
+            error_log("Failed to execute query: " . $stmt->errorInfo()[2]);
+            jsonResponse(false, 'Failed to execute query: ' . $stmt->errorInfo()[2], null, 500);
+            return;
+        }
+
+        $isAvailable = $stmt->rowCount() === 0;
+        error_log("Username availability check result: " . ($isAvailable ? "available" : "taken"));
+        
+        jsonResponse(true, 'Username check completed', [
+            'available' => $isAvailable,
+            'message' => $isAvailable ? 'Username is available' : 'Username is already taken'
+        ]);
+    } catch (Exception $e) {
+        error_log("Username check error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+        jsonResponse(false, 'Internal server error: ' . $e->getMessage(), null, 500);
+    }
+}
+
+/**
+ * Check if email is available
+ */
+function checkEmail() {
+    try {
+        // Log the start of the function
+        error_log("Starting email check...");
+        
+        // Get email from GET parameters
+        $email = isset($_GET['email']) ? sanitize($_GET['email']) : null;
+        error_log("Checking email: " . $email);
+        
+        if (!$email) {
+            error_log("Email is empty");
+            jsonResponse(false, 'Email is required', null, 400);
+            return;
+        }
+        
+        // Validate email format
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            error_log("Invalid email format: " . $email);
+            jsonResponse(false, 'Invalid email format', null, 400);
+            return;
+        }
+        
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed");
+            jsonResponse(false, 'Database connection failed', null, 500);
+            return;
+        }
+
+        $sql = "SELECT id FROM users WHERE email = ?";
+        error_log("Preparing SQL: " . $sql);
+        
+        $stmt = $pdo->prepare($sql);
+        if (!$stmt) {
+            error_log("Failed to prepare statement: " . $pdo->errorInfo()[2]);
+            jsonResponse(false, 'Failed to prepare statement: ' . $pdo->errorInfo()[2], null, 500);
+            return;
+        }
+
+        if (!$stmt->execute([$email])) {
+            error_log("Failed to execute query: " . $stmt->errorInfo()[2]);
+            jsonResponse(false, 'Failed to execute query: ' . $stmt->errorInfo()[2], null, 500);
+            return;
+        }
+
+        $isAvailable = $stmt->rowCount() === 0;
+        error_log("Email availability check result: " . ($isAvailable ? "available" : "taken"));
+        
+        jsonResponse(true, 'Email check completed', [
+            'available' => $isAvailable,
+            'message' => $isAvailable ? 'Email is available' : 'Email is already registered'
+        ]);
+    } catch (Exception $e) {
+        error_log("Email check error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+        jsonResponse(false, 'Internal server error: ' . $e->getMessage(), null, 500);
     }
 } 

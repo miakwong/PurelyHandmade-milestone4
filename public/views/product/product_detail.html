@@ -300,16 +300,11 @@
   <script src="../../js/api-client.js"></script>
   <script src="../../js/cart.js"></script>
   <script src="../../js/product_detail.js"></script>
+  <script src="../../js/ui.js"></script>
 
   <script>
-    // Load navbar and footer
-    fetch('../../layout/navbar.html').then(r => r.text()).then(html => {
-      document.getElementById('navbar-placeholder').innerHTML = html;
-
-      // Update cart count
-      updateCartCount();
-    });
-    fetch('../../layout/footer.html').then(r => r.text()).then(html => document.getElementById('footer-placeholder').innerHTML = html);
+    // Load navbar and footer content dynamically
+    loadLayoutComponents();
   </script>
 </body>
 

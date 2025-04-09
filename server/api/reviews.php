@@ -101,7 +101,7 @@ function handleGetRequest($productId, $reviews) {
                     ]
                 ]
             ];
-            jsonResponse($response);
+            jsonResponse(true, "Response loaded", $response, 200);
             return;
         }
         
@@ -115,7 +115,7 @@ function handleGetRequest($productId, $reviews) {
             'stats' => $stats
         ];
         
-        jsonResponse($response);
+        jsonResponse(true, "All Response loaded", $response, 200);
     } catch (Exception $e) {
         errorResponse('Failed to retrieve reviews', 500);
     }
@@ -211,9 +211,7 @@ function handlePostRequest(&$reviews) {
             errorResponse('Failed to update product rating', 500);
         }
         
-        jsonResponse([
-            'success' => true,
-            'message' => 'Review submitted successfully',
+        jsonResponse(true, 'Review submitted successfully', [
             'review' => $newReview,
             'stats' => $stats
         ], 201);

@@ -13,10 +13,14 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
 // jsonResponse function
-function jsonResponse($data, $status = 200) {
-    http_response_code($status);
+function jsonResponse($success, $message, $data = null, $status = 200) {
+    http_response_code((int)$status);
     header('Content-Type: application/json');
-    echo json_encode($data);
+    echo json_encode([
+        'success' => $success,
+        'message' => $message,
+        'data' => $data
+    ]);
     exit;
 }
 
@@ -166,4 +170,18 @@ function uploadFile($file, $destination, $allowedTypes = [], $maxSize = 2097152)
     }
     
     return $filename;
+}
+
+//check auth function
+function checkAuth() {
+    if (!isLoggedIn()) {
+        jsonResponse(['error' => 'Authentication required'], 401);
+    }
+}
+
+//check admin function
+function checkAdmin() {
+    if (!isAdmin()) {
+        jsonResponse(['error' => 'Admin privileges required'], 403);
+    }
 } 

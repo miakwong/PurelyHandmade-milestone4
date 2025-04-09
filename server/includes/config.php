@@ -17,13 +17,6 @@ if (file_exists(__DIR__ . '/db_credentials.php')) {
     trigger_error('Database credentials file not found. Please create db_credentials.php', E_USER_NOTICE);
 }
 
-// Database charset and options
-define('DB_CHARSET', 'utf8mb4');
-define('DB_OPTIONS', [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    PDO::ATTR_EMULATE_PREPARES => false
-]);
 
 // Path Configuration
 if ($isProduction) {
@@ -52,6 +45,3 @@ define('API_URL', BASE_URL . '/server/api');
 // Session Configuration
 define('SESSION_NAME', 'purely_handmade_session');
 define('SESSION_LIFETIME', 60 * 60 * 24); // 24 hours
-
-// Security Configuration
-define('PASSWORD_COST', 12); // For password_hash 

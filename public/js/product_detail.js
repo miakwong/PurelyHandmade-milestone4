@@ -36,7 +36,11 @@ function loadProductDetails(productId) {
       return response.json();
     })
     .then(data => {
-      displayProductDetails(data);
+      if (data.success && data.data) {
+        displayProductDetails(data.data);
+      } else {
+        throw new Error("Invalid product data");
+      }
     })
     .catch(error => {
       console.error("Error loading product:", error);
@@ -223,12 +227,13 @@ function loadProductReviews(productId) {
       return response.json();
     })
     .then(data => {
-      if (data.success) {
-        displayReviews(data.reviews, data.stats);
+      const actual = data.data;
+      if (actual.success) {
+        displayReviews(actual.reviews, actual.stats);
       } else {
         document.getElementById("reviews-container").innerHTML = `
           <div class="alert alert-warning">
-            <p>${data.message}</p>
+            <p>${actual.message}</p>
           </div>
         `;
       }

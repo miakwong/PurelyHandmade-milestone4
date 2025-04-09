@@ -66,14 +66,14 @@ function handleGetRequest($products, $id) {
             errorResponse('Product not found', 404);
         }
         
-        jsonResponse($product);
+        jsonResponse(true, "Products loaded", $product, 200);
     }
     
     // Filter products based on query parameters
     $filteredProducts = filterProducts($products);
     
     // Return all products (or filtered subset)
-    jsonResponse($filteredProducts);
+    jsonResponse(true, "Filtered products loaded", $filteredProducts, 200);
 }
 
 /**
@@ -120,7 +120,7 @@ function handlePostRequest($products) {
     }
     
     // Return the new product
-    jsonResponse($newProduct, 201);
+    jsonResponse(true, "Return new products", $newProduct, 201);
 }
 
 /**
@@ -195,7 +195,7 @@ function handlePutRequest($products, $id) {
     }
     
     // Return the updated product
-    jsonResponse($products[$index]);
+    jsonResponse(true, "Updated product loaded", $products[$index], 200);
 }
 
 /**
@@ -229,7 +229,7 @@ function handleDeleteRequest($products, $id) {
     }
     
     // Return success response
-    jsonResponse(['message' => 'Product deleted successfully']);
+    jsonResponse(true, ['message' => 'Product deleted successfully'], null, 200);
 }
 
 /**

@@ -2,7 +2,7 @@
 //Database Connection
 //Handles connection to MySQL database
 
-
+require_once 'db_credentials.php';
 require_once 'config.php';
 
 //Get a database connection
@@ -15,15 +15,26 @@ function getConnection() {
     }
     
     try {
-        // Create DSN
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+        $options = [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+        ];
         
-        // Create new connection
-        $pdo = new PDO($dsn, DB_USER, DB_PASS, DB_OPTIONS);
+        // Force TCP connection for server environment
+        $dsn = "mysql:host=" . DB_HOST;
+        if (defined('DB_PORT') && !empty(DB_PORT)) {
+            $dsn .= ";port=" . DB_PORT;
+        }
+        
+        // Create initial connection
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+        
+        // Select database
+        $pdo->exec("USE " . DB_NAME);
         
         return $pdo;
     } catch (PDOException $e) {
-        die("Database connection failed. Please try again later.");
+        error_log("Database connection failed: " . $e->getMessage());
+        return false;
     }
 }
 
@@ -33,7 +44,6 @@ function closeConnection() {
 }
 
 //Execute a query and return the result
-
 function executeQuery($sql, $params = [], $types = "") {
     $pdo = getConnection();
     
@@ -54,7 +64,7 @@ function executeQuery($sql, $params = [], $types = "") {
     }
 }
 
-// Fetch all rows from a quer
+// Fetch all rows from a query
 function fetchAll($sql, $params = []) {
     $stmt = executeQuery($sql, $params);
     

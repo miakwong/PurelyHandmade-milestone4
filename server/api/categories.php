@@ -4,7 +4,9 @@
  * 
  * Handles CRUD operations for product categories
  */
-
+ini_set('display_errors', 1); // 显示错误
+ini_set('display_startup_errors', 1); // 显示启动错误
+error_reporting(E_ALL); // 显示所有错误
 // Include common functions
 require_once '../includes/functions.php';
 
@@ -82,11 +84,11 @@ function handleGetRequest($categories, $id) {
             $category['products'] = array_values($categoryProducts);
         }
         
-        jsonResponse($category);
+        jsonResponse(true, "Categories retrieved successfully", $category, 200);
     }
     
     // Return all categories
-    jsonResponse($categories);
+    jsonResponse(true, "Categories retrieved successfully", $categories, 200);
 }
 
 /**
@@ -124,7 +126,7 @@ function handlePostRequest($categories) {
     }
     
     // Return the new category
-    jsonResponse($newCategory, 201);
+    jsonResponse(true, "New category loaded", $newCategory, 201);
 }
 
 /**
@@ -167,7 +169,7 @@ function handlePutRequest($categories, $id) {
     }
     
     // Return the updated category
-    jsonResponse($categories[$index]);
+    jsonResponse(true, "Updated category", $categories[$index], 200);
 }
 
 /**
@@ -211,7 +213,7 @@ function handleDeleteRequest($categories, $id) {
     }
     
     // Return success response
-    jsonResponse(['message' => 'Category deleted successfully']);
+    jsonResponse(true, ['message' => 'Category deleted successfully'], null, 200);
 }
 
 /**
