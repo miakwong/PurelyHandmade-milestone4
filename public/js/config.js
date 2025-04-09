@@ -9,11 +9,11 @@ const config = {
   },
   
   get apiUrl() {
-    return this.production ? 'https://cosc360.ok.ubc.ca/server/api' : '/server/api';
+    return this.production ? 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/api' : '/server/api';
   },
   
   get uploadsUrl() {
-    return this.production ? 'https://cosc360.ok.ubc.ca/server/uploads' : '/server/uploads';
+    return this.production ? 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/uploads' : '/server/uploads';
   },
   
   get imagesUrl() {

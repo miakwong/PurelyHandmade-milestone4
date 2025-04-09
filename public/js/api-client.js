@@ -6,6 +6,10 @@ const API_URL = '/~miakuang/PurelyHandmade/server/api/';
  * @returns {string} The full API URL
  */
 const apiUrl = (endpoint) => {
+    // Use config object if available, otherwise use default
+    if (window.config && window.config.apiUrl) {
+        return window.config.apiUrl + '/' + endpoint;
+    }
     return API_URL + endpoint;
 };
 
@@ -154,7 +158,33 @@ const auth = {
      * @returns {Promise} Promise with login status
      */
     checkLoginStatus: async () => {
-        return await get('auth.php?action=status');
+        try {
+            // Enhanced error handling for auth status check
+            const response = await fetch(apiUrl('auth.php?action=status'), {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            // Handle non-2xx responses
+            if (!response.ok) {
+                // For 401 Unauthorized, we know the user is not logged in
+                if (response.status === 401) {
+                    return { success: false, message: 'User is not logged in' };
+                }
+                
+                // For other errors, try to parse the response
+                const errorText = await response.text();
+                console.warn(`Auth status check failed: ${response.status}`, errorText);
+                return { success: false, message: `Auth check failed: ${response.status}` };
+            }
+            
+            // Parse successful response
+            return await response.json();
+        } catch (error) {
+            console.error('Error in auth status check:', error);
+            // Return a consistent format even on error
+            return { success: false, message: 'Error checking auth status' };
+        }
     }
 };
 
@@ -387,6 +417,35 @@ const cart = {
     }
 };
 
+/**
+ * Reviews API methods
+ */
+const reviews = {
+    /**
+     * Get reviews for a product
+     * @param {number} productId - Product ID to get reviews for
+     * @returns {Promise} Promise with reviews data and statistics
+     */
+    getProductReviews: async (productId) => {
+        return await get('reviews.php', { action: 'get', product_id: productId });
+    },
+    
+    /**
+     * Add a new review for a product
+     * @param {number} productId - Product ID to review
+     * @param {number} rating - Rating (1-5 stars)
+     * @param {string} reviewText - Review text content
+     * @returns {Promise} Promise with success status and updated review statistics
+     */
+    addReview: async (productId, rating, reviewText) => {
+        return await post('reviews.php?action=add', { 
+            product_id: productId, 
+            rating, 
+            review_text: reviewText 
+        });
+    }
+};
+
 // Export the API services
 const api = {
     auth,
@@ -394,7 +453,8 @@ const api = {
     categories,
     comments,
     users,
-    cart
+    cart,
+    reviews
 };
 
 // Make API available globally

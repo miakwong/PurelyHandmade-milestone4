@@ -158,4 +158,8 @@ function initializePage() {
   
   // 初始化事件监听器
   initializeEventListeners();
-} 
+}
+
+// 将界面功能函数附加到全局window对象
+window.showToast = showToast;
+window.initializePage = initializePage; 

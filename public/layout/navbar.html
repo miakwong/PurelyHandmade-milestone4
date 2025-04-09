@@ -8,14 +8,14 @@
 <!-- Top Navigation Bar -->
 <nav class="navbar navbar-light bg-light p-3">
   <div class="container d-flex justify-content-between">
-    <a class="navbar-brand d-flex align-items-center" href="index.html">
+    <a class="navbar-brand d-flex align-items-center" href="/~miakuang/PurelyHandmade/public/index.html">
       <img src="https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/uploads/images/logo.jpg" alt="Logo" width="50"
         id="navbar-logo">
       <span class="ms-2 fs-4">Purely Homemade</span>
     </a>
 
     <!-- Search Bar -->
-    <form class="d-flex" action="views/product/product-list.html" method="GET">
+    <form class="d-flex" action="/~miakuang/PurelyHandmade/public/index.html" method="GET">
       <input class="form-control me-2" type="search" name="search" placeholder="Search products...">
       <button class="btn btn-outline-primary" type="submit">🔍</button>
     </form>
@@ -28,12 +28,15 @@
           <i class="material-icons-outlined">account_circle</i>
         </a>
         <ul class="dropdown-menu" aria-labelledby="userDropdown">
-          <li><a class="dropdown-item" href="views/auth/login.html" id="login-link">Login</a></li>
-          <li><a class="dropdown-item" href="views/auth/register.html" id="register-link">Register</a></li>
+          <li><a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/auth/login.html"
+              id="login-link">Login</a></li>
+          <li><a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/auth/register.html"
+              id="register-link">Register</a></li>
         </ul>
       </div>
       <!-- Cart Icon -->
-      <a href="views/checkout/cart.html" class="btn btn-outline-primary" id="cart-link">
+      <a href="/~miakuang/PurelyHandmade/public/views/checkout/cart.html" class="btn btn-outline-primary"
+        id="cart-link">
         <i class="material-icons-outlined">shopping_bag</i>
         <span class="badge bg-danger rounded-pill" id="cart-count" style="display: none;">0</span>
       </a>
@@ -90,7 +93,7 @@
           registerLink.parentElement.style.display = 'none';
 
           const profileItem = document.createElement('li');
-          profileItem.innerHTML = `<a class="dropdown-item" href="views/auth/profile.html">My Profile</a>`;
+          profileItem.innerHTML = `<a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/auth/profile.html">My Profile</a>`;
 
           const logoutItem = document.createElement('li');
           logoutItem.innerHTML = `<a class="dropdown-item" href="#" id="logout-link">Logout</a>`;
@@ -98,7 +101,7 @@
           // 如果是管理员，显示管理选项
           if (data.isAdmin) {
             const adminItem = document.createElement('li');
-            adminItem.innerHTML = `<a class="dropdown-item" href="views/admin/dashboard.html">Admin Panel</a>`;
+            adminItem.innerHTML = `<a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/admin/dashboard.html">Admin Panel</a>`;
             loginLink.parentElement.parentElement.appendChild(adminItem);
           }
 

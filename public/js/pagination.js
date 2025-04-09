@@ -94,7 +94,24 @@ function displayPaginatedProducts() {
       e.preventDefault();
       e.stopPropagation();
       const productId = parseInt(this.getAttribute('data-product-id'));
-      addToCart(productId, 1);
+      
+      // Check if addToCart function exists before calling it
+      if (typeof addToCart === 'function') {
+        addToCart(productId, 1);
+      } else if (typeof window.addToCart === 'function') {
+        window.addToCart(productId, 1);
+      } else {
+        console.error('Add to cart function not found. Make sure cart.js is loaded correctly.');
+        // Check if showToast function exists before calling it
+        if (typeof showToast === 'function') {
+          showToast('Error adding product to cart. Please try again.', 'error');
+        } else if (typeof window.showToast === 'function') {
+          window.showToast('Error adding product to cart. Please try again.', 'error');
+        } else {
+          console.error('showToast function not found. Make sure ui.js is loaded correctly.');
+          alert('Error adding product to cart. Please try again.');
+        }
+      }
     });
   });
 }

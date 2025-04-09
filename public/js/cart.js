@@ -1,12 +1,31 @@
 // Cart functionality
 
 // Define cart API object
-const cart = {
+const cartAPI = {
+  // 内部方法：检查登录状态
+  _checkLogin: async function() {
+    const isLoggedIn = await checkUserLogin();
+    if (!isLoggedIn) {
+      if (typeof showToast === 'function') {
+        showToast('Please log in to view your cart', 'warning');
+      } else {
+        alert('Please log in to view your cart');
+      }
+      
+      setTimeout(() => {
+        window.location.href = (window.location.pathname.includes('/views/') ? '../auth/login.html' : 'views/auth/login.html');
+      }, 1500);
+      
+      return false;
+    }
+    return true;
+  },
+
   getCart: async () => {
     try {
+      if (!await cartAPI._checkLogin()) return [];
       return await get('cart.php');
     } catch (error) {
-      // If API request fails, fallback to localStorage
       const cartData = localStorage.getItem('cart');
       return cartData ? JSON.parse(cartData) : [];
     }
@@ -14,118 +33,80 @@ const cart = {
   
   addToCart: async (productId, quantity) => {
     try {
-      return await post('cart.php?action=add', { product_id: productId, quantity });
+      if (!await cartAPI._checkLogin()) return { success: false, message: "Login required" };
+      return await post('cart.php', { product_id: productId, quantity });
     } catch (error) {
-      // If API request fails, fallback to localStorage
-      const productsData = localStorage.getItem('products');
-      if (!productsData) throw new Error('Products data not available');
-      
-      const products = JSON.parse(productsData);
-      const product = products.find(p => p.id === productId);
-      if (!product) throw new Error('Product not found');
-      
-      // Get existing cart
-      let cart = [];
-      const cartData = localStorage.getItem('cart');
-      if (cartData) {
-        cart = JSON.parse(cartData);
-      }
-      
-      // Check if product is already in the cart
-      const existingItem = cart.find(item => item.id === productId);
-      if (existingItem) {
-        existingItem.quantity += quantity;
-      } else {
-        cart.push({
-          id: product.id,
-          name: product.name,
-          price: product.onSale && product.salePrice ? product.salePrice : product.price,
-          image: product.images[0],
-          quantity: quantity
-        });
-      }
-      
-      // Save to localStorage
-      localStorage.setItem('cart', JSON.stringify(cart));
-      
-      return cart;
+      throw error;
     }
   },
   
   updateCart: async (productId, quantity) => {
     try {
-      return await post('cart.php?action=update', { product_id: productId, quantity });
+      if (!await cartAPI._checkLogin()) return { success: false, message: "Login required" };
+      return await put('cart.php', { product_id: productId, quantity });
     } catch (error) {
-      // If API request fails, fallback to localStorage
-      const cartData = localStorage.getItem('cart');
-      if (!cartData) throw new Error('Cart not available');
-      
-      let cart = JSON.parse(cartData);
-      const item = cart.find(item => item.id === productId);
-      
-      if (item) {
-        if (quantity <= 0) {
-          // Remove product
-          cart = cart.filter(item => item.id !== productId);
-        } else {
-          // Update quantity
-          item.quantity = quantity;
-        }
-        
-        // Save to localStorage
-        localStorage.setItem('cart', JSON.stringify(cart));
-      }
-      
-      return cart;
+      throw error;
     }
   },
   
   removeFromCart: async (productId) => {
     try {
-      return await post('cart.php?action=remove', { product_id: productId });
+      if (!await cartAPI._checkLogin()) return { success: false, message: "Login required" };
+      return await del(`cart.php?productId=${productId}`);
     } catch (error) {
-      // If API request fails, fallback to localStorage
-      const cartData = localStorage.getItem('cart');
-      if (!cartData) throw new Error('Cart not available');
-      
-      let cart = JSON.parse(cartData);
-      // Remove product
-      cart = cart.filter(item => item.id !== productId);
-      
-      // Save to localStorage
-      localStorage.setItem('cart', JSON.stringify(cart));
-      
-      return cart;
+      throw error;
     }
   },
   
   clearCart: async () => {
     try {
-      return await post('cart.php?action=clear');
+      if (!await cartAPI._checkLogin()) return { success: false, message: "Login required" };
+      return await post('cart.php?clear=1');
     } catch (error) {
-      // If API request fails, fallback to localStorage
-      localStorage.removeItem('cart');
-      return [];
+      throw error;
     }
   }
 };
 
+// Function to check if user is logged in
+function checkUserLogin() {
+  // Call auth.php with the correct action parameter
+  const authUrl = `${config.apiUrl}/auth.php?action=status`;
+  console.log("Checking login status:", authUrl);
+  
+  return fetch(authUrl)
+    .then(response => {
+      return response.json();
+    })
+    .then(data => {
+      console.log("Auth status response:", data);
+      // Check for success field in the response
+      return data.success === true;
+    })
+    .catch(error => {
+      console.error('Error checking auth status:', error);
+      // Assume user is not logged in if there's an error
+      return false;
+    });
+}
+
 // Add to cart function
 function addToCart(productId, quantity) {
-  // Use API to add to cart
-  cart.addToCart(productId, quantity)
+  cartAPI.addToCart(productId, quantity)
     .then(response => {
-      // Find product information to display name
-      const product = productsList.find(p => p.id === productId);
-      if (product) {
-        // Show success message
-        showToast(`${product.name} added to your cart!`, 'success');
-      } else {
-        showToast('Product added to your cart!', 'success');
+      if (response.success) {
+        // Find product information to display name
+        const product = productsList.find(p => p.id === productId);
+        if (product) {
+          // Show success message
+          showToast(`${product.name} added to your cart!`, 'success');
+        } else {
+          showToast('Product added to your cart!', 'success');
+        }
+        
+        // Update cart count in navbar
+        updateCartCount();
       }
-      
-      // Update cart count in navbar
-      updateCartCount();
     })
     .catch(error => {
       console.error('Error adding to cart:', error);
@@ -139,15 +120,28 @@ function updateCartCount() {
   
   if (!cartCount) return;
   
-  // Use API to get cart count
-  cart.getCart()
-    .then(cartData => {
-      const count = cartData.reduce((total, item) => total + item.quantity, 0);
-      cartCount.textContent = count;
-      cartCount.style.display = count > 0 ? 'inline-block' : 'none';
+  // Check if user is logged in
+  checkUserLogin()
+    .then(isLoggedIn => {
+      if (!isLoggedIn) {
+        cartCount.style.display = 'none';
+        return;
+      }
+      
+      // Get cart data
+      cartAPI.getCart()
+        .then(cartData => {
+          const count = cartData.reduce((total, item) => total + item.quantity, 0);
+          cartCount.textContent = count;
+          cartCount.style.display = count > 0 ? 'inline-block' : 'none';
+        })
+        .catch(error => {
+          console.error('Error getting cart:', error);
+          cartCount.style.display = 'none';
+        });
     })
     .catch(error => {
-      console.error('Error getting cart:', error);
+      console.error('Error checking login status:', error);
       cartCount.style.display = 'none';
     });
 }
@@ -155,4 +149,5 @@ function updateCartCount() {
 // Attach functions and the cart object to the window object to make them globally available
 window.addToCart = addToCart;
 window.updateCartCount = updateCartCount;
-window.cart = cart; 
+window.checkUserLogin = checkUserLogin;
+window.cart = cartAPI; 
