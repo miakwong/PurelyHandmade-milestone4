@@ -344,11 +344,22 @@ function isAdmin() {
 
 ```apache
 RewriteEngine On
-RewriteBase /
-RewriteRule ^index\.php$ - [L]
+RewriteBase /~miakuang/PurelyHandmade/
+RewriteRule ^api/(.*)$ server/api/$1 [L]
+RewriteRule ^uploads/(.*)$ server/uploads/$1 [L]
+RewriteRule ^$ public/index.html [L]
+RewriteRule ^index\.html$ public/index.html [L]
+
+# If the requested file exists in public/ serve it directly
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.php [L]
+RewriteCond %{DOCUMENT_ROOT}/~miakuang/PurelyHandmade/public%{REQUEST_URI} -f
+RewriteRule ^(.*)$ public/$1 [L]
+
+# Default to index.html for any other requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.html [L]
 ```
 
 ### 8.2 Configuration Settings
@@ -368,7 +379,7 @@ $config = [
 // For production (detect automatically or set manually)
 if ($_SERVER['HTTP_HOST'] === 'cosc360.ok.ubc.ca') {
   $config['production'] = true;
-  $config['base_url'] = 'https://cosc360.ok.ubc.ca/~username/PurelyHandmade';
+  $config['base_url'] = 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade';
   $config['api_url'] = $config['base_url'] . '/server/api';
   $config['uploads_url'] = $config['base_url'] . '/server/uploads';
 }
@@ -386,7 +397,7 @@ const config = {
   
   // Set URLs based on environment
   get baseUrl() {
-    return this.production ? 'https://cosc360.ok.ubc.ca/~username/PurelyHandmade' : '';
+    return this.production ? 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade' : '';
   },
   
   get apiUrl() {
@@ -479,60 +490,57 @@ This documentation provides a blueprint for implementing a simple but functional
 
 ### Database Schema
 
+The database name is `miakuang` on the cosc360.ok.ubc.ca server. The following tables are created:
+
 #### User Table
-- user_id: int (Primary Key)
+- id: int (Primary Key)
 - username: varchar(50)
 - email: varchar(100)
 - password: varchar(255) (hashed)
-- first_name: varchar(50)
-- last_name: varchar(50)
-- address: text
-- phone: varchar(20)
+- name: varchar(100)
+- role: enum('user', 'admin')
 - created_at: timestamp
-- updated_at: timestamp
 
 #### Product Table
-- product_id: int (Primary Key)
+- id: int (Primary Key)
 - category_id: int (Foreign Key references Categories)
 - name: varchar(100)
+- slug: varchar(100)
 - description: text
 - price: decimal(10,2)
-- stock: int
+- stock_quantity: int
 - image: varchar(255)
+- is_featured: boolean
+- in_stock: boolean
 - created_at: timestamp
-- updated_at: timestamp
 
 #### Category Table
-- category_id: int (Primary Key)
-- name: varchar(50)
-- slug: varchar(50)
+- id: int (Primary Key)
+- name: varchar(100)
+- slug: varchar(100)
 - description: text
 - image: varchar(255)
 
 #### Order Table
-- order_id: int (Primary Key)
+- id: int (Primary Key)
 - user_id: int (Foreign Key references Users)
+- order_number: varchar(50)
 - total_amount: decimal(10,2)
 - status: varchar(20)
-- shipping_address: text
-- payment_method: varchar(50)
 - created_at: timestamp
-- updated_at: timestamp
 
 #### Order_Item Table
-- item_id: int (Primary Key)
+- id: int (Primary Key)
 - order_id: int (Foreign Key references Orders)
 - product_id: int (Foreign Key references Products)
 - quantity: int
 - price: decimal(10,2)
 
-#### Comment Table
-- comment_id: int (Primary Key)
+#### Product_Images Table
+- id: int (Primary Key)
 - product_id: int (Foreign Key references Products)
-- user_id: int (Foreign Key references Users)
-- content: text
-- rating: int
-- created_at: timestamp
+- image_path: varchar(255)
+- is_primary: boolean
 
 ### Data Files Structure
 

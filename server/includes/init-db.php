@@ -15,33 +15,26 @@ echo "<h1>Database Initialization</h1>";
 echo "<pre>";
 
 try {
-    // Create database connection (without selecting database)
+    // Create database connection
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ];
     
     // Use the database credentials for connection
-    if (defined('DB_SOCKET') && !empty(DB_SOCKET)) {
-        $dsn = "mysql:unix_socket=" . DB_SOCKET;
+    if (defined('DB_SOCKET') && !empty(DB_SOCKET) && file_exists(DB_SOCKET)) {
+        $dsn = "mysql:unix_socket=" . DB_SOCKET . ";dbname=" . DB_NAME;
         echo "Using socket connection: " . DB_SOCKET . "\n";
     } else {
-        $dsn = "mysql:host=" . DB_HOST;
+        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME;
         if (defined('DB_PORT') && !empty(DB_PORT)) {
             $dsn .= ";port=" . DB_PORT;
         }
         echo "Using TCP connection: " . DB_HOST . "\n";
     }
     
-    // Create initial connection
+    // Create connection with database name
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-    
-    // Create database if it doesn't exist
-    $sql = "CREATE DATABASE IF NOT EXISTS " . DB_NAME . " DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
-    $pdo->exec($sql);
-    echo "Database created or already exists: " . DB_NAME . "\n";
-    
-    // Select the database
-    $pdo->exec("USE " . DB_NAME);
+    echo "Connected to database: " . DB_NAME . "\n";
     
     // Disable foreign key checks (when creating tables)
     $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
@@ -250,6 +243,7 @@ try {
     
     echo "Database initialization completed successfully!\n";
     echo "You can now access PHPMyAdmin to view the tables and data in database " . DB_NAME . ".\n";
+    echo "PHPMyAdmin URL: https://cosc360.ok.ubc.ca/phpmyadmin/\n";
     
 } catch (PDOException $e) {
     echo "Error: " . $e->getMessage() . "\n";
@@ -257,4 +251,4 @@ try {
 }
 
 echo "</pre>";
-echo "<p><a href='/'>Return to homepage</a></p>"; 
+echo "<p><a href='/~miakuang/PurelyHandmade/'>Return to homepage</a></p>"; 

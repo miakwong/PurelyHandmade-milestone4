@@ -31,19 +31,14 @@
     Header set Access-Control-Allow-Headers "Content-Type, Authorization"
 </IfModule>
 
-# Enable PHP error reporting
-php_flag display_errors on
-php_value error_reporting E_ALL
-
 # Set default character set
 AddDefaultCharset UTF-8
 
 # Set default index files
-DirectoryIndex public/index.html index.php index.html
+DirectoryIndex index.html index.php index.html
 
 # PHP settings
 <IfModule mod_php7.c>
-    php_flag display_errors Off
     php_value upload_max_filesize 10M
     php_value post_max_size 10M
     php_value max_execution_time 300
@@ -52,4 +47,4 @@ DirectoryIndex public/index.html index.php index.html
 
 # Error handling
 ErrorDocument 404 /public/views/errors/404.html
-ErrorDocument 500 /public/views/errors/500.html 
+ErrorDocument 500 /public/views/errors/500.html
