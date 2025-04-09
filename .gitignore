@@ -1,21 +1,27 @@
-# macOS system files
-.DS_Store
-
-# IntelliJ IDEA
-*.iml
+# IDE 配置 (IDE configuration)
 .idea/
-workspace.xml
-modules.xml
-vcs.xml
-
-# VSCode
 .vscode/
 
-# Node modules (if applicable)
-node_modules/
+# 操作系统文件 (OS files)
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# Python
-__pycache__/
-
-# Logs
+# 临时文件 (Temporary files)
+tmp/
+temp/
+*.tmp
 *.log
+
+# 上传文件 (Uploaded files)
+server/uploads/images/*
+!server/uploads/images/.gitkeep
+
+# 敏感配置文件 (Sensitive configuration files)
+server/config/db_config.php
+
+# 依赖和构建目录 (Dependencies and build directories)
+node_modules/
+vendor/
+dist/
+build/

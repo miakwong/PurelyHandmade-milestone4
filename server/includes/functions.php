@@ -11,8 +11,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Load application configuration
-$config = require_once __DIR__ . '/../config/app.php';
-$db_config = require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/db.php';
 
 /**
  * Return JSON response
@@ -134,6 +134,34 @@ function validateRequired($data, $fields) {
 }
 
 /**
+ * Create database credentials file
+ * For first-time setup only, not for production use
+ * 
+ * @param string $host Database host
+ * @param string $user Database username
+ * @param string $pass Database password
+ * @param string $name Database name
+ * @return bool True if successful
+ */
+function createDbCredentialsFile($host, $user, $pass, $name) {
+    $file = __DIR__ . '/db_credentials.php';
+    
+    // Don't overwrite existing file
+    if (file_exists($file)) {
+        return false;
+    }
+    
+    $content = "<?php\n";
+    $content .= "// Database credentials - Do not commit to version control\n";
+    $content .= "define('DB_HOST', '" . addslashes($host) . "');\n";
+    $content .= "define('DB_USER', '" . addslashes($user) . "');\n";
+    $content .= "define('DB_PASS', '" . addslashes($pass) . "');\n";
+    $content .= "define('DB_NAME', '" . addslashes($name) . "');\n";
+    
+    return file_put_contents($file, $content) !== false;
+}
+
+/**
  * Load data from JSON file
  * 
  * @param string $file JSON file path
@@ -191,8 +219,7 @@ function generateId($existingIds) {
  * @return string Base URL
  */
 function getBaseUrl() {
-    global $config;
-    return $config['base_url'];
+    return BASE_URL;
 }
 
 /**
@@ -203,18 +230,6 @@ function getBaseUrl() {
  */
 function url($path) {
     return rtrim(getBaseUrl(), '/') . '/' . ltrim($path, '/');
-}
-
-/**
- * Sanitize input data
- * @param string $data Data to sanitize
- * @return string Sanitized data
- */
-function sanitizeInput($data) {
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data);
-    return $data;
 }
 
 /**

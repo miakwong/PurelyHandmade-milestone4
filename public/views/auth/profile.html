@@ -374,32 +374,6 @@
                 </table>
               </div>
             </div>
-            
-            <!-- Designer Management Section -->
-            <div class="admin-section">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4>Designer Management</h4>
-                <button class="btn btn-primary" onclick="resetDesignerForm()" data-bs-toggle="modal" data-bs-target="#designerModal">
-                  <i class="bi bi-plus-circle me-1"></i> Add Designer
-                </button>
-              </div>
-              <div class="table-responsive">
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th>Image</th>
-                      <th>Name</th>
-                      <th>Specialty</th>
-                      <th>Products</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="designerTableBody">
-                    <!-- Designer rows will be dynamically added here -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
           
         </div>
@@ -560,72 +534,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<!-- Designer Modal -->
-<div class="modal fade" id="designerModal" tabindex="-1" aria-labelledby="designerModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="designerModalLabel">Add New Designer</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="designerForm">
-          <input type="hidden" id="designerId">
-          <div class="row">
-            <div class="col-md-8">
-              <div class="mb-3">
-                <label for="designerName" class="form-label">Designer Name</label>
-                <input type="text" class="form-control" id="designerName" required>
-              </div>
-              <div class="mb-3">
-                <label for="designerSpecialty" class="form-label">Specialty</label>
-                <input type="text" class="form-control" id="designerSpecialty" required>
-              </div>
-              <div class="mb-3">
-                <label for="designerBio" class="form-label">Biography</label>
-                <textarea class="form-control" id="designerBio" rows="3" required></textarea>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <label class="form-label">Profile Images</label>
-                <div id="designerImagesContainer">
-                  <!-- Image previews will be added here -->
-                </div>
-                <div class="d-grid mt-2">
-                  <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('designerImage').click()">
-                    <i class="bi bi-upload me-1"></i> Upload Images
-                  </button>
-                </div>
-                <input type="file" id="designerImage" accept="image/*" multiple style="display: none;" onchange="previewDesignerImages(event)">
-              </div>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Social Media Links</label>
-            <div class="input-group mb-2">
-              <span class="input-group-text"><i class="bi bi-instagram"></i></span>
-              <input type="url" class="form-control" id="designerInstagram" placeholder="Instagram URL">
-            </div>
-            <div class="input-group mb-2">
-              <span class="input-group-text"><i class="bi bi-pinterest"></i></span>
-              <input type="url" class="form-control" id="designerPinterest" placeholder="Pinterest URL">
-            </div>
-            <div class="input-group">
-              <span class="input-group-text"><i class="bi bi-shop"></i></span>
-              <input type="url" class="form-control" id="designerEtsy" placeholder="Etsy URL">
-            </div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="saveDesigner()">Save Designer</button>
-      </div>
-    </div>
-  </div>
   </div>
 
 <!-- Product Modal -->
@@ -650,17 +558,12 @@
                   <label for="productCategory" class="form-label">Category</label>
                   <select class="form-select" id="productCategory" required>
                     <option value="">Select Category</option>
-                    <option value="1">Ceramics</option>
-                    <option value="2">Wood Crafts</option>
-                    <option value="3">Textiles</option>
+                    <!-- Categories will be loaded dynamically -->
                   </select>
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="productDesigner" class="form-label">Designer (Optional)</label>
-                  <select class="form-select" id="productDesigner">
-                    <option value="">No Designer</option>
-                    <!-- Designers will be loaded dynamically -->
-                  </select>
+                  <label for="productStock" class="form-label">Stock Quantity</label>
+                  <input type="number" class="form-control" id="productStock" min="0" required>
                 </div>
               </div>
               <div class="row">
@@ -669,13 +572,9 @@
                   <input type="number" class="form-control" id="productPrice" min="0" step="0.01" required>
                 </div>
                 <div class="col-md-6 mb-3">
-                  <label for="productStock" class="form-label">Stock</label>
-                  <input type="number" class="form-control" id="productStock" min="0" required>
-                </div>
-              </div>
-              <div class="mb-3">
                 <label for="productListingDate" class="form-label">Listing Date</label>
                 <input type="datetime-local" class="form-control" id="productListingDate">
+                </div>
               </div>
               <div class="mb-3">
                 <label for="productDescription" class="form-label">Description</label>
@@ -747,13 +646,13 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="../../js/api-client.js"></script>
 
-<script>
+  <script>
   // Load navbar and footer content dynamically
   fetch('../../layout/navbar.html').then(r => r.text()).then(html => document.getElementById('navbar-placeholder').innerHTML = html);
   fetch('../../layout/footer.html').then(r => r.text()).then(html => document.getElementById('footer-placeholder').innerHTML = html);
   
   // 其余脚本保持不变
-</script>
+  </script>
 
 </body>
 </html>

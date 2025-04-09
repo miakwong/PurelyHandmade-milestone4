@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "Ceramics",
+    "slug": "ceramics",
+    "description": "Handcrafted ceramic pieces including mugs, bowls, plates and decorative items. Each piece is uniquely created by our skilled artisans.",
+    "image": "/server/uploads/images/category-ceramics.jpg"
+  },
+  {
+    "id": 2,
+    "name": "Woodworking",
+    "slug": "woodworking",
+    "description": "Beautiful handcrafted wooden items, from serving boards to decorative pieces. All of our wood products are made from sustainably sourced materials.",
+    "image": "/server/uploads/images/category-woodworking.jpg"
+  },
+  {
+    "id": 3,
+    "name": "Textiles",
+    "slug": "textiles",
+    "description": "Handwoven textiles including table linens, throws, wall hangings, and more. Each piece showcases traditional techniques with contemporary design.",
+    "image": "/server/uploads/images/category-textiles.jpg"
+  },
+  {
+    "id": 4,
+    "name": "Jewelry",
+    "slug": "jewelry",
+    "description": "Handcrafted jewelry pieces made with traditional metalsmithing techniques. From delicate earrings to statement necklaces, each piece is unique.",
+    "image": "/server/uploads/images/category-jewelry.jpg"
+  },
+  {
+    "id": 5,
+    "name": "Paper Goods",
+    "slug": "paper-goods",
+    "description": "Handmade paper products including journals, cards, and art prints. Our paper artisans create beautiful pieces using traditional papermaking and printing techniques.",
+    "image": "/server/uploads/images/category-paper.jpg"
+  },
+  {
+    "id": 6,
+    "name": "Glass",
+    "slug": "glass",
+    "description": "Hand-blown and stained glass pieces created by skilled artisans. From functional vases to decorative suncatchers, each glass piece is uniquely crafted.",
+    "image": "/server/uploads/images/category-glass.jpg"
+  }
+] 

@@ -17,49 +17,23 @@ This section outlines the organization of the project files and directories.
 ### 1.1 Directory Structure
 
 ```
-PurelyHandmade-Clean/
-├── .idea/                  # IDE configuration
-├── docs/                   # Documentation
-│   └── technical_documentation.md  # This file
-├── public/                 # Public frontend assets
-│   ├── css/                # CSS stylesheets
-│   │   ├── global.css      # Global styles
-│   │   ├── navbar.css      # Navigation styling
-│   │   ├── product_detail.css  # Product page styling
-│   │   └── style.css       # Main stylesheet
-│   ├── img/                # Images and assets
-│   ├── js/                 # JavaScript files
-│   │   ├── api-client.js   # API communication
-│   │   ├── init-data.js    # Initial data loading
-│   │   ├── product.js      # Product functionality
-│   │   └── product_detail.js  # Product detail page
-│   ├── layout/              # Page layout components
-│   │   ├── navbar.html     # Navigation bar
-│   │   └── footer.html     # Page footer
-│   ├── views/               # Page templates
-│   │   ├── product/        # Product pages
-│   │   ├── checkout/       # Checkout flow
-│   │   ├── auth/           # Authentication pages
-│   │   └── admin/          # Admin interfaces
-│   └── index.html          # Main store page
-├── server/                 # Backend code
-│   ├── api/                # API endpoints
-│   │   ├── auth.php        # Authentication API
-│   │   ├── cart.php        # Cart API
-│   │   ├── categories.php  # Categories API
-│   │   ├── products.php    # Products API
-│   │   ├── comments.php    # Comments API
-│   │   └── users.php       # Users API
-│   ├── config/             # Configuration files
-│   │   └── database.php    # Database connection
-│   ├── data/               # Data storage
-│   │   ├── products.json   # Product data
-│   │   └── categories.json # Category data
-│   ├── includes/           # Shared PHP files
-│   │   ├── functions.php   # Helper functions
-│   │   └── session.php     # Session handling
-│   └── uploads/            # User uploaded files
-│       └── images/         # Product images
+/PurelyHandmade
+├── .idea/                   # IDE configuration
+├── docs/                    # Project documentation
+├── public/                  # Public assets
+│   ├── css/                 # CSS files
+│   ├── js/                  # JavaScript files
+│   └── images/              # Image assets
+├── server/                  # Server-side code
+│   ├── api/                 # API endpoints
+│   ├── config/              # Configuration files 
+│   └── lib/                 # Library files
+├── src/                     # Source code
+│   ├── views/               # Frontend views
+│   └── assets/              # Frontend assets
+├── index.html               # Main HTML file
+├── .htaccess                # Server configuration
+└── README.md                # Project description
 ```
 
 ### 1.2 File Naming and Organization
@@ -143,6 +117,16 @@ The backend will implement a minimal REST API supporting the current frontend fu
 2. **Statelessness**: No server-side session dependencies except for auth
 3. **JSON**: All requests and responses use JSON
 4. **Error Handling**: Consistent error response format
+
+### 3.4 Image Storage and Access
+
+Product images are stored in the server's file system at `server/uploads/images/`. These images can be accessed through the following methods:
+
+1. **Direct URL Access**: Images can be accessed directly via URL: `/server/uploads/images/{filename}`
+2. **API Reference**: Product data returned from the API includes full image paths in the `images` array
+3. **Products API**: The Products API handles image uploads and automatically stores them in the correct location
+
+For security reasons, only the admin can upload or modify product images through the API.
 
 ## 4. API Specification
 
@@ -359,32 +343,12 @@ function isAdmin() {
 ### 8.1 .htaccess Configuration
 
 ```apache
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /~username/PurelyHandmade/
-  
-  # Handle API requests
-  RewriteRule ^api/(.*)$ server/api/$1 [L]
-  
-  # Handle static files
-  RewriteRule ^uploads/(.*)$ server/uploads/$1 [L]
-  
-  # Default to index.html
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule ^(.*)$ public/index.html [L]
-</IfModule>
-
-# Enable CORS if needed
-<IfModule mod_headers.c>
-  Header set Access-Control-Allow-Origin "*"
-  Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE"
-  Header set Access-Control-Allow-Headers "Content-Type"
-</IfModule>
-
-# Error Pages
-ErrorDocument 404 /public/views/errors/404.html
-ErrorDocument 500 /public/views/errors/500.html
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
 ```
 
 ### 8.2 Configuration Settings
@@ -510,3 +474,105 @@ This documentation provides a blueprint for implementing a simple but functional
   - Remove products from cart
   - Clear all items from cart
 - Returns JSON responses with cart data and operation status 
+
+## Data Structure
+
+### Database Schema
+
+#### User Table
+- user_id: int (Primary Key)
+- username: varchar(50)
+- email: varchar(100)
+- password: varchar(255) (hashed)
+- first_name: varchar(50)
+- last_name: varchar(50)
+- address: text
+- phone: varchar(20)
+- created_at: timestamp
+- updated_at: timestamp
+
+#### Product Table
+- product_id: int (Primary Key)
+- category_id: int (Foreign Key references Categories)
+- name: varchar(100)
+- description: text
+- price: decimal(10,2)
+- stock: int
+- image: varchar(255)
+- created_at: timestamp
+- updated_at: timestamp
+
+#### Category Table
+- category_id: int (Primary Key)
+- name: varchar(50)
+- slug: varchar(50)
+- description: text
+- image: varchar(255)
+
+#### Order Table
+- order_id: int (Primary Key)
+- user_id: int (Foreign Key references Users)
+- total_amount: decimal(10,2)
+- status: varchar(20)
+- shipping_address: text
+- payment_method: varchar(50)
+- created_at: timestamp
+- updated_at: timestamp
+
+#### Order_Item Table
+- item_id: int (Primary Key)
+- order_id: int (Foreign Key references Orders)
+- product_id: int (Foreign Key references Products)
+- quantity: int
+- price: decimal(10,2)
+
+#### Comment Table
+- comment_id: int (Primary Key)
+- product_id: int (Foreign Key references Products)
+- user_id: int (Foreign Key references Users)
+- content: text
+- rating: int
+- created_at: timestamp
+
+### Data Files Structure
+
+The application uses JSON files to store data:
+
+- `server/data/users.json`: Stores user registration and profile information
+- `server/data/products.json`: Contains product listings with details
+- `server/data/categories.json`: Stores product categories information
+- `server/data/orders.json`: Tracks customer orders and their status
+- `server/data/comments.json`: Stores product reviews and ratings
+
+## API Endpoints
+
+### Authentication API
+- POST `/server/api/auth/register.php` - Register a new user
+- POST `/server/api/auth/login.php` - Authenticate user and start session
+- GET `/server/api/auth/status.php` - Check current user login status
+- POST `/server/api/auth/logout.php` - End user session
+
+### Products API
+- GET `/server/api/products/get.php` - Get products (with optional filtering)
+- GET `/server/api/products/get.php?id={id}` - Get a specific product
+- POST `/server/api/products/create.php` - Create a new product (admin only)
+- PUT `/server/api/products/update.php` - Update a product (admin only)
+- DELETE `/server/api/products/delete.php` - Delete a product (admin only)
+
+### Categories API
+- GET `/server/api/categories/get.php` - Get all categories
+- GET `/server/api/categories/get.php?id={id}` - Get a specific category
+- POST `/server/api/categories/create.php` - Create a new category (admin only)
+- PUT `/server/api/categories/update.php` - Update a category (admin only)
+- DELETE `/server/api/categories/delete.php` - Delete a category (admin only)
+
+### Cart API
+- GET `/server/api/cart/get.php` - Get current user's cart
+- POST `/server/api/cart/add.php` - Add item to cart
+- PUT `/server/api/cart/update.php` - Update cart item quantity
+- DELETE `/server/api/cart/remove.php` - Remove item from cart
+- DELETE `/server/api/cart/clear.php` - Clear entire cart
+
+### Users API
+- GET `/server/api/users/get.php` - Get current user profile
+- PUT `/server/api/users/update.php` - Update user profile 

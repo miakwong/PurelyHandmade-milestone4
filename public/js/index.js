@@ -28,7 +28,6 @@ document.addEventListener("DOMContentLoaded", function () {
     ourStoryLink.addEventListener("click", function (event) {
       event.preventDefault();
       sidebar.classList.add("d-none");
-      designerCarousel.classList.add("d-none");
       renderProducts(products.onSale, "On Sale - Special Discount");
     });
   }

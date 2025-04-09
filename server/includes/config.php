@@ -7,11 +7,26 @@
 // Environment Detection
 $isProduction = (strpos($_SERVER['HTTP_HOST'] ?? '', 'cosc360.ok.ubc.ca') !== false);
 
-// Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root'); // Change in production
-define('DB_PASS', '');     // Change in production
-define('DB_NAME', 'purely_handmade');
+// Database Configuration - These should not be uploaded to version control
+// In production, update these values accordingly
+if (file_exists(__DIR__ . '/db_credentials.php')) {
+    require_once __DIR__ . '/db_credentials.php';
+} else {
+    // Default database name, credentials should be in db_credentials.php
+    define('DB_HOST', 'localhost');
+    define('DB_NAME', 'purely_handmade');
+    
+    // Display warning about missing credentials file
+    trigger_error('Database credentials file not found. Please create db_credentials.php', E_USER_NOTICE);
+}
+
+// Database charset and options
+define('DB_CHARSET', 'utf8mb4');
+define('DB_OPTIONS', [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false
+]);
 
 // Path Configuration
 if ($isProduction) {

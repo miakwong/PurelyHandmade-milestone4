@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   const recommendedItems = document.getElementById("recommended-items");
   const sidebar = document.getElementById("sidebar");
-  const designerCarousel = document.getElementById("designerCarousel");
 
   // Navigation links
   const newArrivalsLink = document.getElementById("newArrivalsLink");
@@ -12,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Image directory path
   const currentPath = window.location.pathname;
-  let imgPath = currentPath.includes("/views/product/") ? "../../assets/img/" : "src/assets/img/";
+  let imgPath = "/server/uploads/images/";
 
   console.log("Resolved Image Path:", imgPath);
   console.log("Testing image path:", imgPath + "mug_1.JPG");
@@ -87,7 +86,6 @@ document.addEventListener("DOMContentLoaded", function () {
     newArrivalsLink.addEventListener("click", function (event) {
       event.preventDefault();
       sidebar.classList.add("d-none");
-      designerCarousel.classList.add("d-none");
       renderProducts(products.newArrivals, "New Arrivals");
     });
   }
@@ -97,7 +95,6 @@ document.addEventListener("DOMContentLoaded", function () {
     onSaleLink.addEventListener("click", function (event) {
       event.preventDefault();
       sidebar.classList.add("d-none");
-      designerCarousel.classList.add("d-none");
       renderProducts(products.onSale, "On Sale - Special Discount");
     });
   }
@@ -108,9 +105,8 @@ document.addEventListener("DOMContentLoaded", function () {
       event.preventDefault();
       const category = this.getAttribute("data-category");
 
-      // Show sidebar and designer carousel when filtering by category
+      // Show sidebar when filtering by category
       sidebar.classList.remove("d-none");
-      designerCarousel.classList.remove("d-none");
 
       // Render products based on selected category
       if (products.categories[category]) {

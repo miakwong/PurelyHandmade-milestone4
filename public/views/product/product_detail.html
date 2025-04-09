@@ -10,8 +10,8 @@
   <link rel="stylesheet" href="../../css/product_detail.css">
 </head>
 <body>
-  <!-- Navbar Placeholder -->
-  <div id="navbar-placeholder"></div>
+<!-- Navbar Placeholder -->
+<div id="navbar-placeholder"></div>
 
   <!-- Main Content -->
   <div class="container my-5">
@@ -22,12 +22,12 @@
         <div class="col-md-6">
           <div class="product-gallery">
             <div class="main-image-container">
-              <img src="../../img/Handwoven_1.JPG" alt="Product Main Image" id="main-product-image" class="main-product-image">
+              <img src="/server/uploads/images/Handwoven_1.JPG" alt="Product Main Image" id="main-product-image" class="main-product-image">
             </div>
             <div class="thumbnail-container mt-3" id="thumbnail-container">
               <!-- 缩略图将在这里动态生成 -->
             </div>
-          </div>
+</div>
         </div>
 
         <!-- 产品详情部分 -->
@@ -40,9 +40,9 @@
                   <!-- 星级评分将在这里动态生成 -->
                 </span>
                 <span class="text-muted ms-2" id="review-count">(0 reviews)</span>
-              </div>
-            </div>
-            
+        </div>
+      </div>
+
             <div class="product-price-container mb-4">
               <span class="product-price" id="product-price">$0.00</span>
               <span class="product-original-price" id="product-original-price">$0.00</span>
@@ -78,7 +78,6 @@
             <div class="product-meta">
               <p><strong>SKU:</strong> <span id="product-sku">PHM-001</span></p>
               <p><strong>Category:</strong> <a href="#" id="product-category">Category</a></p>
-              <p><strong>Designer:</strong> <a href="#" id="product-designer">Designer Name</a></p>
             </div>
             
             <div class="social-share mt-4">
@@ -88,11 +87,11 @@
               <a href="#" class="social-icon"><i class="bi bi-pinterest"></i></a>
               <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
             </div>
-          </div>
+        </div>
         </div>
       </div>
     </div>
-    
+
     <!-- 产品详情标签栏 -->
     <div class="product-tabs mb-5">
       <ul class="nav nav-tabs" id="product-tab" role="tablist">
@@ -146,16 +145,16 @@
                         <div class="progress-bar bg-warning" id="three-star-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                       </div>
                       <span class="rating-count" id="three-star-count">0</span>
-                    </div>
-                    
+      </div>
+      
                     <div class="rating-bar-container">
                       <span class="rating-label">2 <i class="bi bi-star-fill text-warning"></i></span>
                       <div class="progress">
                         <div class="progress-bar bg-warning" id="two-star-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                      </div>
+        </div>
                       <span class="rating-count" id="two-star-count">0</span>
-                    </div>
-                    
+      </div>
+
                     <div class="rating-bar-container">
                       <span class="rating-label">1 <i class="bi bi-star-fill text-warning"></i></span>
                       <div class="progress">
@@ -166,8 +165,8 @@
                   </div>
                 </div>
               </div>
-            </div>
-            
+      </div>
+
             <div class="review-list mb-4" id="review-list">
               <!-- 评论列表将在这里动态生成 -->
             </div>
@@ -245,62 +244,62 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 相关产品 -->
     <div class="related-products">
       <h3 class="mb-4">You May Also Like</h3>
       <div class="row" id="related-products-container">
         <!-- 相关产品将在这里动态生成 -->
-      </div>
-    </div>
-    
+  </div>
+</div>
+
     <!-- 最近浏览 -->
     <div class="recently-viewed mt-5" id="recently-viewed-section" style="display: none;">
       <h3 class="mb-4">Recently Viewed</h3>
       <div class="row" id="recently-viewed-container">
         <!-- 最近浏览的产品将在这里动态生成 -->
       </div>
-    </div>
   </div>
+</div>
 
-  <!-- Toast通知容器 -->
-  <div class="toast-container" id="toast-container"></div>
+<!-- Toast通知容器 -->
+<div class="toast-container" id="toast-container"></div>
 
-  <!-- Footer Placeholder -->
-  <div id="footer-placeholder"></div>
+<!-- Footer Placeholder -->
+<div id="footer-placeholder"></div>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="../../js/init-data.js"></script>
   <script src="../../js/product_detail.js"></script>
-  
-  <script>
+
+<script>
     // 加载导航栏和页脚
     fetch('../../layout/navbar.html').then(r => r.text()).then(html => {
       document.getElementById('navbar-placeholder').innerHTML = html;
       
       // 更新购物车计数
-      updateCartCount();
+        updateCartCount();
     });
     fetch('../../layout/footer.html').then(r => r.text()).then(html => document.getElementById('footer-placeholder').innerHTML = html);
+  
+  // 更新购物车计数
+  function updateCartCount() {
+    const cartData = localStorage.getItem('cart');
+    const cartCount = document.getElementById('cart-count');
     
-    // 更新购物车计数
-    function updateCartCount() {
-      const cartData = localStorage.getItem('cart');
-      const cartCount = document.getElementById('cart-count');
-      
-      if (!cartCount) return;
-      
-      if (cartData) {
-        const cart = JSON.parse(cartData);
-        const count = cart.reduce((total, item) => total + item.quantity, 0);
-        cartCount.textContent = count;
-        cartCount.style.display = count > 0 ? 'inline-block' : 'none';
-      } else {
-        cartCount.style.display = 'none';
-      }
+    if (!cartCount) return;
+    
+    if (cartData) {
+      const cart = JSON.parse(cartData);
+      const count = cart.reduce((total, item) => total + item.quantity, 0);
+      cartCount.textContent = count;
+      cartCount.style.display = count > 0 ? 'inline-block' : 'none';
+    } else {
+      cartCount.style.display = 'none';
     }
-  </script>
+  }
+</script>
 </body>
 </html>

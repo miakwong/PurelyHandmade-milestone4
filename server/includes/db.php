@@ -8,75 +8,120 @@ require_once 'config.php';
 
 /**
  * Get a database connection
- * @return mysqli The database connection
+ * @return PDO The database connection
  */
 function getConnection() {
-    static $conn = null;
+    static $pdo = null;
     
     // If connection already exists, return it
-    if ($conn !== null) {
-        return $conn;
+    if ($pdo !== null) {
+        return $pdo;
     }
     
-    // Create new connection
-    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-    
-    // Check connection
-    if ($conn->connect_error) {
-        error_log("Database Connection Failed: " . $conn->connect_error);
-        die("Connection failed: " . $conn->connect_error);
+    try {
+        // Create DSN
+        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+        
+        // Create new connection
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, DB_OPTIONS);
+        
+        return $pdo;
+    } catch (PDOException $e) {
+        // Log the error but don't expose details to user
+        error_log("Database Connection Failed: " . $e->getMessage());
+        die("Database connection failed. Please try again later.");
     }
-    
-    // Set charset
-    $conn->set_charset("utf8mb4");
-    
-    return $conn;
 }
 
 /**
  * Close the database connection
  */
 function closeConnection() {
-    global $conn;
-    if ($conn) {
-        $conn->close();
-    }
+    // PDO handles closing connections automatically
+    // This function remains for compatibility
+    return true;
 }
 
 /**
  * Execute a query and return the result
  * @param string $sql The SQL query
  * @param array $params Parameters for prepared statement
- * @param string $types Types of parameters (e.g., 'ssi' for string, string, int)
- * @return mysqli_result|bool Query result or false on failure
+ * @param string $types Types of parameters (optional, for compatibility)
+ * @return mixed PDOStatement object or false on failure
  */
 function executeQuery($sql, $params = [], $types = "") {
-    $conn = getConnection();
-    $stmt = $conn->prepare($sql);
+    $pdo = getConnection();
     
-    if (!$stmt) {
-        error_log("Query preparation failed: " . $conn->error);
-        return false;
-    }
-    
-    if (!empty($params)) {
-        if (empty($types)) {
-            // Auto-detect parameter types if not specified
-            $types = str_repeat("s", count($params));
+    try {
+        $stmt = $pdo->prepare($sql);
+        
+        // Execute with parameters
+        if (!empty($params)) {
+            $stmt->execute($params);
+        } else {
+            $stmt->execute();
         }
         
-        $stmt->bind_param($types, ...$params);
-    }
-    
-    $result = $stmt->execute();
-    
-    if (!$result) {
-        error_log("Query execution failed: " . $stmt->error);
+        return $stmt;
+    } catch (PDOException $e) {
+        error_log("Query execution failed: " . $e->getMessage());
         return false;
     }
+}
+
+/**
+ * Execute a query and fetch all results
+ * @param string $sql The SQL query
+ * @param array $params Parameters for prepared statement
+ * @return array|false Array of results or false on failure
+ */
+function fetchAll($sql, $params = []) {
+    $stmt = executeQuery($sql, $params);
     
-    $result = $stmt->get_result();
-    $stmt->close();
+    if ($stmt) {
+        return $stmt->fetchAll();
+    }
     
-    return $result;
+    return false;
+}
+
+/**
+ * Execute a query and fetch a single row
+ * @param string $sql The SQL query
+ * @param array $params Parameters for prepared statement
+ * @return array|false Single row or false on failure
+ */
+function fetchOne($sql, $params = []) {
+    $stmt = executeQuery($sql, $params);
+    
+    if ($stmt) {
+        return $stmt->fetch();
+    }
+    
+    return false;
+}
+
+/**
+ * Execute an INSERT, UPDATE or DELETE query and return affected rows
+ * @param string $sql The SQL query
+ * @param array $params Parameters for prepared statement
+ * @return int|false Number of affected rows or false on failure
+ */
+function executeNonQuery($sql, $params = []) {
+    $stmt = executeQuery($sql, $params);
+    
+    if ($stmt) {
+        return $stmt->rowCount();
+    }
+    
+    return false;
+}
+
+/**
+ * Get the ID of the last inserted row
+ * @return string|false Last inserted ID or false on failure
+ */
+function getLastInsertId() {
+    $pdo = getConnection();
+    return $pdo->lastInsertId();
 } 

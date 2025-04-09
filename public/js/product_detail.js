@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("Parsed product:", productName, "Category:", category);
 
   // Image directory path
-  const imgPath = "../../assets/img/";
+  const imgPath = "/server/uploads/images/";
 
   // Category data
   const categories = {
