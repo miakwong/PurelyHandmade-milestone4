@@ -8,6 +8,9 @@
     # Handle API requests
     RewriteRule ^api/(.*)$ /~miakuang/PurelyHandmade/server/api/$1 [L]
     
+    # Special rule for reviews.php to redirect to the correct path
+    RewriteRule ^server/api/reviews.php$ /~miakuang/PurelyHandmade/server/api/reviews.php [L]
+
     # Handle static files from server/uploads (make sure we are catching uploads first)
     RewriteRule ^uploads/(.*)$ /~miakuang/PurelyHandmade/server/uploads/$1 [L]
 

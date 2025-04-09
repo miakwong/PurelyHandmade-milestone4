@@ -74,14 +74,25 @@ The JavaScript architecture follows a modular approach with separate files for d
 - **pagination.js**: Pagination controls and display logic
 - **ui.js**: UI components and interactions
 
-This modular approach improves code organization, maintainability, and testability.
+#### Product Detail Page (`product_detail.js`)
 
-#### Fallback Mechanism
+The product detail page handles:
+- Product information display
+- Image gallery
+- Review display and submission
+- Add to cart functionality
+- Recently viewed products
 
-For better user experience, the application implements a fallback mechanism:
-- Primary data source is the server API
-- If API requests fail, the application falls back to localStorage
-- This ensures the application can work in offline or degraded connectivity scenarios
+##### Review Display
+- Shows product rating and total review count
+- Displays rating distribution
+- Lists reviews with:
+  - Star rating
+  - Review date
+  - Review text
+- Sorts reviews by date (newest first)
+- Handles empty review state
+- Provides error handling for failed review loading
 
 ### 2.4 HTML Structure
 
@@ -218,6 +229,39 @@ POST /server/api/cart.php?action=clear
 - Clears the entire cart
 ```
 
+### 4.5 Reviews API
+
+The Reviews API handles CRUD operations for product reviews. It provides endpoints for:
+
+- Getting reviews for a specific product
+- Adding new reviews
+
+#### Authentication
+- Reviews can be viewed by any user
+- Only authenticated users can add reviews
+- Authentication is checked using the session variable `$_SESSION['user_id']`
+
+#### Endpoints
+
+1. **GET /reviews.php?action=get&product_id={id}**
+   - Returns all reviews for a specific product
+   - Includes review statistics (average rating, distribution)
+   - No authentication required
+
+2. **POST /reviews.php?action=add**
+   - Adds a new review for a product
+   - Requires user authentication
+   - Request body should include:
+     - product_id
+     - rating (1-5)
+     - review_text
+
+#### Error Handling
+- 400: Invalid request parameters
+- 401: User not authenticated (for POST requests)
+- 404: Product not found
+- 500: Server error
+
 ## 5. Data Model
 
 ### 5.1 Products
@@ -276,6 +320,20 @@ POST /server/api/cart.php?action=clear
 }
 ```
 
+### 5.5 Product Reviews
+
+```json
+{
+  "id": 1,
+  "product_id": 1,
+  "user_id": 1,
+  "rating": 4.5,
+  "review_text": "Beautifully crafted handwoven basket with excellent attention to detail.",
+  "created_at": "2023-05-10T14:30:00Z",
+  "username": "user123"
+}
+```
+
 ## 6. Database Configuration and Initialization
 
 ### 6.1 Database Setup
@@ -287,31 +345,55 @@ The application uses a MySQL database with the following configuration:
 - **Password**: miakuang
 - **Host**: localhost
 - **Character Set**: utf8mb4
-
-The database structure includes tables for users, categories, products, product_images, orders, and order_items.
+- **Connection Type**: TCP connection (for better server compatibility)
 
 ### 6.2 Database Initialization
 
 The database can be initialized by running the script located at `server/includes/init-db.php`. This script:
 
 1. Creates the database if it doesn't exist
-2. Creates all required tables with appropriate relationships
-3. Creates a default admin user (username: miakuang, password: miakuang)
-4. Imports initial data for categories and products from JSON files
+2. Creates all required tables with appropriate relationships:
+   - users
+   - categories
+   - products
+   - product_images
+   - product_reviews
+   - orders
+   - order_items
+3. Creates a default admin user:
+   - Username: miakuang
+   - Email: miakuang@example.com
+   - Password: miakuang
+   - Role: admin
+4. Creates test users for review data:
+   - Username: testuser1, testuser2, testuser3
+   - Email: testuser[1-3]@example.com
+   - Password: password123
+   - Role: user
+5. Imports initial data from JSON files:
+   - Categories from `server/data/categories.json`
+   - Products from `server/data/products.json`
+   - Reviews from `server/data/reviews.json`
 
 #### Important Implementation Notes
 
-- The script uses TCP connection to MySQL (using `localhost`) rather than socket connections for better server compatibility
-- ISO date format (`2023-04-01T10:30:00Z`) is automatically converted to MySQL compatible format (`2023-04-01 10:30:00`)
-- Boolean values for fields like `is_primary` in product_images are explicitly cast to integers (0 or 1) for MySQL compatibility
-- Initial category and product data is imported from JSON files in the `server/data/` directory
+- The script uses TCP connection to MySQL for better server compatibility
+- All SQL queries use prepared statements to prevent SQL injection
+- Foreign key constraints are temporarily disabled during table creation
+- ISO date format (`2023-04-01T10:30:00Z`) is automatically converted to MySQL format (`2023-04-01 10:30:00`)
+- Boolean values are explicitly cast to integers (0 or 1) for MySQL compatibility
 - Auto-increment counters are reset after bulk imports to ensure new records start with correct IDs
+- Product review counts and average ratings are automatically calculated and updated
 
 #### Database Initialization Process
 
 To initialize the database:
 1. Navigate to `https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/includes/init-db.php`
-2. The script will create the database and all required tables
+2. The script will:
+   - Create the database and tables if they don't exist
+   - Create default admin and test users if they don't exist
+   - Import category, product, and review data if tables are empty
+   - Update product review statistics
 3. Upon completion, you can access PHPMyAdmin at `https://cosc360.ok.ubc.ca/phpmyadmin/`
 
 ### 6.3 Data Structure
@@ -319,92 +401,221 @@ To initialize the database:
 The database schema includes the following tables:
 
 #### User Table
-- id: int (Primary Key)
-- username: varchar(50) UNIQUE
-- email: varchar(100) UNIQUE
-- password: varchar(255) (hashed)
-- name: varchar(100)
-- role: ENUM('user', 'admin')
-- created_at: timestamp
+- `id`: Primary key, auto-incrementing integer
+- `username`: Unique username (VARCHAR 50)
+- `email`: Unique email address (VARCHAR 100)
+- `password`: Hashed password (VARCHAR 255)
+- `name`: User's full name (VARCHAR 100)
+- `avatar`: User's avatar image (LONGBLOB, nullable)
+- `birthday`: User's date of birth (DATE)
+- `gender`: User's gender (ENUM: 'male', 'female', 'other')
+- `role`: User role (ENUM: 'user' or 'admin')
+- `created_at`: Timestamp of account creation
 
 #### Category Table
-- id: int (Primary Key)
-- name: varchar(100)
-- slug: varchar(100) UNIQUE
-- description: text
-- image: varchar(255)
+- `id`: Primary key, auto-incrementing integer
+- `name`: Category name (VARCHAR 100)
+- `slug`: Unique URL-friendly name (VARCHAR 100)
+- `description`: Category description (TEXT)
+- `image`: Category image path (VARCHAR 255)
 
 #### Product Table
-- id: int (Primary Key)
-- category_id: int (Foreign Key references Categories)
-- name: varchar(100)
-- slug: varchar(100) UNIQUE
-- description: text
-- price: decimal(10,2)
-- stock_quantity: int
-- image: varchar(255)
-- is_featured: boolean
-- in_stock: boolean
-- created_at: timestamp
+- `id`: Primary key, auto-incrementing integer
+- `category_id`: Foreign key to categories table
+- `name`: Product name (VARCHAR 100)
+- `slug`: Unique URL-friendly name (VARCHAR 100)
+- `description`: Product description (TEXT)
+- `price`: Product price (DECIMAL 10,2)
+- `stock_quantity`: Available stock (INT)
+- `image`: Main product image path (VARCHAR 255)
+- `is_featured`: Featured product flag (BOOLEAN)
+- `in_stock`: Stock status flag (BOOLEAN)
+- `rating`: Average rating (DECIMAL 2,1)
+- `reviewCount`: Number of reviews (INT)
+- `created_at`: Creation timestamp
 
 #### Product_Images Table
-- id: int (Primary Key)
-- product_id: int (Foreign Key references Products)
-- image_path: varchar(255)
-- is_primary: boolean
+- `id`: Primary key, auto-incrementing integer
+- `product_id`: Foreign key to products table
+- `image_path`: Image file path (VARCHAR 255)
+- `is_primary`: Primary image flag (BOOLEAN)
+
+#### Product_Reviews Table
+- `id`: Primary key, auto-incrementing integer
+- `product_id`: Foreign key to products table
+- `user_id`: Foreign key to users table
+- `rating`: Review rating (DECIMAL 2,1, range 1-5)
+- `review_text`: Review content (TEXT)
+- `created_at`: Creation timestamp
 
 #### Order Table
-- id: int (Primary Key)
-- user_id: int (Foreign Key references Users)
-- order_number: varchar(50) UNIQUE
-- total_amount: decimal(10,2)
-- status: varchar(20)
-- created_at: timestamp
+- `id`: Primary key, auto-incrementing integer
+- `user_id`: Foreign key to users table
+- `order_number`: Unique order identifier (VARCHAR 50)
+- `total_amount`: Order total (DECIMAL 10,2)
+- `status`: Order status (VARCHAR 20)
+- `created_at`: Creation timestamp
 
 #### Order_Item Table
-- id: int (Primary Key)
-- order_id: int (Foreign Key references Orders)
-- product_id: int (Foreign Key references Products)
-- quantity: int
-- price: decimal(10,2)
+- `id`: Primary key, auto-incrementing integer
+- `order_id`: Foreign key to orders table
+- `product_id`: Foreign key to products table
+- `quantity`: Item quantity (INT)
+- `price`: Item price (DECIMAL 10,2)
 
 ## 7. Authentication
 
-For simplicity, the authentication system will use:
+### 7.1 API Endpoints
 
-1. **PHP Sessions**: For maintaining login state
-2. **Password Hashing**: Using password_hash() and password_verify()
-3. **Basic Access Control**: Admin vs. regular user roles
-
-```php
-// Simple authentication mechanism
-session_start();
-
-function login($username, $password) {
-  // Load users from JSON file (or database in production)
-  $users = json_decode(file_get_contents('users.json'), true);
-  
-  $user = array_filter($users, function($u) use ($username) {
-    return $u['username'] === $username;
-  });
-  
-  if (count($user) === 1 && password_verify($password, $user[0]['password_hash'])) {
-    $_SESSION['user_id'] = $user[0]['id'];
-    $_SESSION['is_admin'] = $user[0]['is_admin'];
-    return true;
+#### Login
+- **Endpoint**: `/api/auth.php?action=login`
+- **Method**: POST
+- **Request Body**:
+  ```json
+  {
+    "username": "string",
+    "password": "string"
   }
-  
-  return false;
-}
+  ```
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "message": "Login successful",
+    "data": {
+      "id": "number",
+      "username": "string",
+      "isAdmin": "boolean"
+    }
+  }
+  ```
+- **Error Codes**:
+  - 400: Invalid input
+  - 401: Invalid credentials
+  - 500: Server error
 
-function isLoggedIn() {
-  return isset($_SESSION['user_id']);
-}
+#### Registration
+- **Endpoint**: `/api/auth.php?action=register`
+- **Method**: POST
+- **Request Body**:
+  ```json
+  {
+    "username": "string",
+    "email": "string",
+    "password": "string",
+    "firstName": "string",
+    "lastName": "string",
+    "birthday": "string",
+    "gender": "string",
+    "avatar": "string (base64)"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "message": "Registration successful",
+    "data": {
+      "id": "number",
+      "username": "string"
+    }
+  }
+  ```
+- **Error Codes**:
+  - 400: Invalid input
+  - 409: Username or email already exists
+  - 500: Server error
 
-function isAdmin() {
-  return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
-}
-```
+#### Logout
+- **Endpoint**: `/api/auth.php?action=logout`
+- **Method**: POST
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "message": "Logout successful"
+  }
+  ```
+
+#### Status Check
+- **Endpoint**: `/api/auth.php?action=status`
+- **Method**: GET
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "isLoggedIn": "boolean",
+      "user": {
+        "id": "number",
+        "username": "string",
+        "isAdmin": "boolean"
+      }
+    }
+  }
+  ```
+
+### 7.2 Implementation Details
+
+#### Database Connection
+- Uses PDO for database operations
+- Connection is established using credentials from `db_credentials.php`
+- Error handling for connection failures
+- Prepared statements for all database queries
+
+#### Security Measures
+1. **Password Handling**:
+   - Passwords are hashed using `password_hash()` with PASSWORD_DEFAULT
+   - Password verification using `password_verify()`
+   - Minimum password length requirement (6 characters)
+
+2. **Input Validation**:
+   - Email format validation
+   - Username and email uniqueness checks
+   - Input sanitization for all user inputs
+   - Required field validation
+
+3. **Session Management**:
+   - PHP sessions for user authentication
+   - Session variables for user ID, username, and admin status
+   - Session start error handling
+
+4. **Error Handling**:
+   - Detailed error logging
+   - JSON error responses
+   - Database error tracking
+   - Input validation errors
+
+### 7.3 Data Flow
+
+#### Login Process
+1. Receive login request with username/email and password
+2. Validate input format
+3. Check if username is email or username
+4. Query database for user
+5. Verify password hash
+6. Set session variables
+7. Return user data
+
+#### Registration Process
+1. Receive registration data
+2. Validate all required fields
+3. Check username and email availability
+4. Hash password
+5. Combine first and last name into single name field
+6. Insert new user record
+7. Set session variables
+8. Return success response
+
+#### Logout Process
+1. Clear session variables
+2. Destroy session
+3. Return success response
+
+#### Status Check Process
+1. Check session status
+2. Return current authentication state
+3. Include user data if logged in
 
 ## 8. Development Guidelines
 
@@ -585,58 +796,78 @@ This documentation provides a blueprint for implementing a simple but functional
 ### Database Schema
 
 #### User Table
-- user_id: int (Primary Key)
-- username: varchar(50)
-- email: varchar(100)
-- password: varchar(255) (hashed)
-- first_name: varchar(50)
-- last_name: varchar(50)
-- address: text
-- phone: varchar(20)
-- created_at: timestamp
-- updated_at: timestamp
+- `id`: Primary key, auto-incrementing integer
+- `username`: Unique username (VARCHAR 50)
+- `email`: Unique email address (VARCHAR 100)
+- `password`: Hashed password (VARCHAR 255)
+- `name`: User's full name (VARCHAR 100)
+- `avatar`: User's avatar image (LONGBLOB, nullable)
+- `birthday`: User's date of birth (DATE)
+- `gender`: User's gender (ENUM: 'male', 'female', 'other')
+- `role`: User role (ENUM: 'user' or 'admin')
+- `created_at`: Timestamp of account creation
 
-#### Product Table
-- product_id: int (Primary Key)
-- category_id: int (Foreign Key references Categories)
-- name: varchar(100)
-- description: text
-- price: decimal(10,2)
-- stock: int
-- image: varchar(255)
-- created_at: timestamp
-- updated_at: timestamp
+Default test users:
+1. Admin user:
+   - Username: miakuang
+   - Email: miakuang@example.com
+   - Password: miakuang
+   - Role: admin
+
+2. Test users (for review data):
+   - Username: testuser1, testuser2, testuser3
+   - Email: testuser[1-3]@example.com
+   - Password: password123
+   - Role: user
+   - Avatar: /~miakuang/PurelyHandmade/server/uploads/images/avatars/default-avatar-[1-3].jpg
 
 #### Category Table
-- category_id: int (Primary Key)
-- name: varchar(50)
-- slug: varchar(50)
+- id: int (Primary Key)
+- name: varchar(100)
+- slug: varchar(100) UNIQUE
 - description: text
 - image: varchar(255)
 
+#### Product Table
+- id: int (Primary Key)
+- category_id: int (Foreign Key references Categories)
+- name: varchar(100)
+- slug: varchar(100) UNIQUE
+- description: text
+- price: decimal(10,2)
+- stock_quantity: int
+- image: varchar(255)
+- is_featured: boolean
+- in_stock: boolean
+- created_at: timestamp
+
+#### Product_Images Table
+- id: int (Primary Key)
+- product_id: int (Foreign Key references Products)
+- image_path: varchar(255)
+- is_primary: boolean
+
 #### Order Table
-- order_id: int (Primary Key)
+- id: int (Primary Key)
 - user_id: int (Foreign Key references Users)
+- order_number: varchar(50) UNIQUE
 - total_amount: decimal(10,2)
 - status: varchar(20)
-- shipping_address: text
-- payment_method: varchar(50)
 - created_at: timestamp
-- updated_at: timestamp
 
 #### Order_Item Table
-- item_id: int (Primary Key)
+- id: int (Primary Key)
 - order_id: int (Foreign Key references Orders)
 - product_id: int (Foreign Key references Products)
 - quantity: int
 - price: decimal(10,2)
 
-#### Comment Table
-- comment_id: int (Primary Key)
+#### Product_Reviews Table
+- id: int (Primary Key)
 - product_id: int (Foreign Key references Products)
 - user_id: int (Foreign Key references Users)
-- content: text
-- rating: int
+- rating: decimal(2,1) (range 1-5)
+- review_text: text
 - created_at: timestamp
 
 ### Data Files Structure
@@ -681,3 +912,69 @@ The application uses JSON files to store data:
 ### Users API
 - GET `/server/api/users/get.php` - Get current user profile
 - PUT `/server/api/users/update.php` - Update user profile 
+
+// Define cart API object inside an IIFE to avoid global namespace pollution
+const cartAPI = (function() {
+  // Define cart API object
+  const api = {
+  }
+})();
+
+### User Registration Process
+
+1. **Frontend Validation**:
+   - Form validation for required fields
+   - Password strength check
+   - Password confirmation match
+   - Email format validation
+   - Username format validation
+   - Terms and conditions acceptance
+
+2. **Backend Validation**:
+   - Username uniqueness check via `users.php?action=check_username`
+   - Email uniqueness check via `users.php?action=check_email`
+   - Password hashing using bcrypt
+   - Input sanitization
+   - SQL injection prevention
+
+3. **Data Flow**:
+   ```
+   Frontend -> Check Username -> Check Email -> Register User -> Response
+   ```
+
+4. **API Endpoints**:
+   - `users.php?action=check_username`
+     - Method: GET
+     - Parameters: username
+     - Response: { success: boolean, data: { available: boolean, message: string } }
+   
+   - `users.php?action=check_email`
+     - Method: GET
+     - Parameters: email
+     - Response: { success: boolean, data: { available: boolean, message: string } }
+   
+   - `auth.php?action=register`
+     - Method: POST
+     - Parameters: userData object
+     - Response: { success: boolean, message: string }
+
+5. **Security Measures**:
+   - All API calls use HTTPS
+   - Input sanitization on both frontend and backend
+   - Parameterized SQL queries
+   - Password hashing with bcrypt
+   - CSRF protection
+   - Rate limiting for API calls
+
+6. **Error Handling**:
+   - Frontend validation errors
+   - Backend validation errors
+   - Duplicate username/email errors
+   - Network errors
+   - Server errors
+
+7. **User Feedback**:
+   - Real-time validation feedback
+   - Toast notifications for success/error
+   - Clear error messages
+   - Loading states during API calls
