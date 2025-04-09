@@ -11,30 +11,36 @@ require_once 'functions.php';
 // Set longer execution time to prevent timeout during large data imports
 set_time_limit(300);
 
+// Set the real database name for the server
+$DB_NAME_REAL = "miakuang";
+
 echo "<h1>Database Initialization</h1>";
 echo "<pre>";
 
 try {
-    // Create database connection
+    // Create database connection (without selecting database)
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ];
     
-    // Use the database credentials for connection
-    if (defined('DB_SOCKET') && !empty(DB_SOCKET) && file_exists(DB_SOCKET)) {
-        $dsn = "mysql:unix_socket=" . DB_SOCKET . ";dbname=" . DB_NAME;
-        echo "Using socket connection: " . DB_SOCKET . "\n";
-    } else {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME;
-        if (defined('DB_PORT') && !empty(DB_PORT)) {
-            $dsn .= ";port=" . DB_PORT;
-        }
-        echo "Using TCP connection: " . DB_HOST . "\n";
+    // Force TCP connection for server environment
+    $dsn = "mysql:host=" . DB_HOST;
+    if (defined('DB_PORT') && !empty(DB_PORT)) {
+        $dsn .= ";port=" . DB_PORT;
     }
+    echo "Using TCP connection: " . DB_HOST . "\n";
     
-    // Create connection with database name
+    // Create initial connection
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-    echo "Connected to database: " . DB_NAME . "\n";
+    
+    // Create database if it doesn't exist
+    $sql = "CREATE DATABASE IF NOT EXISTS " . $DB_NAME_REAL . " DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
+    $pdo->exec($sql);
+    echo "Database created or already exists: " . $DB_NAME_REAL . "\n";
+    
+    // Select the database
+    $pdo->exec("USE " . $DB_NAME_REAL);
+    echo "Connected to database: " . $DB_NAME_REAL . "\n";
     
     // Disable foreign key checks (when creating tables)
     $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
@@ -201,6 +207,16 @@ try {
                     // Get first image as main image
                     $mainImage = isset($product['images'][0]) ? $product['images'][0] : null;
                     
+                    // Convert ISO datetime format (2023-04-01T10:30:00Z) to MySQL format (2023-04-01 10:30:00)
+                    $createdAt = isset($product['created_at']) ? $product['created_at'] : date('Y-m-d H:i:s');
+                    if (isset($product['created_at']) && preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $createdAt)) {
+                        $createdAt = str_replace('T', ' ', substr($createdAt, 0, -1));
+                    }
+                    
+                    // Ensure boolean values are converted to integers for MySQL
+                    $isFeatured = isset($product['is_featured']) ? ($product['is_featured'] ? 1 : 0) : 0;
+                    $inStock = isset($product['in_stock']) ? ($product['in_stock'] ? 1 : 0) : 1; // Default to in stock
+                    
                     // Insert product
                     $insertProductStmt->execute([
                         $product['id'],
@@ -211,18 +227,21 @@ try {
                         $product['category_id'],
                         $product['stock_quantity'] ?? 0,
                         $mainImage,
-                        $product['is_featured'] ?? false,
-                        $product['in_stock'] ?? true,
-                        $product['created_at'] ?? date('Y-m-d H:i:s')
+                        $isFeatured,
+                        $inStock,
+                        $createdAt
                     ]);
                     
                     // Insert product images
                     if (isset($product['images']) && is_array($product['images'])) {
                         foreach ($product['images'] as $index => $imagePath) {
+                            // Ensure is_primary is always a boolean value (0 or 1)
+                            $isPrimary = ($index === 0) ? 1 : 0;
+                            
                             $insertImageStmt->execute([
                                 $product['id'],
                                 $imagePath,
-                                $index === 0  // First image is primary
+                                $isPrimary  // First image is primary (1), others are not (0)
                             ]);
                         }
                     }
@@ -242,8 +261,8 @@ try {
     }
     
     echo "Database initialization completed successfully!\n";
-    echo "You can now access PHPMyAdmin to view the tables and data in database " . DB_NAME . ".\n";
-    echo "PHPMyAdmin URL: https://cosc360.ok.ubc.ca/phpmyadmin/\n";
+    echo "You can now access PHPMyAdmin to view the tables and data in database " . $DB_NAME_REAL . ".\n";
+    echo "URL: https://cosc360.ok.ubc.ca/phpmyadmin/\n";
     
 } catch (PDOException $e) {
     echo "Error: " . $e->getMessage() . "\n";

@@ -274,7 +274,99 @@ POST /server/api/cart.php?action=clear
 }
 ```
 
-## 6. Authentication
+## 6. Database Configuration and Initialization
+
+### 6.1 Database Setup
+
+The application uses a MySQL database with the following configuration:
+
+- **Database Name**: miakuang
+- **Username**: miakuang
+- **Password**: miakuang
+- **Host**: localhost
+- **Character Set**: utf8mb4
+
+The database structure includes tables for users, categories, products, product_images, orders, and order_items.
+
+### 6.2 Database Initialization
+
+The database can be initialized by running the script located at `server/includes/init-db.php`. This script:
+
+1. Creates the database if it doesn't exist
+2. Creates all required tables with appropriate relationships
+3. Creates a default admin user (username: miakuang, password: miakuang)
+4. Imports initial data for categories and products from JSON files
+
+#### Important Implementation Notes
+
+- The script uses TCP connection to MySQL (using `localhost`) rather than socket connections for better server compatibility
+- ISO date format (`2023-04-01T10:30:00Z`) is automatically converted to MySQL compatible format (`2023-04-01 10:30:00`)
+- Boolean values for fields like `is_primary` in product_images are explicitly cast to integers (0 or 1) for MySQL compatibility
+- Initial category and product data is imported from JSON files in the `server/data/` directory
+- Auto-increment counters are reset after bulk imports to ensure new records start with correct IDs
+
+#### Database Initialization Process
+
+To initialize the database:
+1. Navigate to `https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/includes/init-db.php`
+2. The script will create the database and all required tables
+3. Upon completion, you can access PHPMyAdmin at `https://cosc360.ok.ubc.ca/phpmyadmin/`
+
+### 6.3 Data Structure
+
+The database schema includes the following tables:
+
+#### User Table
+- id: int (Primary Key)
+- username: varchar(50) UNIQUE
+- email: varchar(100) UNIQUE
+- password: varchar(255) (hashed)
+- name: varchar(100)
+- role: ENUM('user', 'admin')
+- created_at: timestamp
+
+#### Category Table
+- id: int (Primary Key)
+- name: varchar(100)
+- slug: varchar(100) UNIQUE
+- description: text
+- image: varchar(255)
+
+#### Product Table
+- id: int (Primary Key)
+- category_id: int (Foreign Key references Categories)
+- name: varchar(100)
+- slug: varchar(100) UNIQUE
+- description: text
+- price: decimal(10,2)
+- stock_quantity: int
+- image: varchar(255)
+- is_featured: boolean
+- in_stock: boolean
+- created_at: timestamp
+
+#### Product_Images Table
+- id: int (Primary Key)
+- product_id: int (Foreign Key references Products)
+- image_path: varchar(255)
+- is_primary: boolean
+
+#### Order Table
+- id: int (Primary Key)
+- user_id: int (Foreign Key references Users)
+- order_number: varchar(50) UNIQUE
+- total_amount: decimal(10,2)
+- status: varchar(20)
+- created_at: timestamp
+
+#### Order_Item Table
+- id: int (Primary Key)
+- order_id: int (Foreign Key references Orders)
+- product_id: int (Foreign Key references Products)
+- quantity: int
+- price: decimal(10,2)
+
+## 7. Authentication
 
 For simplicity, the authentication system will use:
 
@@ -312,9 +404,9 @@ function isAdmin() {
 }
 ```
 
-## 7. Development Guidelines
+## 8. Development Guidelines
 
-### 7.1 Frontend Development
+### 8.1 Frontend Development
 
 1. **Use Vanilla JavaScript**: Keep dependencies minimal
 2. **Follow Bootstrap Conventions**: Use Bootstrap components and utilities
@@ -322,7 +414,7 @@ function isAdmin() {
 4. **Error Handling**: Gracefully handle network errors and empty states
 5. **Mobile-First**: Design for mobile devices first, then enhance for larger screens
 
-### 7.2 Backend Development 
+### 8.2 Backend Development 
 
 1. **Keep It Simple**: Start with the minimal functionality needed
 2. **JSON First**: Use JSON files for data storage initially
@@ -330,7 +422,7 @@ function isAdmin() {
 4. **RESTful Design**: Maintain clear conventions for API endpoints
 5. **Error Handling**: Return appropriate HTTP status codes and error messages
 
-### 7.3 Testing
+### 8.3 Testing
 
 1. **Manual Testing**: Test all functionality in major browsers
 2. **Validate Forms**: Check all form inputs for validation
@@ -338,9 +430,9 @@ function isAdmin() {
 4. **Offline Testing**: Test localStorage functionality
 5. **Error Scenarios**: Test API error responses
 
-## 8. Deployment Configuration
+## 9. Deployment Configuration
 
-### 8.1 .htaccess Configuration
+### 9.1 .htaccess Configuration
 
 ```apache
 RewriteEngine On
@@ -362,7 +454,7 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ public/index.html [L]
 ```
 
-### 8.2 Configuration Settings
+### 9.2 Configuration Settings
 
 Create a simple configuration mechanism for different environments:
 
@@ -387,7 +479,7 @@ if ($_SERVER['HTTP_HOST'] === 'cosc360.ok.ubc.ca') {
 return $config;
 ```
 
-### 8.3 JavaScript Configuration
+### 9.3 JavaScript Configuration
 
 ```javascript
 // public/js/config.js
@@ -490,57 +582,60 @@ This documentation provides a blueprint for implementing a simple but functional
 
 ### Database Schema
 
-The database name is `miakuang` on the cosc360.ok.ubc.ca server. The following tables are created:
-
 #### User Table
-- id: int (Primary Key)
+- user_id: int (Primary Key)
 - username: varchar(50)
 - email: varchar(100)
 - password: varchar(255) (hashed)
-- name: varchar(100)
-- role: enum('user', 'admin')
+- first_name: varchar(50)
+- last_name: varchar(50)
+- address: text
+- phone: varchar(20)
 - created_at: timestamp
+- updated_at: timestamp
 
 #### Product Table
-- id: int (Primary Key)
+- product_id: int (Primary Key)
 - category_id: int (Foreign Key references Categories)
 - name: varchar(100)
-- slug: varchar(100)
 - description: text
 - price: decimal(10,2)
-- stock_quantity: int
+- stock: int
 - image: varchar(255)
-- is_featured: boolean
-- in_stock: boolean
 - created_at: timestamp
+- updated_at: timestamp
 
 #### Category Table
-- id: int (Primary Key)
-- name: varchar(100)
-- slug: varchar(100)
+- category_id: int (Primary Key)
+- name: varchar(50)
+- slug: varchar(50)
 - description: text
 - image: varchar(255)
 
 #### Order Table
-- id: int (Primary Key)
+- order_id: int (Primary Key)
 - user_id: int (Foreign Key references Users)
-- order_number: varchar(50)
 - total_amount: decimal(10,2)
 - status: varchar(20)
+- shipping_address: text
+- payment_method: varchar(50)
 - created_at: timestamp
+- updated_at: timestamp
 
 #### Order_Item Table
-- id: int (Primary Key)
+- item_id: int (Primary Key)
 - order_id: int (Foreign Key references Orders)
 - product_id: int (Foreign Key references Products)
 - quantity: int
 - price: decimal(10,2)
 
-#### Product_Images Table
-- id: int (Primary Key)
+#### Comment Table
+- comment_id: int (Primary Key)
 - product_id: int (Foreign Key references Products)
-- image_path: varchar(255)
-- is_primary: boolean
+- user_id: int (Foreign Key references Users)
+- content: text
+- rating: int
+- created_at: timestamp
 
 ### Data Files Structure
 
