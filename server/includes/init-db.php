@@ -55,7 +55,7 @@ try {
         email VARCHAR(100) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         name VARCHAR(100),
-        avatar VARCHAR(255) DEFAULT NULL,
+        avatar LONGBLOB DEFAULT NULL,
         birthday DATE,
         gender ENUM('male', 'female', 'other') DEFAULT 'other',
         role ENUM('user', 'admin') DEFAULT 'user',
@@ -154,7 +154,7 @@ try {
         
         $stmt = $pdo->prepare("INSERT INTO users 
             (username, email, password, name, role, avatar, birthday, gender) 
-            VALUES (?, ?, ?, 'Mia Kuang', 'admin', '/~miakuang/PurelyHandmade/server/uploads/images/avatars/profile.png', '1990-01-01', 'female')");
+            VALUES (?, ?, ?, 'Mia Kuang', 'admin', NULL, '1990-01-01', 'female')");
         
         $stmt->execute([$username, $email, $passwordHash]);
         
@@ -164,19 +164,19 @@ try {
         // User ID 2
         $stmt = $pdo->prepare("INSERT INTO users 
             (id, username, email, password, name, role, avatar, birthday, gender) 
-            VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user', '/~miakuang/PurelyHandmade/server/uploads/images/avatars/default-avatar-1.jpg', '1990-01-15', 'male')");
+            VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user', NULL, '1990-01-15', 'male')");
         $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
         
         // User ID 3
         $stmt = $pdo->prepare("INSERT INTO users 
             (id, username, email, password, name, role, avatar, birthday, gender) 
-            VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user', '/~miakuang/PurelyHandmade/server/uploads/images/avatars/default-avatar-2.jpg', '1992-05-20', 'female')");
+            VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user', NULL, '1992-05-20', 'female')");
         $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
         
         // User ID 4
         $stmt = $pdo->prepare("INSERT INTO users 
             (id, username, email, password, name, role, avatar, birthday, gender) 
-            VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user', '/~miakuang/PurelyHandmade/server/uploads/images/avatars/default-avatar-3.jpg', '1995-11-30', 'other')");
+            VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user', NULL, '1995-11-30', 'other')");
         $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
         
         echo "Created 3 additional test users for review data\n";
@@ -192,21 +192,21 @@ try {
             if (!userExists($pdo, 2)) {
                 $stmt = $pdo->prepare("INSERT INTO users 
                     (id, username, email, password, name, role, avatar, birthday, gender) 
-                    VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user', '/~miakuang/PurelyHandmade/server/uploads/images/avatars/default-avatar-1.jpg', '1990-01-15', 'male')");
+                    VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user', NULL, '1990-01-15', 'male')");
                 $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
             }
             
             if (!userExists($pdo, 3)) {
                 $stmt = $pdo->prepare("INSERT INTO users 
                     (id, username, email, password, name, role, avatar, birthday, gender) 
-                    VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user', '/~miakuang/PurelyHandmade/server/uploads/images/avatars/default-avatar-2.jpg', '1992-05-20', 'female')");
+                    VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user', NULL, '1992-05-20', 'female')");
                 $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
             }
             
             if (!userExists($pdo, 4)) {
                 $stmt = $pdo->prepare("INSERT INTO users 
                     (id, username, email, password, name, role, avatar, birthday, gender) 
-                    VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user', '/~miakuang/PurelyHandmade/server/uploads/images/avatars/default-avatar-3.jpg', '1995-11-30', 'other')");
+                    VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user', NULL, '1995-11-30', 'other')");
                 $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
             }
             
