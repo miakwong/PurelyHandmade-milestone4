@@ -86,8 +86,16 @@ function initializeEventListeners() {
 
 // 加载导航栏和页脚
 function loadLayoutComponents() {
+  const navbarUrl = config.production 
+    ? `${config.baseUrl}/layout/navbar.html` 
+    : 'layout/navbar.html';
+    
+  const footerUrl = config.production 
+    ? `${config.baseUrl}/layout/footer.html` 
+    : 'layout/footer.html';
+    
   // 加载导航栏
-  fetch('layout/navbar.html')
+  fetch(navbarUrl)
     .then(response => {
       if (!response.ok) {
         throw new Error(`Failed to load navbar (${response.status})`);
@@ -98,8 +106,15 @@ function loadLayoutComponents() {
       document.getElementById('navbar-placeholder').innerHTML = html;
       console.log('Navbar loaded successfully');
       
-      // 加载导航栏后更新购物车计数
-      updateCartCount();
+      // 在导航栏加载完成后，确保DOM元素已存在再更新购物车计数
+      setTimeout(() => {
+        if (typeof updateCartCount === 'function') {
+          updateCartCount();
+          console.log('Cart count updated after navbar loaded');
+        } else {
+          console.error('updateCartCount function not found');
+        }
+      }, 100);
     })
     .catch(error => {
       console.error('Error loading navbar:', error);
@@ -108,7 +123,7 @@ function loadLayoutComponents() {
     });
 
   // 加载页脚
-  fetch('layout/footer.html')
+  fetch(footerUrl)
     .then(response => {
       if (!response.ok) {
         throw new Error(`Failed to load footer (${response.status})`);

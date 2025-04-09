@@ -9,17 +9,20 @@ const config = {
   },
   
   get apiUrl() {
-    return this.baseUrl + '/server/api';
+    return this.production ? 'https://cosc360.ok.ubc.ca/server/api' : '/server/api';
   },
   
   get uploadsUrl() {
-    return this.baseUrl + '/server/uploads';
+    return this.production ? 'https://cosc360.ok.ubc.ca/server/uploads' : '/server/uploads';
   },
   
   get imagesUrl() {
     return this.uploadsUrl + '/images';
   }
 };
+
+// 确保config对象在全局可用
+window.config = config;
 
 // Helper functions
 function getApiUrl(endpoint) {

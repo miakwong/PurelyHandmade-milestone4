@@ -1,4 +1,4 @@
-const API_URL = '/server/api/';
+const API_URL = '/~miakuang/PurelyHandmade/server/api/';
 
 /**
  * Constructs the full API URL for an endpoint

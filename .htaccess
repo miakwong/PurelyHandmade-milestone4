@@ -1,25 +1,25 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /~miakuang/PurelyHandmade/
-    
+
     # Direct access to root should go to public/index.html
     RewriteRule ^$ /~miakuang/PurelyHandmade/public/index.html [L,R=301]
     
     # Handle API requests
-    RewriteRule ^api/(.*)$ server/api/$1 [L]
+    RewriteRule ^api/(.*)$ /~miakuang/PurelyHandmade/server/api/$1 [L]
     
-    # Handle static files from server/uploads
-    RewriteRule ^uploads/(.*)$ server/uploads/$1 [L]
-    
+    # Handle static files from server/uploads (make sure we are catching uploads first)
+    RewriteRule ^uploads/(.*)$ /~miakuang/PurelyHandmade/server/uploads/$1 [L]
+
     # If the requested file exists in public/ serve it directly
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ public/$1 [L]
+    RewriteRule ^(.*)$ /~miakuang/PurelyHandmade/public/$1 [L]
     
     # Default to index.html for any other requests
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ public/index.html [L]
+    RewriteRule ^(.*)$ /~miakuang/PurelyHandmade/public/index.html [L]
 </IfModule>
 
 # Add CORS headers if needed
@@ -33,7 +33,7 @@
 AddDefaultCharset UTF-8
 
 # Set default index files - Make sure public/index.html is first
-DirectoryIndex public/index.html index.html index.php
+DirectoryIndex /~miakuang/PurelyHandmade/public/index.html /index.html /index.php
 
 # PHP settings
 <IfModule mod_php7.c>

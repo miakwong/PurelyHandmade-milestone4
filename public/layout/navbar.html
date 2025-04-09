@@ -3,18 +3,19 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <link rel="stylesheet" href="../css/navbar.css">
+  <link rel="stylesheet" href="https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/css/navbar.css" id="navbar-css">
 </head>
 <!-- Top Navigation Bar -->
 <nav class="navbar navbar-light bg-light p-3">
   <div class="container d-flex justify-content-between">
-    <a class="navbar-brand d-flex align-items-center" href="../index.html">
-      <img src="/server/uploads/images/logo.jpg" alt="Logo" width="50">
+    <a class="navbar-brand d-flex align-items-center" href="index.html">
+      <img src="https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/uploads/images/logo.jpg" alt="Logo" width="50"
+        id="navbar-logo">
       <span class="ms-2 fs-4">Purely Homemade</span>
     </a>
 
     <!-- Search Bar -->
-    <form class="d-flex" action="../views/product/product-list.html" method="GET">
+    <form class="d-flex" action="views/product/product-list.html" method="GET">
       <input class="form-control me-2" type="search" name="search" placeholder="Search products...">
       <button class="btn btn-outline-primary" type="submit">🔍</button>
     </form>
@@ -27,12 +28,12 @@
           <i class="material-icons-outlined">account_circle</i>
         </a>
         <ul class="dropdown-menu" aria-labelledby="userDropdown">
-          <li><a class="dropdown-item" href="../views/auth/login.html" id="login-link">Login</a></li>
-          <li><a class="dropdown-item" href="../views/auth/register.html" id="register-link">Register</a></li>
+          <li><a class="dropdown-item" href="views/auth/login.html" id="login-link">Login</a></li>
+          <li><a class="dropdown-item" href="views/auth/register.html" id="register-link">Register</a></li>
         </ul>
       </div>
       <!-- Cart Icon -->
-      <a href="../views/checkout/cart.html" class="btn btn-outline-primary" id="cart-link">
+      <a href="views/checkout/cart.html" class="btn btn-outline-primary" id="cart-link">
         <i class="material-icons-outlined">shopping_bag</i>
         <span class="badge bg-danger rounded-pill" id="cart-count" style="display: none;">0</span>
       </a>
@@ -57,36 +58,71 @@
 </div>
 
 <script>
-  (function() {
-    const loginButton = document.getElementById('login-button');
-    const logoutButton = document.getElementById('logout-button');
-    const ordersMenuItem = document.getElementById('orders-menu-item');
-    const accountButton = document.getElementById('account-button');
+  document.addEventListener('DOMContentLoaded', function () {
+    const userDropdown = document.getElementById('userDropdown');
+    const loginLink = document.getElementById('login-link');
+    const registerLink = document.getElementById('register-link');
+    const cartLink = document.getElementById('cart-link');
+    const navbarLogo = document.getElementById('navbar-logo');
+    const navbarCss = document.getElementById('navbar-css');
 
-    const currentUser = localStorage.getItem('currentUser');
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    // 使用全局config对象获取API URL
+    const apiUrl = window.config ? window.config.apiUrl : 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/api';
+    const baseUrl = window.config ? window.config.baseUrl : 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade';
 
-    if (currentUser) {
-      loginButton.style.display = 'none';
-      logoutButton.style.display = 'inline-block';
-      accountButton.style.display = 'inline-block';
-
-      if (isAdmin) {
-        ordersMenuItem.style.display = 'inline-block';
-      }
-
-      logoutButton.addEventListener('click', function(e) {
-        e.preventDefault();
-
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('isAdmin');
-
-        window.location.href = '../index.html';
-      });
-    } else {
-      loginButton.style.display = 'inline-block';
-      logoutButton.style.display = 'none';
-      accountButton.style.display = 'none';
+    // 设置正确的CSS路径
+    if (window.config && window.config.production) {
+      navbarCss.href = `${baseUrl}/css/navbar.css`;
     }
-  })();
+
+    // 设置正确的logo路径
+    if (window.config && window.config.imagesUrl) {
+      navbarLogo.src = `${window.config.imagesUrl}/logo.jpg`;
+    }
+
+    // 检查用户登录状态
+    fetch(`${apiUrl}/auth.php?action=status`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.loggedIn) {
+          // 用户已登录，显示用户名和退出选项
+          loginLink.parentElement.style.display = 'none';
+          registerLink.parentElement.style.display = 'none';
+
+          const profileItem = document.createElement('li');
+          profileItem.innerHTML = `<a class="dropdown-item" href="views/auth/profile.html">My Profile</a>`;
+
+          const logoutItem = document.createElement('li');
+          logoutItem.innerHTML = `<a class="dropdown-item" href="#" id="logout-link">Logout</a>`;
+
+          // 如果是管理员，显示管理选项
+          if (data.isAdmin) {
+            const adminItem = document.createElement('li');
+            adminItem.innerHTML = `<a class="dropdown-item" href="views/admin/dashboard.html">Admin Panel</a>`;
+            loginLink.parentElement.parentElement.appendChild(adminItem);
+          }
+
+          loginLink.parentElement.parentElement.appendChild(profileItem);
+          loginLink.parentElement.parentElement.appendChild(logoutItem);
+
+          // 添加退出功能
+          document.getElementById('logout-link').addEventListener('click', function (e) {
+            e.preventDefault();
+            fetch(`${apiUrl}/auth.php?action=logout`)
+              .then(response => response.json())
+              .then(() => {
+                window.location.reload();
+              });
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error checking authentication status:', error);
+      });
+
+    // 初始化Bootstrap下拉菜单
+    if (typeof bootstrap !== 'undefined') {
+      const dropdown = new bootstrap.Dropdown(userDropdown);
+    }
+  });
 </script>

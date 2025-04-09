@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/PurelyHandmade-milestone4/src/assets/css/footer.css">
+<link rel="stylesheet" href="https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/css/footer.css" id="footer-css">
 
 <!-- Footer -->
 <footer class="bg-light text-center text-lg-start mt-5 p-3">
@@ -6,15 +6,18 @@
         <div class="row">
             <!-- Logo Section -->
             <div class="col-md-4">
-                <img src="/PurelyHandmade-milestone4/src/assets/img/logo.jpg" alt="Logo" width="110">
+                <img src="https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/uploads/images/logo.jpg" alt="Logo"
+                    width="110" id="footer-logo">
             </div>
 
             <!-- Contact Information -->
             <div class="col-md-4 contact-info">
                 <p class="d-flex align-items-center gap-3">
-                    <i class="material-icons-outlined">email</i>purelyhomemade@email.com</p>
+                    <i class="material-icons-outlined">email</i>purelyhomemade@email.com
+                </p>
                 <p class="d-flex align-items-center gap-3">
-                    <i class="material-icons-outlined">phone</i>+123 456 7890</p>
+                    <i class="material-icons-outlined">phone</i>+123 456 7890
+                </p>
                 <p class="d-flex align-items-center gap-3">
                     <i class="material-icons-outlined">mediation</i>
                     <a href="https://www.facebook.com" target="_blank">
@@ -38,7 +41,22 @@
     </div>
 </footer>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         console.log('Footer loaded successfully');
+
+        // Get the base URL from the config object
+        const baseUrl = window.config ? window.config.baseUrl : 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade';
+
+        // Set the correct CSS path for the footer
+        const footerCss = document.getElementById('footer-css');
+        if (window.config && window.config.production) {
+            footerCss.href = `${baseUrl}/css/footer.css`;
+        }
+
+        // Set the correct logo path for the footer
+        const footerLogo = document.getElementById('footer-logo');
+        if (window.config && window.config.imagesUrl) {
+            footerLogo.src = `${window.config.imagesUrl}/logo.jpg`;
+        }
     });
 </script>
