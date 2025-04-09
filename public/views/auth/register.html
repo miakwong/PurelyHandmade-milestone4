@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Register - Purely Homemade</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+  <link rel="stylesheet" href="../../css/styles.css">
+
   <style>
     :root {
       --primary-color: #0d6efd;
@@ -16,18 +20,18 @@
       --success-color: #198754;
       --danger-color: #dc3545;
     }
-    
+
     body {
       background-color: #f9f9f9;
     }
-    
+
     .register-card {
       border: none;
       border-radius: 12px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
       overflow: hidden;
     }
-    
+
     .card-header {
       background-color: var(--primary-color);
       color: white;
@@ -35,22 +39,22 @@
       padding: 1.5rem 1rem;
       border-bottom: none;
     }
-    
+
     .card-header h2 {
       margin-bottom: 0;
       font-weight: 600;
     }
-    
+
     .card-body {
       padding: 2rem;
     }
-    
+
     /* Avatar Upload */
     .avatar-container {
       margin-bottom: 2rem;
       text-align: center;
     }
-    
+
     .avatar-wrapper {
       position: relative;
       width: 120px;
@@ -59,11 +63,11 @@
       cursor: pointer;
       transition: transform 0.3s ease;
     }
-    
+
     .avatar-wrapper:hover {
       transform: scale(1.05);
     }
-    
+
     .avatar-preview {
       width: 100%;
       height: 100%;
@@ -73,18 +77,18 @@
       overflow: hidden;
       transition: all 0.3s ease;
     }
-    
+
     .avatar-wrapper:hover .avatar-preview {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 4px var(--primary-light);
     }
-    
+
     .avatar-wrapper img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
-    
+
     .avatar-placeholder {
       display: flex;
       align-items: center;
@@ -94,7 +98,7 @@
       font-size: 40px;
       color: var(--text-muted);
     }
-    
+
     .avatar-camera-icon {
       position: absolute;
       bottom: 5px;
@@ -112,55 +116,55 @@
       z-index: 2;
       transition: background-color 0.2s ease;
     }
-    
+
     .avatar-wrapper:hover .avatar-camera-icon {
       background-color: #0b5ed7;
     }
-    
+
     .avatar-input {
       display: none;
     }
-    
+
     /* Form fields */
     .form-label {
       font-weight: 500;
       margin-bottom: 0.5rem;
       color: #495057;
     }
-    
+
     .form-control {
       padding: 0.75rem 1rem;
       border-radius: 8px;
     }
-    
+
     .form-control:focus {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 3px var(--primary-light);
     }
-    
+
     .form-field-group {
       margin-bottom: 1.5rem;
     }
-    
+
     .form-check-input:checked {
       background-color: var(--primary-color);
       border-color: var(--primary-color);
     }
-    
+
     .gender-options {
       display: flex;
       gap: 1rem;
     }
-    
+
     .gender-option {
       flex: 1;
       text-align: center;
     }
-    
+
     .gender-option input[type="radio"] {
       display: none;
     }
-    
+
     .gender-option label {
       display: block;
       padding: 0.75rem;
@@ -169,36 +173,36 @@
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    
-    .gender-option input[type="radio"]:checked + label {
+
+    .gender-option input[type="radio"]:checked+label {
       background-color: var(--primary-color);
       color: white;
       border-color: var(--primary-color);
     }
-    
+
     .gender-option i {
       display: block;
       font-size: 1.5rem;
       margin-bottom: 0.5rem;
     }
-    
+
     .submit-btn {
       padding: 0.75rem;
       font-weight: 500;
       border-radius: 8px;
       transition: all 0.3s ease;
     }
-    
+
     .login-link {
       color: var(--primary-color);
       text-decoration: none;
       font-weight: 500;
     }
-    
+
     .login-link:hover {
       text-decoration: underline;
     }
-    
+
     /* Password strength indicator */
     .password-strength {
       height: 4px;
@@ -207,29 +211,30 @@
       background-color: #e9ecef;
       overflow: hidden;
     }
-    
+
     .password-strength-meter {
       height: 100%;
       width: 0;
       transition: width 0.3s ease, background-color 0.3s ease;
     }
-    
+
     .strength-weak {
       width: 33%;
       background-color: var(--danger-color);
     }
-    
+
     .strength-medium {
       width: 66%;
       background-color: #ffc107;
     }
-    
+
     .strength-strong {
       width: 100%;
       background-color: var(--success-color);
     }
   </style>
 </head>
+
 <body>
   <!-- Navbar Placeholder -->
   <div id="navbar-placeholder"></div>
@@ -260,7 +265,7 @@
                 </div>
                 <p class="text-center text-muted mt-2">Profile Photo (Optional)</p>
               </div>
-              
+
               <!-- Form Fields -->
               <div class="row">
                 <div class="col-md-6 form-field-group">
@@ -274,19 +279,19 @@
                   <div class="invalid-feedback">Please enter your last name.</div>
                 </div>
               </div>
-              
+
               <div class="form-field-group">
                 <label for="email" class="form-label">Email Address</label>
                 <input type="email" class="form-control" id="email" required>
                 <div class="invalid-feedback">Please enter a valid email address.</div>
               </div>
-              
+
               <div class="form-field-group">
                 <label for="username" class="form-label">Username</label>
                 <input type="text" class="form-control" id="username" required>
                 <div class="invalid-feedback">Please choose a username.</div>
               </div>
-              
+
               <div class="row">
                 <div class="col-md-6 form-field-group">
                   <label for="password" class="form-label">Password</label>
@@ -299,13 +304,13 @@
                   <div class="invalid-feedback">Passwords do not match.</div>
                 </div>
               </div>
-              
+
               <div class="form-field-group">
                 <label for="birthday" class="form-label">Birthday</label>
                 <input type="date" class="form-control" id="birthday" required>
                 <div class="invalid-feedback">Please enter your birthday.</div>
               </div>
-              
+
               <div class="form-field-group">
                 <label class="form-label">Gender</label>
                 <div class="gender-options">
@@ -333,20 +338,21 @@
                 </div>
                 <div class="invalid-feedback">Please select your gender.</div>
               </div>
-              
+
               <div class="form-field-group">
                 <div class="form-check">
                   <input class="form-check-input" type="checkbox" id="terms" required>
                   <label class="form-check-label" for="terms">
-                    I agree to the <a href="#" class="login-link">Terms of Service</a> and <a href="#" class="login-link">Privacy Policy</a>
+                    I agree to the <a href="#" class="login-link">Terms of Service</a> and <a href="#"
+                      class="login-link">Privacy Policy</a>
                   </label>
                   <div class="invalid-feedback">You must agree to the terms.</div>
                 </div>
               </div>
-              
+
               <button type="submit" class="btn btn-primary w-100 submit-btn mt-3">Create Account</button>
             </form>
-            
+
             <div class="text-center mt-4">
               <p>Already have an account? <a href="login.html" class="login-link">Login</a></p>
             </div>
@@ -358,7 +364,7 @@
 
   <!-- Footer Placeholder -->
   <div id="footer-placeholder"></div>
-  
+
   <script>
     // Load navbar and footer content dynamically
     fetch('../../layout/navbar.html').then(response => response.text())
@@ -376,45 +382,45 @@
       .catch(error => {
         console.error('Error loading footer:', error);
       });
-      
+
     // Avatar upload preview
-    document.getElementById('avatar-wrapper').addEventListener('click', function() {
+    document.getElementById('avatar-wrapper').addEventListener('click', function () {
       document.getElementById('avatar-input').click();
     });
-    
-    document.getElementById('avatar-input').addEventListener('change', function(e) {
+
+    document.getElementById('avatar-input').addEventListener('change', function (e) {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = function (event) {
           const imgUrl = event.target.result;
           document.querySelector('.avatar-placeholder').innerHTML = `<img src="${imgUrl}" alt="Profile Photo" style="width: 100%; height: 100%; object-fit: cover;">`;
         };
         reader.readAsDataURL(file);
       }
     });
-    
+
     // Form validation
     const form = document.getElementById('register-form');
     const password = document.getElementById('password');
     const confirmPassword = document.getElementById('confirmPassword');
-    
-    form.addEventListener('submit', function(event) {
+
+    form.addEventListener('submit', function (event) {
       event.preventDefault();
-      
+
       // Check if passwords match
       if (password.value !== confirmPassword.value) {
         confirmPassword.setCustomValidity("Passwords don't match");
       } else {
         confirmPassword.setCustomValidity("");
       }
-      
+
       if (!form.checkValidity()) {
         event.stopPropagation();
         form.classList.add('was-validated');
         return;
       }
-      
+
       // Get form data
       const firstName = document.getElementById('firstName').value;
       const lastName = document.getElementById('lastName').value;
@@ -424,21 +430,21 @@
       const gender = document.querySelector('input[name="gender"]:checked').value;
       const avatarImg = document.querySelector('.avatar-placeholder img');
       const avatar = avatarImg ? avatarImg.src : null;
-      
+
       // Get existing users
       let users = JSON.parse(localStorage.getItem('users') || '[]');
-      
+
       // Check if username or email already exists
       if (users.some(user => user.username === username)) {
         alert('Username already exists. Please choose another one.');
         return;
       }
-      
+
       if (users.some(user => user.email === email)) {
         alert('Email already registered. Please use another email or login.');
         return;
       }
-      
+
       // Create new user
       const newUser = {
         id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
@@ -453,19 +459,19 @@
         isAdmin: false,
         createdAt: new Date().toISOString()
       };
-      
+
       users.push(newUser);
       localStorage.setItem('users', JSON.stringify(users));
-      
+
       // Create profile object for the user
       const userProfile = {
         ...newUser,
         fullName: `${firstName} ${lastName}`,
       };
       delete userProfile.password; // Don't store password in profile
-      
+
       localStorage.setItem('user', JSON.stringify(userProfile));
-      
+
       // Set as current user
       localStorage.setItem('currentUser', JSON.stringify({
         id: newUser.id,
@@ -473,12 +479,13 @@
         email: newUser.email,
         isAdmin: newUser.isAdmin
       }));
-      
+
       alert('Account created successfully! Welcome to Purely Homemade!');
       window.location.href = 'profile.html';
     });
   </script>
-  
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

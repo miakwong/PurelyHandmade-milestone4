@@ -1,20 +1,17 @@
 <?php
-/**
- * Configuration File
- * Contains all global configuration settings
- */
+//Config file for db
 
 // Environment Detection
 $isProduction = (strpos($_SERVER['HTTP_HOST'] ?? '', 'cosc360.ok.ubc.ca') !== false);
 
-// Database Configuration - These should not be uploaded to version control
+// Database Configuration 
 // In production, update these values accordingly
 if (file_exists(__DIR__ . '/db_credentials.php')) {
     require_once __DIR__ . '/db_credentials.php';
 } else {
-    // Default database name, credentials should be in db_credentials.php
+    // Default database name
     define('DB_HOST', 'localhost');
-    define('DB_NAME', 'purely_handmade');
+    define('DB_NAME', 'miakuang');
     
     // Display warning about missing credentials file
     trigger_error('Database credentials file not found. Please create db_credentials.php', E_USER_NOTICE);
@@ -35,8 +32,8 @@ if ($isProduction) {
     define('BASE_URL', '');  // Empty for local development with relative paths
 }
 
-define('SITE_ROOT', dirname(dirname(__FILE__))); // Points to server directory
-define('PROJECT_ROOT', dirname(SITE_ROOT));     // Points to project root
+define('SITE_ROOT', dirname(dirname(__FILE__))); 
+define('PROJECT_ROOT', dirname(SITE_ROOT));     
 define('UPLOAD_PATH', SITE_ROOT . '/uploads');
 define('IMAGES_PATH', UPLOAD_PATH . '/images');
 define('ASSETS_PATH', UPLOAD_PATH . '/assets');

@@ -1,6 +1,6 @@
-// UI 交互功能
+// UI interaction functions
 
-// 初始化URL参数
+// Initialize URL parameters
 function initializeUrlParams() {
   const urlParams = new URLSearchParams(window.location.search);
   const categoryParam = urlParams.get('category');
@@ -10,13 +10,13 @@ function initializeUrlParams() {
   return activeCategoryId;
 }
 
-// 显示Toast通知
+// Display Toast notifications
 function showToast(message, type = 'success') {
   const toastContainer = document.getElementById('toast-container');
   
   if (!toastContainer) return;
   
-  // 创建toast元素
+  // Create toast element
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.style.backgroundColor = '#fff';
@@ -37,54 +37,54 @@ function showToast(message, type = 'success') {
     toast.style.borderLeft = '4px solid #dc3545';
   }
   
-  // 添加内容
+  // Add content
   toast.innerHTML = `
     <div style="flex: 1; padding-right: 10px;">${message}</div>
     <div style="cursor: pointer; font-size: 16px; color: #999;">&times;</div>
   `;
   
-  // 添加到容器
+  // Append to container
   toastContainer.appendChild(toast);
   
-  // 添加关闭按钮事件
+  // Add close button event
   const closeBtn = toast.querySelector('div:last-child');
   closeBtn.addEventListener('click', function() {
     toast.remove();
   });
   
-  // 自动3秒后移除
+  // Automatically remove after 3 seconds
   setTimeout(() => {
     toast.remove();
   }, 3000);
 }
 
-// 初始化事件监听器
+// Initialize event listeners
 function initializeEventListeners() {
-  // 排序选择器
+  // Sort selector
   document.getElementById('sort-select').addEventListener('change', applyFiltersAndSort);
   
-  // 每页显示产品数选择器
+  // Products per page selector
   document.getElementById('products-per-page').addEventListener('change', function() {
     setProductsPerPage(parseInt(this.value));
     applyFiltersAndSort();
   });
   
-  // 价格筛选
+  // Price filter
   document.getElementById('apply-price-filter').addEventListener('click', applyFiltersAndSort);
   
-  // 重置筛选器
+  // Reset filters
   document.getElementById('reset-filters').addEventListener('click', resetFilters);
   
-  // 评分筛选
+  // Rating filter
   document.querySelectorAll('input[name="rating-filter"]').forEach(input => {
     input.addEventListener('change', applyFiltersAndSort);
   });
   
-  // 特惠筛选
+  // Deals filter
   document.getElementById('filter-sale').addEventListener('change', applyFiltersAndSort);
 }
 
-// 加载导航栏和页脚
+// Load navbar and footer
 function loadLayoutComponents() {
   const navbarUrl = config.production 
     ? `${config.baseUrl}/layout/navbar.html` 
@@ -94,7 +94,7 @@ function loadLayoutComponents() {
     ? `${config.baseUrl}/layout/footer.html` 
     : 'layout/footer.html';
     
-  // 加载导航栏
+  // Load navbar
   fetch(navbarUrl)
     .then(response => {
       if (!response.ok) {
@@ -106,7 +106,7 @@ function loadLayoutComponents() {
       document.getElementById('navbar-placeholder').innerHTML = html;
       console.log('Navbar loaded successfully');
       
-      // 在导航栏加载完成后，确保DOM元素已存在再更新购物车计数
+      // Ensure DOM elements exist before updating cart count
       setTimeout(() => {
         if (typeof updateCartCount === 'function') {
           updateCartCount();
@@ -122,7 +122,7 @@ function loadLayoutComponents() {
         '<div class="alert alert-danger">Failed to load navigation bar. Please check console for details.</div>';
     });
 
-  // 加载页脚
+  // Load footer
   fetch(footerUrl)
     .then(response => {
       if (!response.ok) {
@@ -141,25 +141,25 @@ function loadLayoutComponents() {
     });
 }
 
-// 页面初始化
+// Page initialization
 function initializePage() {
-  // 加载导航栏和页脚
+  // Load navbar and footer
   loadLayoutComponents();
   
-  // 初始化URL参数
+  // Initialize URL parameters
   initializeUrlParams();
   
-  // 加载分类和产品
+  // Load categories and products
   loadCategories();
   loadProducts();
   
-  // 初始化筛选器折叠功能
+  // Initialize filter accordion functionality
   initializeFilterAccordion();
   
-  // 初始化事件监听器
+  // Initialize event listeners
   initializeEventListeners();
 }
 
-// 将界面功能函数附加到全局window对象
+// Attach UI functions to the global window object
 window.showToast = showToast;
-window.initializePage = initializePage; 
+window.initializePage = initializePage;

@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - Purely Homemade</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="../../css/global.css" rel="stylesheet">
+  <link href="../../css/styles.css" rel="stylesheet">
 </head>
 
 <body>
@@ -113,17 +113,16 @@
           localStorage.setItem('isAdmin', 'true');
         }
 
-        // 检查是否有待添加到购物车的商品
+        // Check if there are pending items to add to the cart
         const pendingCart = localStorage.getItem('pendingAddToCart');
         if (pendingCart) {
           try {
             const { productId, quantity } = JSON.parse(pendingCart);
-            // 清除待添加记录
+            // Clear pending record
             localStorage.removeItem('pendingAddToCart');
 
-            // 登录成功后重定向到商品页面并自动添加商品
+            // Redirect to the homepage and automatically add the product after login
             alert(`Successfully logged in! Welcome, ${user.username}!`);
-            // 将URL设置为首页
             window.location.href = '../../index.html';
             return;
           } catch (error) {

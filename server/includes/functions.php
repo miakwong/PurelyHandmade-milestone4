@@ -1,26 +1,18 @@
 <?php
-/**
- * Common Functions
- * 
- * Contains helper functions used throughout the application
- */
+//Common Functions
+//Contains helper functions
+
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Load application configuration
+// application configuration
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/db.php';
 
-/**
- * Return JSON response
- * 
- * @param array $data Data to return
- * @param int $status HTTP status code
- * @return void
- */
+// jsonResponse function
 function jsonResponse($data, $status = 200) {
     http_response_code($status);
     header('Content-Type: application/json');
@@ -28,51 +20,29 @@ function jsonResponse($data, $status = 200) {
     exit;
 }
 
-/**
- * Return error response
- * 
- * @param string $message Error message
- * @param int $status HTTP status code
- * @return void
- */
+// errorResponse function
 function errorResponse($message, $status = 400) {
     jsonResponse(['error' => $message], $status);
 }
 
-/**
- * Check if user is logged in
- * 
- * @return bool True if logged in
- */
+// login status check function
 function isLoggedIn() {
     return isset($_SESSION['user_id']);
 }
 
-/**
- * Check if user is admin
- * 
- * @return bool True if admin
- */
+// admin status check function
 function isAdmin() {
     return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
 }
 
-/**
- * Require user to be logged in
- * 
- * @return void
- */
+// require for login function
 function requireLogin() {
     if (!isLoggedIn()) {
         errorResponse('Authentication required', 401);
     }
 }
 
-/**
- * Require user to be admin
- * 
- * @return void
- */
+//admin requirement function
 function requireAdmin() {
     requireLogin();
     if (!isAdmin()) {
@@ -80,20 +50,12 @@ function requireAdmin() {
     }
 }
 
-/**
- * Get current user ID
- * 
- * @return int|null User ID or null if not logged in
- */
+// get current user ID function
 function getCurrentUserId() {
     return $_SESSION['user_id'] ?? null;
 }
 
-/**
- * Get JSON data from request body
- * 
- * @return array Parsed JSON data
- */
+// json input function
 function getJsonInput() {
     $json = file_get_contents('php://input');
     $data = json_decode($json, true);
@@ -105,12 +67,7 @@ function getJsonInput() {
     return $data;
 }
 
-/**
- * Sanitize input data
- * 
- * @param string $data Data to sanitize
- * @return string Sanitized data
- */
+//sanitize input function
 function sanitize($data) {
     $data = trim($data);
     $data = stripslashes($data);
@@ -118,13 +75,7 @@ function sanitize($data) {
     return $data;
 }
 
-/**
- * Validate required fields
- * 
- * @param array $data Data to validate
- * @param array $fields Required fields
- * @return void
- */
+//vlidate required fields function
 function validateRequired($data, $fields) {
     foreach ($fields as $field) {
         if (!isset($data[$field]) || empty($data[$field])) {
@@ -133,40 +84,7 @@ function validateRequired($data, $fields) {
     }
 }
 
-/**
- * Create database credentials file
- * For first-time setup only, not for production use
- * 
- * @param string $host Database host
- * @param string $user Database username
- * @param string $pass Database password
- * @param string $name Database name
- * @return bool True if successful
- */
-function createDbCredentialsFile($host, $user, $pass, $name) {
-    $file = __DIR__ . '/db_credentials.php';
-    
-    // Don't overwrite existing file
-    if (file_exists($file)) {
-        return false;
-    }
-    
-    $content = "<?php\n";
-    $content .= "// Database credentials - Do not commit to version control\n";
-    $content .= "define('DB_HOST', '" . addslashes($host) . "');\n";
-    $content .= "define('DB_USER', '" . addslashes($user) . "');\n";
-    $content .= "define('DB_PASS', '" . addslashes($pass) . "');\n";
-    $content .= "define('DB_NAME', '" . addslashes($name) . "');\n";
-    
-    return file_put_contents($file, $content) !== false;
-}
-
-/**
- * Load data from JSON file
- * 
- * @param string $file JSON file path
- * @return array Data from file
- */
+//load json data function
 function loadJsonData($file) {
     if (!file_exists($file)) {
         return [];
@@ -182,13 +100,7 @@ function loadJsonData($file) {
     return $data;
 }
 
-/**
- * Save data to JSON file
- * 
- * @param string $file JSON file path
- * @param array $data Data to save
- * @return bool True if successful
- */
+//save json data function   
 function saveJsonData($file, $data) {
     $json = json_encode($data, JSON_PRETTY_PRINT);
     
@@ -199,12 +111,7 @@ function saveJsonData($file, $data) {
     return file_put_contents($file, $json) !== false;
 }
 
-/**
- * Generate a unique ID
- * 
- * @param array $existingIds Existing IDs to avoid
- * @return int New unique ID
- */
+//generate unique ID function
 function generateId($existingIds) {
     if (empty($existingIds)) {
         return 1;
@@ -213,33 +120,19 @@ function generateId($existingIds) {
     return max($existingIds) + 1;
 }
 
-/**
- * Get base URL
- * 
- * @return string Base URL
- */
+//return base URL
 function getBaseUrl() {
     return BASE_URL;
 }
 
-/**
- * Get full URL for a path
- * 
- * @param string $path Path to append to base URL
- * @return string Full URL
- */
+//Get full URL for a path
+ 
 function url($path) {
     return rtrim(getBaseUrl(), '/') . '/' . ltrim($path, '/');
 }
 
-/**
- * Upload file to server
- * @param array $file File from $_FILES
- * @param string $destination Destination directory
- * @param array $allowedTypes Allowed MIME types
- * @param int $maxSize Maximum file size in bytes
- * @return string|false File path on success, false on failure
- */
+//Upload file to server
+
 function uploadFile($file, $destination, $allowedTypes = [], $maxSize = 2097152) {
     // Check for upload errors
     if ($file['error'] !== UPLOAD_ERR_OK) {

@@ -14,10 +14,9 @@
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/navbar.css">
 
   <style>
-    /* 筛选栏样式 */
+    /* CSS */
     .filter-sidebar {
       background-color: #f8f9fa;
       border-radius: 8px;
@@ -47,7 +46,7 @@
       width: 80px;
     }
 
-    /* 产品卡片样式 */
+    /* Product card styles */
     .product-card {
       border-radius: 8px;
       overflow: hidden;
@@ -91,7 +90,6 @@
       margin-left: 5px;
     }
 
-    /* 产品定位 */
     .product-item {
       position: relative;
     }
@@ -103,14 +101,14 @@
       z-index: 10;
     }
 
-    /* 产品卡片链接 */
+    /* Card link */
     .product-card-link {
       display: block;
       color: inherit;
       text-decoration: none;
     }
 
-    /* 分页样式 */
+    /* Pagination styles */
     .pagination .page-item.active .page-link {
       background-color: #0d6efd;
       border-color: #0d6efd;
@@ -120,18 +118,17 @@
       color: #0d6efd;
     }
 
-    /* 排序下拉框 */
     .sort-select {
       width: auto;
       min-width: 150px;
     }
 
-    /* 面包屑导航 */
+    /* Breadcrumb */
     .breadcrumb {
       margin-bottom: 20px;
     }
 
-    /* Toast 通知样式 */
+    /* Toast styles */
     @keyframes slideIn {
       from {
         transform: translateX(100%);
@@ -168,24 +165,15 @@
   <!-- Navbar Placeholder -->
   <div id="navbar-placeholder"></div>
 
-  <!-- 面包屑导航 -->
-  <div class="container mt-3">
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item active" id="breadcrumb-category">All Products</li>
-      </ol>
-    </nav>
-  </div>
-
-  <!-- 产品列表主体 -->
+  <!-- Product list -->
   <div class="container mb-5">
     <div class="row">
-      <!-- 左侧筛选栏 -->
+      <!-- Left filtering section -->
       <div class="col-lg-3">
         <div class="filter-sidebar">
           <h4 class="mb-4">Filter Products</h4>
 
-          <!-- 分类筛选 -->
+          <!-- Category filter -->
           <div class="filter-group">
             <div class="filter-group-title">
               <span>Categories</span>
@@ -198,11 +186,11 @@
                   All Categories
                 </label>
               </div>
-              <!-- 分类选项将在这里动态生成 -->
+              <!-- Category options will be dynamically generated here -->
             </div>
           </div>
 
-          <!-- 价格筛选 -->
+          <!-- Price filter -->
           <div class="filter-group">
             <div class="filter-group-title">
               <span>Price Range</span>
@@ -224,7 +212,7 @@
             </div>
           </div>
 
-          <!-- 评分筛选 -->
+          <!-- Rating filter -->
           <div class="filter-group">
             <div class="filter-group-title">
               <span>Rating</span>
@@ -258,7 +246,7 @@
             </div>
           </div>
 
-          <!-- 特惠筛选 -->
+          <!-- Deals filter -->
           <div class="filter-group">
             <div class="filter-group-title">
               <span>Deals</span>
@@ -274,14 +262,14 @@
             </div>
           </div>
 
-          <!-- 重置筛选按钮 -->
+          <!-- Reset filters button -->
           <button class="btn btn-outline-secondary w-100 mt-3" id="reset-filters">
             <i class="bi bi-arrow-counterclockwise"></i> Reset Filters
           </button>
         </div>
       </div>
 
-      <!-- 右侧产品列表 -->
+      <!-- Right product list -->
       <div class="col-lg-9">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h2 id="product-list-title">All Products</h2>
@@ -297,7 +285,7 @@
           </div>
         </div>
 
-        <!-- 产品计数和分页信息 -->
+        <!-- Product count and pagination info -->
         <div class="d-flex justify-content-between align-items-center mb-3">
           <div id="product-count">Showing 0 products</div>
           <div class="d-flex align-items-center">
@@ -310,15 +298,15 @@
           </div>
         </div>
 
-        <!-- 产品网格 -->
+        <!-- Product grid -->
         <div class="row" id="products-container">
-          <!-- 产品将在这里动态加载 -->
+          <!-- Products will be dynamically loaded here -->
         </div>
 
-        <!-- 分页控件 -->
+        <!-- Pagination controls -->
         <nav aria-label="Products pagination" class="mt-4">
           <ul class="pagination justify-content-center" id="pagination">
-            <!-- 分页将在这里动态生成 -->
+            <!-- Pagination will be dynamically generated here -->
           </ul>
         </nav>
       </div>
@@ -339,40 +327,31 @@
   <script src="js/config.js"></script>
   <script src="js/api-client.js"></script>
 
-  <!-- 模块化JS文件 -->
+  <!-- Modular JS files -->
   <script src="js/products.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/pagination.js"></script>
 
   <script>
-    // 全局变量
+    // Global variables
     let activeCategoryId = null;
 
-    // 页面加载完成后初始化
+    // Initialize after page load
     document.addEventListener('DOMContentLoaded', function () {
-      // 初始化页面
+      // Initialize the page
       initializePage();
 
-      // 测试Toast显示 - 确保在ui.js加载后调用
+      // Check for items to add to the cart after login
       setTimeout(() => {
-        if (typeof showToast === 'function') {
-          showToast('Welcome', 'success');
-        } else {
-          console.error("showToast function is not defined!");
-        }
-      }, 500);
-
-      // 检查是否有登录后需要添加的商品
-      setTimeout(() => {
-        // 为了确保addToCart函数已经加载，延迟执行
+        // Delay execution to ensure addToCart function is loaded
         checkPendingCartItems();
-      }, 1000);
+      }, 500);
     });
 
-    // 检查是否有登录后需要添加的商品
+    // Check for items to add to the cart after login
     function checkPendingCartItems() {
-      // 确保用户已登录并且addToCart函数可用
+      // Ensure user is logged in and addToCart function is available
       if (typeof checkUserLogin === 'function' && typeof addToCart === 'function') {
         checkUserLogin().then(isLoggedIn => {
           if (isLoggedIn) {
@@ -380,9 +359,9 @@
             if (pendingCart) {
               try {
                 const { productId, quantity } = JSON.parse(pendingCart);
-                // 清除待添加记录
+                // Clear pending record
                 localStorage.removeItem('pendingAddToCart');
-                // 添加商品到购物车
+                // Add product to cart
                 addToCart(productId, quantity);
               } catch (error) {
                 console.error('Error processing pending cart item:', error);

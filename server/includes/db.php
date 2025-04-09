@@ -1,15 +1,11 @@
 <?php
-/**
- * Database Connection
- * Handles connection to MySQL database
- */
+//Database Connection
+//Handles connection to MySQL database
+
 
 require_once 'config.php';
 
-/**
- * Get a database connection
- * @return PDO The database connection
- */
+//Get a database connection
 function getConnection() {
     static $pdo = null;
     
@@ -27,28 +23,17 @@ function getConnection() {
         
         return $pdo;
     } catch (PDOException $e) {
-        // Log the error but don't expose details to user
-        error_log("Database Connection Failed: " . $e->getMessage());
         die("Database connection failed. Please try again later.");
     }
 }
 
-/**
- * Close the database connection
- */
+//Close the db connection
 function closeConnection() {
-    // PDO handles closing connections automatically
-    // This function remains for compatibility
     return true;
 }
 
-/**
- * Execute a query and return the result
- * @param string $sql The SQL query
- * @param array $params Parameters for prepared statement
- * @param string $types Types of parameters (optional, for compatibility)
- * @return mixed PDOStatement object or false on failure
- */
+//Execute a query and return the result
+
 function executeQuery($sql, $params = [], $types = "") {
     $pdo = getConnection();
     
@@ -69,12 +54,7 @@ function executeQuery($sql, $params = [], $types = "") {
     }
 }
 
-/**
- * Execute a query and fetch all results
- * @param string $sql The SQL query
- * @param array $params Parameters for prepared statement
- * @return array|false Array of results or false on failure
- */
+// Fetch all rows from a quer
 function fetchAll($sql, $params = []) {
     $stmt = executeQuery($sql, $params);
     
@@ -85,12 +65,7 @@ function fetchAll($sql, $params = []) {
     return false;
 }
 
-/**
- * Execute a query and fetch a single row
- * @param string $sql The SQL query
- * @param array $params Parameters for prepared statement
- * @return array|false Single row or false on failure
- */
+// Fetch a single row from a query
 function fetchOne($sql, $params = []) {
     $stmt = executeQuery($sql, $params);
     
@@ -101,12 +76,7 @@ function fetchOne($sql, $params = []) {
     return false;
 }
 
-/**
- * Execute an INSERT, UPDATE or DELETE query and return affected rows
- * @param string $sql The SQL query
- * @param array $params Parameters for prepared statement
- * @return int|false Number of affected rows or false on failure
- */
+// Execute a non-query (INSERT, UPDATE, DELETE)
 function executeNonQuery($sql, $params = []) {
     $stmt = executeQuery($sql, $params);
     
@@ -117,10 +87,7 @@ function executeNonQuery($sql, $params = []) {
     return false;
 }
 
-/**
- * Get the ID of the last inserted row
- * @return string|false Last inserted ID or false on failure
- */
+// Get the last inserted ID
 function getLastInsertId() {
     $pdo = getConnection();
     return $pdo->lastInsertId();

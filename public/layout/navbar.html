@@ -3,14 +3,13 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <link rel="stylesheet" href="https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/css/navbar.css" id="navbar-css">
+  <link rel="stylesheet" href="/~miakuang/PurelyHandmade/css/navbar.css" id="navbar-css">
 </head>
 <!-- Top Navigation Bar -->
 <nav class="navbar navbar-light bg-light p-3">
   <div class="container d-flex justify-content-between">
     <a class="navbar-brand d-flex align-items-center" href="/~miakuang/PurelyHandmade/public/index.html">
-      <img src="https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/uploads/images/logo.jpg" alt="Logo" width="50"
-        id="navbar-logo">
+      <img src="/~miakuang/PurelyHandmade/server/uploads/images/logo.jpg" alt="Logo" width="50" id="navbar-logo">
       <span class="ms-2 fs-4">Purely Homemade</span>
     </a>
 
@@ -69,26 +68,26 @@
     const navbarLogo = document.getElementById('navbar-logo');
     const navbarCss = document.getElementById('navbar-css');
 
-    // 使用全局config对象获取API URL
+    // get the base URL and API URL from the config object
     const apiUrl = window.config ? window.config.apiUrl : 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/api';
     const baseUrl = window.config ? window.config.baseUrl : 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade';
 
-    // 设置正确的CSS路径
+    // css path
     if (window.config && window.config.production) {
       navbarCss.href = `${baseUrl}/css/navbar.css`;
     }
 
-    // 设置正确的logo路径
+    // logo path
     if (window.config && window.config.imagesUrl) {
       navbarLogo.src = `${window.config.imagesUrl}/logo.jpg`;
     }
 
-    // 检查用户登录状态
+    // check user status
     fetch(`${apiUrl}/auth.php?action=status`)
       .then(response => response.json())
       .then(data => {
         if (data.loggedIn) {
-          // 用户已登录，显示用户名和退出选项
+          // user is logged in
           loginLink.parentElement.style.display = 'none';
           registerLink.parentElement.style.display = 'none';
 
@@ -98,7 +97,7 @@
           const logoutItem = document.createElement('li');
           logoutItem.innerHTML = `<a class="dropdown-item" href="#" id="logout-link">Logout</a>`;
 
-          // 如果是管理员，显示管理选项
+          // if the user is an admin, add the admin panel link
           if (data.isAdmin) {
             const adminItem = document.createElement('li');
             adminItem.innerHTML = `<a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/admin/dashboard.html">Admin Panel</a>`;
@@ -108,7 +107,7 @@
           loginLink.parentElement.parentElement.appendChild(profileItem);
           loginLink.parentElement.parentElement.appendChild(logoutItem);
 
-          // 添加退出功能
+          //logout
           document.getElementById('logout-link').addEventListener('click', function (e) {
             e.preventDefault();
             fetch(`${apiUrl}/auth.php?action=logout`)
@@ -123,7 +122,7 @@
         console.error('Error checking authentication status:', error);
       });
 
-    // 初始化Bootstrap下拉菜单
+    // boostrap dropdown initialization
     if (typeof bootstrap !== 'undefined') {
       const dropdown = new bootstrap.Dropdown(userDropdown);
     }

@@ -1,25 +1,16 @@
 <?php
-/**
- * Database Initialization Script
- * Creates database tables if they do not exist and imports data
- */
-
+//Database Initialization in phpmyadmin
 require_once 'config.php';
 require_once 'db_credentials.php';
 require_once 'functions.php';
 
-// Set longer execution time to prevent timeout during large data imports
+// Set longer execution time
 set_time_limit(300);
 
-// Set the real database name for the server
+// Set the real database name
 $DB_NAME_REAL = "miakuang";
 
-/**
- * Check if a user with the given ID exists
- * @param PDO $pdo Database connection
- * @param int $userId User ID to check
- * @return bool True if user exists, false otherwise
- */
+// All stmts prevent sql injection
 function userExists($pdo, $userId) {
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE id = ?");
     $stmt->execute([$userId]);
@@ -30,7 +21,7 @@ echo "<h1>Database Initialization</h1>";
 echo "<pre>";
 
 try {
-    // Create database connection (without selecting database)
+    // Create database connection
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ];
@@ -164,7 +155,7 @@ try {
         
         $stmt->execute([$username, $email, $passwordHash]);
         
-        echo "Default admin user created: username=miakuang, password=miakuang\n";
+        echo "Default admin user created: username=m***, password=***\n";
         
         // Create additional test users for review data
         // User ID 2
