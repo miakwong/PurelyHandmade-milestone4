@@ -16,3 +16,23 @@ __pycache__/
 
 # Logs
 *.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Uploaded files
+server/uploads/images/*
+!server/uploads/images/.gitkeep
+
+# Sensitive configuration files
+server/config/db_config.php
+server/config/db_credentials.php
+
+# Dependencies and build directories
+node_modules/
+vendor/
+dist/
+build/
