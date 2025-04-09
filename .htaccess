@@ -2,23 +2,21 @@
     RewriteEngine On
     RewriteBase /~miakuang/PurelyHandmade/
     
+    # Direct access to root should go to public/index.html
+    RewriteRule ^$ /~miakuang/PurelyHandmade/public/index.html [L,R=301]
+    
     # Handle API requests
     RewriteRule ^api/(.*)$ server/api/$1 [L]
     
     # Handle static files from server/uploads
     RewriteRule ^uploads/(.*)$ server/uploads/$1 [L]
     
-    # Handle public frontend files
-    RewriteRule ^$ public/index.html [L]
-    RewriteRule ^index\.html$ public/index.html [L]
-    
     # If the requested file exists in public/ serve it directly
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{DOCUMENT_ROOT}/~miakuang/PurelyHandmade/public%{REQUEST_URI} -f
     RewriteRule ^(.*)$ public/$1 [L]
     
-    # Default to index.php for any other requests
+    # Default to index.html for any other requests
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ public/index.html [L]
@@ -34,8 +32,8 @@
 # Set default character set
 AddDefaultCharset UTF-8
 
-# Set default index files
-DirectoryIndex index.html index.php index.html
+# Set default index files - Make sure public/index.html is first
+DirectoryIndex public/index.html index.html index.php
 
 # PHP settings
 <IfModule mod_php7.c>
@@ -46,5 +44,5 @@ DirectoryIndex index.html index.php index.html
 </IfModule>
 
 # Error handling
-ErrorDocument 404 /public/views/errors/404.html
-ErrorDocument 500 /public/views/errors/500.html
+ErrorDocument 404 /~miakuang/PurelyHandmade/public/views/errors/404.html
+ErrorDocument 500 /~miakuang/PurelyHandmade/public/views/errors/500.html

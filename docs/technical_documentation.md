@@ -49,10 +49,10 @@ This section outlines the organization of the project files and directories.
 
 The frontend is built using vanilla JavaScript with Bootstrap 5 for styling. It uses a client-side architecture where:
 
-- Data is initially loaded from the server and cached in localStorage
+- Data is loaded from the server through API endpoints with localStorage fallback
 - UI interactions are handled through event listeners
-- Products can be filtered, sorted, and paginated entirely on the client-side
-- Cart functionality is implemented using localStorage
+- Products can be filtered, sorted, and paginated
+- Cart functionality is implemented using server API with localStorage fallback for offline support
 
 ### 2.2 Key Features
 
@@ -63,24 +63,25 @@ The frontend is built using vanilla JavaScript with Bootstrap 5 for styling. It 
 - **Shopping Cart**: Add/remove products, update quantities
 - **Responsive Design**: Mobile-friendly using Bootstrap 5
 
-### 2.3 JavaScript Components
+### 2.3 JavaScript Architecture
 
-- **Data Management**
-  - `init-data.js`: Initializes product and category data
-  - Local storage for cart and product data caching
+The JavaScript architecture follows a modular approach with separate files for different functional areas:
 
-- **UI Components**
-  - Dynamic loading of navbar and footer
-  - Product card generation
-  - Filter sidebar with accordion behavior
-  - Pagination controls
-  - Toast notifications
+- **config.js**: Environment detection and configuration settings
+- **api-client.js**: API client for server communication
+- **products.js**: Product data loading, filtering and sorting
+- **cart.js**: Shopping cart functionality
+- **pagination.js**: Pagination controls and display logic
+- **ui.js**: UI components and interactions
 
-- **Event Handling**
-  - Filter application and clearing
-  - Sort selection
-  - Pagination navigation
-  - Add-to-cart functionality
+This modular approach improves code organization, maintainability, and testability.
+
+#### Fallback Mechanism
+
+For better user experience, the application implements a fallback mechanism:
+- Primary data source is the server API
+- If API requests fail, the application falls back to localStorage
+- This ensures the application can work in offline or degraded connectivity scenarios
 
 ### 2.4 HTML Structure
 
@@ -90,6 +91,7 @@ The index.html file contains:
 - Product listing area with card-based display
 - Dynamic pagination controls
 - Toast notification system for cart updates
+- Modular JavaScript imports for clean code organization
 
 ## 3. Backend Design
 

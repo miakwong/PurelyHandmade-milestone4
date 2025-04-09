@@ -270,4 +270,4 @@ try {
 }
 
 echo "</pre>";
-echo "<p><a href='/~miakuang/PurelyHandmade/'>Return to homepage</a></p>"; 
+echo "<p><a href='/~miakuang/PurelyHandmade/public/index.html'>Return to homepage</a></p>"; 
