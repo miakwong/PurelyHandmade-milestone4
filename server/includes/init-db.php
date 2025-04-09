@@ -14,6 +14,18 @@ set_time_limit(300);
 // Set the real database name for the server
 $DB_NAME_REAL = "miakuang";
 
+/**
+ * Check if a user with the given ID exists
+ * @param PDO $pdo Database connection
+ * @param int $userId User ID to check
+ * @return bool True if user exists, false otherwise
+ */
+function userExists($pdo, $userId) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    return $stmt->fetchColumn() > 0;
+}
+
 echo "<h1>Database Initialization</h1>";
 echo "<pre>";
 
@@ -79,6 +91,8 @@ try {
         image VARCHAR(255),
         is_featured BOOLEAN DEFAULT FALSE,
         in_stock BOOLEAN DEFAULT TRUE,
+        rating DECIMAL(2, 1) DEFAULT 0,
+        reviewCount INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -93,6 +107,19 @@ try {
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     echo "Table created: product_images\n";
+    
+    // Create product_reviews table
+    $pdo->exec("CREATE TABLE IF NOT EXISTS product_reviews (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        product_id INT NOT NULL,
+        user_id INT NOT NULL,
+        rating DECIMAL(2, 1) NOT NULL CHECK (rating BETWEEN 1 AND 5),
+        review_text TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    echo "Table created: product_reviews\n";
     
     // Create orders table
     $pdo->exec("CREATE TABLE IF NOT EXISTS orders (
@@ -138,8 +165,59 @@ try {
         $stmt->execute([$username, $email, $passwordHash]);
         
         echo "Default admin user created: username=miakuang, password=miakuang\n";
+        
+        // Create additional test users for review data
+        // User ID 2
+        $stmt = $pdo->prepare("INSERT INTO users 
+            (id, username, email, password, name, role) 
+            VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user')");
+        $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
+        
+        // User ID 3
+        $stmt = $pdo->prepare("INSERT INTO users 
+            (id, username, email, password, name, role) 
+            VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user')");
+        $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
+        
+        // User ID 4
+        $stmt = $pdo->prepare("INSERT INTO users 
+            (id, username, email, password, name, role) 
+            VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user')");
+        $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
+        
+        echo "Created 3 additional test users for review data\n";
     } else {
         echo "Admin user already exists, skipping creation\n";
+        
+        // Check if test users exist
+        $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE id IN (2, 3, 4)");
+        $testUserCount = $stmt->fetchColumn();
+        
+        if ($testUserCount < 3) {
+            // Create missing test users
+            if (!userExists($pdo, 2)) {
+                $stmt = $pdo->prepare("INSERT INTO users 
+                    (id, username, email, password, name, role) 
+                    VALUES (2, 'testuser1', 'testuser1@example.com', ?, 'Test User 1', 'user')");
+                $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
+            }
+            
+            if (!userExists($pdo, 3)) {
+                $stmt = $pdo->prepare("INSERT INTO users 
+                    (id, username, email, password, name, role) 
+                    VALUES (3, 'testuser2', 'testuser2@example.com', ?, 'Test User 2', 'user')");
+                $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
+            }
+            
+            if (!userExists($pdo, 4)) {
+                $stmt = $pdo->prepare("INSERT INTO users 
+                    (id, username, email, password, name, role) 
+                    VALUES (4, 'testuser3', 'testuser3@example.com', ?, 'Test User 3', 'user')");
+                $stmt->execute([password_hash('password123', PASSWORD_DEFAULT, ['cost' => PASSWORD_COST])]);
+            }
+            
+            echo "Created missing test users for review data\n";
+        }
     }
     
     // Import category data
@@ -258,6 +336,81 @@ try {
         }
     } else {
         echo "Products JSON file not found: $productsJsonPath\n";
+    }
+    
+    // Import product reviews data
+    $reviewsJsonPath = __DIR__ . '/../data/reviews.json';
+    if (file_exists($reviewsJsonPath)) {
+        // Check if reviews table is empty
+        $stmt = $pdo->query("SELECT COUNT(*) FROM product_reviews");
+        $reviewsCount = $stmt->fetchColumn();
+        
+        if ($reviewsCount == 0) {
+            echo "Importing product reviews data from JSON file...\n";
+            $reviewsData = json_decode(file_get_contents($reviewsJsonPath), true);
+            
+            if ($reviewsData) {
+                // Prepare statements for review insertion
+                $insertReviewStmt = $pdo->prepare("INSERT INTO product_reviews 
+                    (id, product_id, user_id, rating, review_text, created_at) 
+                    VALUES (?, ?, ?, ?, ?, ?)");
+                
+                foreach ($reviewsData as $review) {
+                    // Convert ISO datetime format to MySQL format
+                    $createdAt = isset($review['created_at']) ? $review['created_at'] : date('Y-m-d H:i:s');
+                    if (isset($review['created_at']) && preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $createdAt)) {
+                        $createdAt = str_replace('T', ' ', substr($createdAt, 0, -1));
+                    }
+                    
+                    // Insert review
+                    $insertReviewStmt->execute([
+                        $review['id'],
+                        $review['product_id'],
+                        $review['user_id'],
+                        $review['rating'],
+                        $review['review_text'],
+                        $createdAt
+                    ]);
+                }
+                
+                echo "Successfully imported " . count($reviewsData) . " product reviews\n";
+                
+                // Update products table with review counts and average ratings
+                $stmt = $pdo->query("
+                    SELECT product_id, 
+                           COUNT(*) as review_count, 
+                           AVG(rating) as avg_rating 
+                    FROM product_reviews 
+                    GROUP BY product_id
+                ");
+                
+                $reviewStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $updateProductStmt = $pdo->prepare("
+                    UPDATE products 
+                    SET reviewCount = ?, rating = ? 
+                    WHERE id = ?
+                ");
+                
+                foreach ($reviewStats as $stat) {
+                    $updateProductStmt->execute([
+                        $stat['review_count'],
+                        $stat['avg_rating'],
+                        $stat['product_id']
+                    ]);
+                }
+                
+                echo "Updated products with review counts and ratings\n";
+                
+                // Reset auto-increment counter
+                $pdo->exec("ALTER TABLE product_reviews AUTO_INCREMENT = " . (max(array_column($reviewsData, 'id')) + 1));
+            } else {
+                echo "Error: Could not parse reviews JSON file\n";
+            }
+        } else {
+            echo "Review data already exists in database, skipping import\n";
+        }
+    } else {
+        echo "Reviews JSON file not found: $reviewsJsonPath\n";
     }
     
     echo "Database initialization completed successfully!\n";

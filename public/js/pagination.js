@@ -1,10 +1,10 @@
-// 分页功能
+// Pagination functionality
 
-// 分页变量
+// Pagination variables
 let currentPage = 1;
 let productsPerPage = 12;
 
-// 显示分页后的产品
+// Display paginated products
 function displayPaginatedProducts() {
   const productsContainer = document.getElementById('products-container');
   productsContainer.innerHTML = '';
@@ -20,24 +20,37 @@ function displayPaginatedProducts() {
   const productsToShow = filteredProducts.slice(startIndex, endIndex);
   
   productsToShow.forEach(product => {
-    // 生成星级评分HTML
-    const fullStars = Math.floor(product.rating);
-    const hasHalfStar = product.rating % 1 >= 0.5;
+    // Generate star rating HTML based on product's rating from the database
+    // Ensure rating has a default value if not provided by the backend
+    const rating = typeof product.rating === 'number' ? product.rating : 0;
+    
+    // Calculate stars display (full, half, empty)
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
     
     let starsHtml = '<span class="text-warning">';
+    // Add full stars
     for (let j = 0; j < fullStars; j++) {
       starsHtml += '<i class="bi bi-star-fill"></i> ';
     }
+    // Add half star if needed
     if (hasHalfStar) {
       starsHtml += '<i class="bi bi-star-half"></i> ';
     }
+    // Add empty stars
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
     for (let j = 0; j < emptyStars; j++) {
       starsHtml += '<i class="bi bi-star"></i> ';
     }
-    starsHtml += `<span class="text-muted ms-1">(${product.reviewCount})</span></span>`;
     
-    // 价格显示
+    // Add review count from database (default to 0 if not available)
+    const reviewCount = typeof product.reviewCount === 'number' ? product.reviewCount : 0;
+    
+    // Show review count with appropriate plural/singular text
+    const reviewText = reviewCount === 1 ? 'review' : 'reviews';
+    starsHtml += `<span class="text-muted ms-1">(${reviewCount} ${reviewText})</span></span>`;
+    
+    // Price display
     let priceHtml = '';
     if (product.onSale && product.salePrice) {
       priceHtml = `
@@ -48,18 +61,21 @@ function displayPaginatedProducts() {
       priceHtml = `<span class="product-price">$${product.price.toFixed(2)}</span>`;
     }
     
-    // 创建产品卡片HTML
+    // Ensure image path is valid
+    const imagePath = product.images && product.images.length > 0 ? product.images[0] : 'images/placeholder.jpg';
+    
+    // Create product card HTML
     const productHtml = `
       <div class="col-lg-4 col-md-6 col-sm-6 product-item">
         <div class="product-card">
           <a href="views/product/product_detail.html?id=${product.id}" class="product-card-link">
-            <img src="${product.images[0]}" class="card-img-top product-img" alt="${product.name}">
+            <img src="${imagePath}" class="card-img-top product-img" alt="${product.name}">
             ${product.onSale ? '<div class="product-badge">Sale</div>' : ''}
             <div class="card-body">
               <h5 class="card-title">${product.name}</h5>
               <div class="mb-2">${priceHtml}</div>
               <div class="mb-2">${starsHtml}</div>
-              <p class="card-text text-muted">${product.description.substring(0, 60)}...</p>
+              <p class="card-text text-muted">${product.description ? product.description.substring(0, 60) + '...' : 'No description available'}</p>
             </div>
           </a>
         </div>
@@ -72,7 +88,7 @@ function displayPaginatedProducts() {
     productsContainer.innerHTML += productHtml;
   });
   
-  // 添加Add to Cart按钮事件
+  // Add "Add to Cart" button events
   document.querySelectorAll('.add-to-cart-btn').forEach(button => {
     button.addEventListener('click', function(e) {
       e.preventDefault();
@@ -83,7 +99,7 @@ function displayPaginatedProducts() {
   });
 }
 
-// 更新分页控件
+// Update pagination controls
 function updatePagination() {
   const pagination = document.getElementById('pagination');
   pagination.innerHTML = '';
@@ -94,7 +110,7 @@ function updatePagination() {
     return;
   }
   
-  // 上一页按钮
+  // Previous page button
   const prevLi = document.createElement('li');
   prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
   
@@ -117,8 +133,8 @@ function updatePagination() {
   prevLi.appendChild(prevLink);
   pagination.appendChild(prevLi);
   
-  // 页码按钮
-  // 最多显示5个页码
+  // Page number buttons
+  // Display maximum 5 page numbers
   let startPage = Math.max(1, currentPage - 2);
   let endPage = Math.min(totalPages, startPage + 4);
   
@@ -149,7 +165,7 @@ function updatePagination() {
     pagination.appendChild(pageLi);
   }
   
-  // 下一页按钮
+  // Next page button
   const nextLi = document.createElement('li');
   nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
   
@@ -173,7 +189,7 @@ function updatePagination() {
   pagination.appendChild(nextLi);
 }
 
-// 设置每页显示的产品数量
+// Set the number of products to display per page
 function setProductsPerPage(count) {
   productsPerPage = count;
   currentPage = 1;

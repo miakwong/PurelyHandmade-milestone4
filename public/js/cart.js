@@ -1,12 +1,12 @@
-// 购物车功能
+// Cart functionality
 
-// 定义购物车API
+// Define cart API object
 const cart = {
   getCart: async () => {
     try {
       return await get('cart.php');
     } catch (error) {
-      // 如果API请求失败，回退到localStorage
+      // If API request fails, fallback to localStorage
       const cartData = localStorage.getItem('cart');
       return cartData ? JSON.parse(cartData) : [];
     }
@@ -16,7 +16,7 @@ const cart = {
     try {
       return await post('cart.php?action=add', { product_id: productId, quantity });
     } catch (error) {
-      // 如果API请求失败，回退到localStorage
+      // If API request fails, fallback to localStorage
       const productsData = localStorage.getItem('products');
       if (!productsData) throw new Error('Products data not available');
       
@@ -24,14 +24,14 @@ const cart = {
       const product = products.find(p => p.id === productId);
       if (!product) throw new Error('Product not found');
       
-      // 获取现有购物车
+      // Get existing cart
       let cart = [];
       const cartData = localStorage.getItem('cart');
       if (cartData) {
         cart = JSON.parse(cartData);
       }
       
-      // 检查产品是否已在购物车中
+      // Check if product is already in the cart
       const existingItem = cart.find(item => item.id === productId);
       if (existingItem) {
         existingItem.quantity += quantity;
@@ -45,7 +45,7 @@ const cart = {
         });
       }
       
-      // 保存到localStorage
+      // Save to localStorage
       localStorage.setItem('cart', JSON.stringify(cart));
       
       return cart;
@@ -56,7 +56,7 @@ const cart = {
     try {
       return await post('cart.php?action=update', { product_id: productId, quantity });
     } catch (error) {
-      // 如果API请求失败，回退到localStorage
+      // If API request fails, fallback to localStorage
       const cartData = localStorage.getItem('cart');
       if (!cartData) throw new Error('Cart not available');
       
@@ -65,14 +65,14 @@ const cart = {
       
       if (item) {
         if (quantity <= 0) {
-          // 移除产品
+          // Remove product
           cart = cart.filter(item => item.id !== productId);
         } else {
-          // 更新数量
+          // Update quantity
           item.quantity = quantity;
         }
         
-        // 保存到localStorage
+        // Save to localStorage
         localStorage.setItem('cart', JSON.stringify(cart));
       }
       
@@ -84,15 +84,15 @@ const cart = {
     try {
       return await post('cart.php?action=remove', { product_id: productId });
     } catch (error) {
-      // 如果API请求失败，回退到localStorage
+      // If API request fails, fallback to localStorage
       const cartData = localStorage.getItem('cart');
       if (!cartData) throw new Error('Cart not available');
       
       let cart = JSON.parse(cartData);
-      // 移除产品
+      // Remove product
       cart = cart.filter(item => item.id !== productId);
       
-      // 保存到localStorage
+      // Save to localStorage
       localStorage.setItem('cart', JSON.stringify(cart));
       
       return cart;
@@ -103,28 +103,28 @@ const cart = {
     try {
       return await post('cart.php?action=clear');
     } catch (error) {
-      // 如果API请求失败，回退到localStorage
+      // If API request fails, fallback to localStorage
       localStorage.removeItem('cart');
       return [];
     }
   }
 };
 
-// 添加到购物车
+// Add to cart function
 function addToCart(productId, quantity) {
-  // 使用API添加到购物车
+  // Use API to add to cart
   cart.addToCart(productId, quantity)
     .then(response => {
-      // 找到要添加的产品信息，用于显示名称
+      // Find product information to display name
       const product = productsList.find(p => p.id === productId);
       if (product) {
-        // 显示成功消息
+        // Show success message
         showToast(`${product.name} added to your cart!`, 'success');
       } else {
         showToast('Product added to your cart!', 'success');
       }
       
-      // 更新导航栏购物车计数
+      // Update cart count in navbar
       updateCartCount();
     })
     .catch(error => {
@@ -133,13 +133,13 @@ function addToCart(productId, quantity) {
     });
 }
 
-// 更新购物车计数
+// Update cart count function
 function updateCartCount() {
   const cartCount = document.getElementById('cart-count');
   
   if (!cartCount) return;
   
-  // 使用API获取购物车计数
+  // Use API to get cart count
   cart.getCart()
     .then(cartData => {
       const count = cartData.reduce((total, item) => total + item.quantity, 0);
@@ -150,4 +150,9 @@ function updateCartCount() {
       console.error('Error getting cart:', error);
       cartCount.style.display = 'none';
     });
-} 
+}
+
+// Attach functions and the cart object to the window object to make them globally available
+window.addToCart = addToCart;
+window.updateCartCount = updateCartCount;
+window.cart = cart; 
