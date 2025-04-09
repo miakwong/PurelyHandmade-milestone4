@@ -188,7 +188,10 @@
         })
         .catch(error => {
           console.error('Error loading cart:', error);
-          showToast('Error loading cart. Please try again.', 'error');
+          showToast('Error loading cart. Please log in.', 'error');
+          setTimeout(() => {
+            window.location.href = (window.location.pathname.includes('/views/') ? '../auth/login.html' : 'views/auth/login.html');
+          }, 1500);
           renderCart([]);
         });
 

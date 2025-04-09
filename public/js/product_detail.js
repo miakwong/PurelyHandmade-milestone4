@@ -8,10 +8,10 @@ document.addEventListener("DOMContentLoaded", function () {
     showErrorMessage("Product not found. Invalid product ID.");
     return;
   }
-  
+
   // Image directory path
   const imgPath = "/server/uploads/images/";
-  
+
   // Load product details
   loadProductDetails(productId);
   
@@ -28,13 +28,15 @@ document.addEventListener("DOMContentLoaded", function () {
  */
 function loadProductDetails(productId) {
   // Use API to fetch product details
-  api.products.getProduct(productId)
+  fetch(`${config.apiUrl}/products.php?id=${productId}`)
     .then(response => {
-      if (response.success) {
-        displayProductDetails(response.product);
-      } else {
-        showErrorMessage("Error loading product: " + response.message);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
+      return response.json();
+    })
+    .then(data => {
+      displayProductDetails(data);
     })
     .catch(error => {
       console.error("Error loading product:", error);
@@ -65,7 +67,7 @@ function displayProductDetails(product) {
   
   // Set stock information
   document.getElementById("stock-info").textContent = 
-    product.stock > 0 ? `${product.stock} in stock` : "Out of stock";
+    product.in_stock ? `${product.stock_quantity} in stock` : "Out of stock";
   
   // Setup product rating stars
   const ratingElem = document.getElementById("product-rating");
@@ -86,17 +88,34 @@ function displayProductDetails(product) {
   }
   
   // Update breadcrumb navigation
-  if (product.categoryId) {
-    api.categories.getCategory(product.categoryId)
-      .then(response => {
-        if (response.success) {
-          const category = response.category;
-          document.getElementById("breadcrumb-category-link").textContent = category.name;
-          document.getElementById("breadcrumb-category-link").setAttribute("href", `../../index.html?category=${category.id}`);
-          document.getElementById("breadcrumb-item").textContent = product.name;
+  if (product.category_id) {
+    // get category info from API
+    fetch(`${config.apiUrl}/categories.php?id=${product.category_id}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const category = data.category;
+          // update breadcrumb links
+          const breadcrumbCategory = document.getElementById("breadcrumb-category-link");
+          const breadcrumbItem = document.getElementById("breadcrumb-item");
+          
+          if (breadcrumbCategory && breadcrumbItem) {
+            breadcrumbCategory.textContent = category.name;
+            breadcrumbCategory.href = `../../index.html?category=${category.id}`;
+            breadcrumbItem.textContent = product.name;
+          }
+          
+          // update category link in product meta
+          const productCategory = document.getElementById("product-category");
+          if (productCategory) {
+            productCategory.textContent = category.name;
+            productCategory.href = `../../index.html?category=${category.id}`;
+          }
         }
       })
-      .catch(error => console.error("Error loading category:", error));
+      .catch(error => {
+        console.error("Error loading category:", error);
+      });
   }
   
   // Set tab content for product details
@@ -137,11 +156,25 @@ function displayProductDetails(product) {
   document.getElementById("increase-quantity").addEventListener("click", function() {
     const quantityInput = document.getElementById("product-quantity");
     const currentQuantity = parseInt(quantityInput.value) || 1;
-    const maxStock = product.stock || 10;
+    const maxStock = product.stock_quantity || 10;
     if (currentQuantity < maxStock) {
       quantityInput.value = currentQuantity + 1;
     }
   });
+  
+  // 设置图片库
+  setupImageGallery();
+  
+  // 设置数量控制
+  const { updateMaxStock } = setupQuantityControl();
+  updateMaxStock(product.stock_quantity);
+  
+  // 设置按钮状态
+  const { updateButtonStates } = setupButtonStates();
+  updateButtonStates(product.stock_quantity);
+  
+  // 显示评分
+  displayRating(product.rating);
 }
 
 /**
@@ -182,24 +215,28 @@ function generateThumbnails(images, productName) {
  * @param {number} productId - ID of the product to load reviews for
  */
 function loadProductReviews(productId) {
-  api.reviews.getProductReviews(productId)
+  fetch(`${config.apiUrl}/reviews.php?action=get&product_id=${productId}`)
     .then(response => {
-      if (response.success) {
-        displayReviews(response.reviews, response.stats);
+      if (!response.ok) {
+        throw new Error('Failed to load reviews');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        displayReviews(data.reviews, data.stats);
       } else {
-        console.error("Error loading reviews:", response.message);
         document.getElementById("reviews-container").innerHTML = `
           <div class="alert alert-warning">
-            Unable to load reviews. ${response.message}
+            <p>${data.message}</p>
           </div>
         `;
       }
     })
     .catch(error => {
-      console.error("Error loading reviews:", error);
       document.getElementById("reviews-container").innerHTML = `
-        <div class="alert alert-warning">
-          Unable to load reviews. Please try again later.
+        <div class="alert alert-danger">
+          <p>Failed to load reviews. Please try again later.</p>
         </div>
       `;
     });
@@ -252,11 +289,8 @@ function displayReviews(reviews, stats) {
     
     reviewEl.innerHTML = `
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <div>
-          <h5 class="mb-0">${review.username}</h5>
-          <div class="text-warning">
-            ${generateStarsHtml(review.rating)}
-          </div>
+        <div class="text-warning">
+          ${generateStarsHtml(review.rating)}
         </div>
         <span class="text-muted small">${formattedDate}</span>
       </div>
@@ -276,14 +310,31 @@ function updateRatingBreakdown(stats) {
   if (totalReviews === 0) return;
   
   // Update star counts and progress bars
-  for (let i = 1; i <= 5; i++) {
-    const count = parseInt(stats[`${getStarName(i)}_star`]) || 0;
+  const starMapping = {
+    5: 'five',
+    4: 'four',
+    3: 'three',
+    2: 'two',
+    1: 'one'
+  };
+  
+  for (let i = 5; i >= 1; i--) {
+    const count = parseInt(stats.rating_distribution[`${i}_star`]) || 0;
     const percentage = Math.round((count / totalReviews) * 100);
+    const starName = starMapping[i];
     
-    document.getElementById(`${getStarName(i)}-star-count`).textContent = count;
-    const progressBar = document.getElementById(`${getStarName(i)}-star-bar`);
-    progressBar.style.width = `${percentage}%`;
-    progressBar.setAttribute("aria-valuenow", percentage);
+    // Update count display
+    const countElement = document.getElementById(`${starName}-star-count`);
+    if (countElement) {
+      countElement.textContent = count;
+    }
+    
+    // Update progress bar
+    const progressBar = document.getElementById(`${starName}-star-bar`);
+    if (progressBar) {
+      progressBar.style.width = `${percentage}%`;
+      progressBar.setAttribute("aria-valuenow", percentage);
+    }
   }
 }
 
@@ -474,7 +525,6 @@ function showToast(title, message, type) {
     toast.remove();
   });
 }
-
 /**
  * Show an error message in the product container
  * @param {string} message - Error message to display
@@ -492,3 +542,138 @@ function showErrorMessage(message) {
     </div>
   `;
 }
+
+// 图片切换动画
+function setupImageGallery() {
+  const mainImage = document.getElementById('main-product-image');
+  const thumbnails = document.querySelectorAll('.thumbnail-img');
+  
+  thumbnails.forEach(thumb => {
+    thumb.addEventListener('click', function() {
+      // 添加淡出动画
+      mainImage.style.opacity = '0';
+      
+      setTimeout(() => {
+        mainImage.src = this.src;
+        mainImage.alt = this.alt;
+        
+        // 添加淡入动画
+        mainImage.style.opacity = '1';
+        
+        // 更新缩略图激活状态
+        thumbnails.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      }, 300);
+    });
+  });
+}
+
+// 数量控制逻辑
+function setupQuantityControl() {
+  const decreaseBtn = document.getElementById('decrease-quantity');
+  const increaseBtn = document.getElementById('increase-quantity');
+  const quantityInput = document.getElementById('product-quantity');
+  const stockInfo = document.getElementById('stock-info');
+  
+  let maxStock = 10; // 默认最大库存
+  
+  // 更新最大库存限制
+  function updateMaxStock(stock) {
+    maxStock = stock;
+    quantityInput.max = maxStock;
+    stockInfo.textContent = `${maxStock} in stock`;
+  }
+  
+  decreaseBtn.addEventListener('click', () => {
+    let value = parseInt(quantityInput.value);
+    if (value > 1) {
+      quantityInput.value = value - 1;
+    }
+  });
+  
+  increaseBtn.addEventListener('click', () => {
+    let value = parseInt(quantityInput.value);
+    if (value < maxStock) {
+      quantityInput.value = value + 1;
+    }
+  });
+  
+  quantityInput.addEventListener('change', () => {
+    let value = parseInt(quantityInput.value);
+    if (value < 1) quantityInput.value = 1;
+    if (value > maxStock) quantityInput.value = maxStock;
+  });
+  
+  return { updateMaxStock };
+}
+
+// 按钮状态控制
+function setupButtonStates() {
+  const addToCartBtn = document.getElementById('add-to-cart-btn');
+  const buyNowBtn = document.getElementById('buy-now-btn');
+  const wishlistBtn = document.getElementById('add-to-wishlist-btn');
+  
+  let isInWishlist = false;
+  
+  // 更新按钮状态
+  function updateButtonStates(stock) {
+    const isAvailable = stock > 0;
+    addToCartBtn.disabled = !isAvailable;
+    buyNowBtn.disabled = !isAvailable;
+    
+    if (isAvailable) {
+      addToCartBtn.classList.remove('btn-secondary');
+      addToCartBtn.classList.add('btn-primary');
+      buyNowBtn.classList.remove('btn-secondary');
+      buyNowBtn.classList.add('btn-outline-primary');
+    } else {
+      addToCartBtn.classList.remove('btn-primary');
+      addToCartBtn.classList.add('btn-secondary');
+      buyNowBtn.classList.remove('btn-outline-primary');
+      buyNowBtn.classList.add('btn-secondary');
+    }
+  }
+  
+  // 收藏按钮点击事件
+  wishlistBtn.addEventListener('click', () => {
+    isInWishlist = !isInWishlist;
+    wishlistBtn.querySelector('i').classList.toggle('bi-heart-fill');
+    wishlistBtn.querySelector('i').classList.toggle('bi-heart');
+    
+    if (isInWishlist) {
+      showToast('Added to wishlist', 'success');
+    } else {
+      showToast('Removed from wishlist', 'info');
+    }
+  });
+  
+  return { updateButtonStates };
+}
+
+// 评分显示
+function displayRating(rating) {
+  const ratingContainer = document.getElementById('product-rating');
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  
+  let starsHtml = '';
+  
+  // 添加完整星星
+  for (let i = 0; i < fullStars; i++) {
+    starsHtml += '<i class="bi bi-star-fill"></i>';
+  }
+  
+  // 添加半星
+  if (hasHalfStar) {
+    starsHtml += '<i class="bi bi-star-half"></i>';
+  }
+  
+  // 添加空星
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  for (let i = 0; i < emptyStars; i++) {
+    starsHtml += '<i class="bi bi-star"></i>';
+  }
+  
+  ratingContainer.innerHTML = starsHtml;
+}
+

@@ -4,9 +4,9 @@
  */
 
 // Load database configuration parameters
-if (file_exists(__DIR__ . '/../includes/db_credentials.php')) {
+if (!defined('DB_HOST') && file_exists(__DIR__ . '/../includes/db_credentials.php')) {
     require_once __DIR__ . '/../includes/db_credentials.php';
-} else {
+} else if (!defined('DB_HOST')) {
     die("Error: Database credentials file not found. Please create server/includes/db_credentials.php.");
 }
 
@@ -34,7 +34,9 @@ function getDbConnection() {
 }
 
 // Get global application config
-$app_config = require_once __DIR__ . '/app.php';
+if (!isset($app_config)) {
+    $app_config = require_once __DIR__ . '/app.php';
+}
 
 // Create data directory if it doesn't exist
 if (!file_exists($app_config['data_path'])) {
@@ -51,7 +53,8 @@ $config = [
         'products' => $app_config['data_path'] . '/products.json',
         'categories' => $app_config['data_path'] . '/categories.json',
         'users' => $app_config['data_path'] . '/users.json',
-        'carts' => $app_config['data_path'] . '/carts.json'
+        'carts' => $app_config['data_path'] . '/carts.json',
+        'reviews' => $app_config['data_path'] . '/reviews.json'
     ]
 ];
 
