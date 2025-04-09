@@ -1,13 +1,10 @@
 <?php
-/**
- * Cart API
- * 
- * Handles shopping cart operations including:
- * - Adding products to cart
- * - Removing products from cart
- * - Updating product quantities
- * - Getting cart contents
- */
+// Cart API
+
+// Enable error reporting and logging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 // Include common functions
 require_once '../includes/functions.php';
@@ -22,13 +19,13 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         // Require authentication for viewing cart
-        requireAuth();
+        checkAuth();
         getCart();
         break;
         
     case 'POST':
         // Require authentication for adding to cart
-        requireAuth();
+        checkAuth();
         // Check if it's a clear cart request
         if (isset($_GET['clear']) && $_GET['clear'] === '1') {
             clearCart();
@@ -39,13 +36,13 @@ switch ($method) {
         
     case 'PUT':
         // Require authentication for updating cart
-        requireAuth();
+        checkAuth();
         updateCart();
         break;
         
     case 'DELETE':
         // Require authentication for removing from cart
-        requireAuth();
+        checkAuth();
         removeFromCart();
         break;
         
@@ -55,11 +52,8 @@ switch ($method) {
         break;
 }
 
-/**
- * Get cart contents for the current user
- * 
- * @return void
- */
+// Get cart contents for the current user
+
 function getCart() {
     global $db_config;
     
@@ -74,11 +68,11 @@ function getCart() {
     
     if ($userCart === null) {
         // Return empty cart if not found
-        jsonResponse([
+        jsonResponse(true, "empty cart", [
             'items' => [],
             'totalItems' => 0,
             'totalPrice' => 0
-        ]);
+        ], 200);
         return;
     }
     
@@ -124,18 +118,14 @@ function getCart() {
     }
     
     // Return cart with calculated totals
-    jsonResponse([
+    jsonResponse(true, "total cart loaded", [
         'items' => $cartItems,
         'totalItems' => $totalItems,
         'totalPrice' => $totalPrice
-    ]);
+    ], 200);
 }
 
-/**
- * Add a product to the cart
- * 
- * @return void
- */
+//Add a product to the cart
 function addToCart() {
     global $db_config;
     
@@ -220,18 +210,14 @@ function addToCart() {
     }
     
     // Return success response
-    jsonResponse([
-        'message' => 'Product added to cart successfully',
+    jsonResponse(true, 'Product added to cart successfully', [
         'productId' => $productId,
         'quantity' => $quantity
-    ]);
+    ], 201);
 }
 
-/**
- * Update cart item quantity
- * 
- * @return void
- */
+// Update cart item quantity
+
 function updateCart() {
     global $db_config;
     
@@ -302,18 +288,13 @@ function updateCart() {
     }
     
     // Return success response
-    jsonResponse([
-        'message' => 'Cart updated successfully',
+    jsonResponse(true, 'Cart updated successfully', [
         'productId' => $productId,
         'quantity' => $quantity
-    ]);
+    ], 201);
 }
 
-/**
- * Remove a product from the cart
- * 
- * @return void
- */
+//Remove a product from the cart
 function removeFromCart() {
     global $db_config;
     
@@ -358,16 +339,11 @@ function removeFromCart() {
     }
     
     // Return success response
-    jsonResponse([
-        'message' => 'Product removed from cart successfully'
-    ]);
+    jsonResponse(true, 'Product removed from cart successfully', null, 200);
 }
 
-/**
- * Clear all items from the cart
- * 
- * @return void
- */
+//Clear all items from the cart
+
 function clearCart() {
     global $db_config;
     
@@ -382,9 +358,7 @@ function clearCart() {
     
     if ($userCartIndex === null) {
         // Cart doesn't exist, nothing to clear
-        jsonResponse([
-            'message' => 'Cart cleared successfully'
-        ]);
+        jsonResponse(false, 'Cart doesn\'t exist', null, 200);
         return;
     }
     
@@ -397,18 +371,10 @@ function clearCart() {
     }
     
     // Return success response
-    jsonResponse([
-        'message' => 'Cart cleared successfully'
-    ]);
+    jsonResponse(true, 'Cart cleared successfully', null, 200);
 }
 
-/**
- * Find user's cart by user ID
- * 
- * @param array $carts Carts data
- * @param int $userId User ID
- * @return array|null Cart data or null if not found
- */
+//Find user's cart by user ID
 function findUserCart($carts, $userId) {
     foreach ($carts as $cart) {
         if ($cart['userId'] === $userId) {
@@ -419,13 +385,8 @@ function findUserCart($carts, $userId) {
     return null;
 }
 
-/**
- * Find user's cart index by user ID
- * 
- * @param array $carts Carts data
- * @param int $userId User ID
- * @return int|null Cart index or null if not found
- */
+// Find user's cart index by user ID
+
 function findUserCartIndex($carts, $userId) {
     foreach ($carts as $index => $cart) {
         if ($cart['userId'] === $userId) {

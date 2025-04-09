@@ -1,9 +1,5 @@
 <?php
-/**
- * Products API
- * 
- * Handles CRUD operations for products
- */
+//Products API
 
 // Include common functions
 require_once '../includes/functions.php';
@@ -50,13 +46,7 @@ switch ($method) {
         break;
 }
 
-/**
- * Handle GET request
- * 
- * @param array $products Products data
- * @param int|null $id Product ID
- * @return void
- */
+// Handle GET request
 function handleGetRequest($products, $id) {
     // Get a single product by ID
     if ($id !== null) {
@@ -72,16 +62,11 @@ function handleGetRequest($products, $id) {
     // Filter products based on query parameters
     $filteredProducts = filterProducts($products);
     
-    // Return all products (or filtered subset)
+    // Return filtered products 
     jsonResponse(true, "Filtered products loaded", $filteredProducts, 200);
 }
 
-/**
- * Handle POST request
- * 
- * @param array $products Products data
- * @return void
- */
+//Handle POST request
 function handlePostRequest($products) {
     global $db_config;
     
@@ -123,13 +108,7 @@ function handlePostRequest($products) {
     jsonResponse(true, "Return new products", $newProduct, 201);
 }
 
-/**
- * Handle PUT request
- * 
- * @param array $products Products data
- * @param int $id Product ID
- * @return void
- */
+//Put request
 function handlePutRequest($products, $id) {
     global $db_config;
     
@@ -198,13 +177,7 @@ function handlePutRequest($products, $id) {
     jsonResponse(true, "Updated product loaded", $products[$index], 200);
 }
 
-/**
- * Handle DELETE request
- * 
- * @param array $products Products data
- * @param int $id Product ID
- * @return void
- */
+//Handle DELETE request
 function handleDeleteRequest($products, $id) {
     global $db_config;
     
@@ -232,13 +205,7 @@ function handleDeleteRequest($products, $id) {
     jsonResponse(true, ['message' => 'Product deleted successfully'], null, 200);
 }
 
-/**
- * Find product by ID
- * 
- * @param array $products Products data
- * @param int $id Product ID
- * @return array|null Product data or null if not found
- */
+// find product by ID
 function findProductById($products, $id) {
     foreach ($products as $product) {
         if ($product['id'] === $id) {
@@ -249,13 +216,7 @@ function findProductById($products, $id) {
     return null;
 }
 
-/**
- * Find product index by ID
- * 
- * @param array $products Products data
- * @param int $id Product ID
- * @return int|null Product index or null if not found
- */
+//find product index by ID
 function findProductIndexById($products, $id) {
     foreach ($products as $index => $product) {
         if ($product['id'] === $id) {
@@ -266,12 +227,7 @@ function findProductIndexById($products, $id) {
     return null;
 }
 
-/**
- * Filter products based on query parameters
- * 
- * @param array $products Products data
- * @return array Filtered products
- */
+// filter products based on query parameters
 function filterProducts($products) {
     // Category filter
     if (isset($_GET['category']) && !empty($_GET['category'])) {

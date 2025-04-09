@@ -9,9 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
-  // Image directory path
-  const imgPath = "/server/uploads/images/";
-
   // Load product details
   loadProductDetails(productId);
   
@@ -22,10 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
   setupReviewForm(productId);
 });
 
-/**
- * Load product details from the API
- * @param {number} productId - ID of the product to load
- */
+//Load product details from the API
 function loadProductDetails(productId) {
   // Use API to fetch product details
   fetch(`${config.apiUrl}/products.php?id=${productId}`)
@@ -48,10 +42,7 @@ function loadProductDetails(productId) {
     });
 }
 
-/**
- * Display product details in the UI
- * @param {Object} product - Product data from the API
- */
+//Display product details 
 function displayProductDetails(product) {
   // Set product name and details
   document.getElementById("product-name").textContent = product.name;
@@ -105,7 +96,7 @@ function displayProductDetails(product) {
           
           if (breadcrumbCategory && breadcrumbItem) {
             breadcrumbCategory.textContent = category.name;
-            breadcrumbCategory.href = `../../index.html?category=${category.id}`;
+            breadcrumbCategory.href = `${config.baseUrl}/public/index.html?category=${category.id}`;
             breadcrumbItem.textContent = product.name;
           }
           
@@ -166,26 +157,22 @@ function displayProductDetails(product) {
     }
   });
   
-  // 设置图片库
+  // Setup image gallery
   setupImageGallery();
   
-  // 设置数量控制
+  // Setup quantity control
   const { updateMaxStock } = setupQuantityControl();
   updateMaxStock(product.stock_quantity);
   
-  // 设置按钮状态
+  // button setup
   const { updateButtonStates } = setupButtonStates();
   updateButtonStates(product.stock_quantity);
   
-  // 显示评分
+  // Display product rating
   displayRating(product.rating);
 }
 
-/**
- * Generate HTML for thumbnail images
- * @param {Array} images - Array of image URLs
- * @param {string} productName - Product name for alt text
- */
+//Generate HTML for thumbnail images
 function generateThumbnails(images, productName) {
   const thumbnailContainer = document.getElementById("thumbnail-container");
   thumbnailContainer.innerHTML = ''; // Clear existing thumbnails
@@ -214,10 +201,7 @@ function generateThumbnails(images, productName) {
   });
 }
 
-/**
- * Load reviews for a product
- * @param {number} productId - ID of the product to load reviews for
- */
+//Load reviews for a product
 function loadProductReviews(productId) {
   fetch(`${config.apiUrl}/reviews.php?action=get&product_id=${productId}`)
     .then(response => {
@@ -247,11 +231,7 @@ function loadProductReviews(productId) {
     });
 }
 
-/**
- * Display reviews and statistics in the UI
- * @param {Array} reviews - Array of review objects
- * @param {Object} stats - Review statistics
- */
+//Display reviews and statistics
 function displayReviews(reviews, stats) {
   // Update review statistics
   const avgRating = parseFloat(stats.avg_rating) || 0;
@@ -306,10 +286,7 @@ function displayReviews(reviews, stats) {
   });
 }
 
-/**
- * Update the rating breakdown display
- * @param {Object} stats - Review statistics
- */
+//Update the rating breakdown display
 function updateRatingBreakdown(stats) {
   const totalReviews = parseInt(stats.total_reviews) || 0;
   if (totalReviews === 0) return;
@@ -343,21 +320,13 @@ function updateRatingBreakdown(stats) {
   }
 }
 
-/**
- * Get the name of a star rating (one, two, three, etc.)
- * @param {number} num - Star rating number (1-5)
- * @returns {string} Star name
- */
+//Stars part
 function getStarName(num) {
   const names = ["one", "two", "three", "four", "five"];
   return names[num - 1];
 }
 
-/**
- * Generate HTML for star ratings
- * @param {number} rating - Star rating (0-5)
- * @returns {string} HTML for star rating
- */
+// Generate HTML for star ratings
 function generateStarsHtml(rating) {
   let starsHtml = '';
   const fullStars = Math.floor(rating);
@@ -382,10 +351,31 @@ function generateStarsHtml(rating) {
   return starsHtml;
 }
 
-/**
- * Setup the review form handlers
- * @param {number} productId - ID of the product being reviewed
- */
+// display rating stars
+function displayRating(rating) {
+  const ratingContainer = document.getElementById('product-rating');
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  
+  let starsHtml = '';
+  
+  for (let i = 0; i < fullStars; i++) {
+    starsHtml += '<i class="bi bi-star-fill"></i>';
+  }
+  
+  if (hasHalfStar) {
+    starsHtml += '<i class="bi bi-star-half"></i>';
+  }
+  
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  for (let i = 0; i < emptyStars; i++) {
+    starsHtml += '<i class="bi bi-star"></i>';
+  }
+  
+  ratingContainer.innerHTML = starsHtml;
+}
+
+// Setup review form
 function setupReviewForm(productId) {
   // Check login status to show appropriate form
   api.auth.checkLoginStatus()
@@ -490,12 +480,8 @@ function setupReviewForm(productId) {
   });
 }
 
-/**
- * Show a toast notification
- * @param {string} title - Toast title
- * @param {string} message - Toast message
- * @param {string} type - Toast type (success, error, info)
- */
+//Show a toast notification
+
 function showToast(title, message, type) {
   const toastContainer = document.getElementById("toast-container");
   
@@ -548,24 +534,24 @@ function showErrorMessage(message) {
   `;
 }
 
-// 图片切换动画
+// Setup image gallery
 function setupImageGallery() {
   const mainImage = document.getElementById('main-product-image');
   const thumbnails = document.querySelectorAll('.thumbnail-img');
   
   thumbnails.forEach(thumb => {
     thumb.addEventListener('click', function() {
-      // 添加淡出动画
+      // fade out
       mainImage.style.opacity = '0';
       
       setTimeout(() => {
         mainImage.src = this.src;
         mainImage.alt = this.alt;
         
-        // 添加淡入动画
+        // fade in
         mainImage.style.opacity = '1';
         
-        // 更新缩略图激活状态
+        // update active thumbnail
         thumbnails.forEach(t => t.classList.remove('active'));
         this.classList.add('active');
       }, 300);
@@ -573,16 +559,16 @@ function setupImageGallery() {
   });
 }
 
-// 数量控制逻辑
+//control quantity
 function setupQuantityControl() {
   const decreaseBtn = document.getElementById('decrease-quantity');
   const increaseBtn = document.getElementById('increase-quantity');
   const quantityInput = document.getElementById('product-quantity');
   const stockInfo = document.getElementById('stock-info');
   
-  let maxStock = 10; // 默认最大库存
+  let maxStock = 10; // default max stock
   
-  // 更新最大库存限制
+  //update max stock
   function updateMaxStock(stock) {
     maxStock = stock;
     quantityInput.max = maxStock;
@@ -612,7 +598,7 @@ function setupQuantityControl() {
   return { updateMaxStock };
 }
 
-// 按钮状态控制
+// Button states logic
 function setupButtonStates() {
   const addToCartBtn = document.getElementById('add-to-cart-btn');
   const buyNowBtn = document.getElementById('buy-now-btn');
@@ -620,7 +606,6 @@ function setupButtonStates() {
   
   let isInWishlist = false;
   
-  // 更新按钮状态
   function updateButtonStates(stock) {
     const isAvailable = stock > 0;
     addToCartBtn.disabled = !isAvailable;
@@ -639,7 +624,7 @@ function setupButtonStates() {
     }
   }
   
-  // 收藏按钮点击事件
+  // wishlist add/remove
   wishlistBtn.addEventListener('click', () => {
     isInWishlist = !isInWishlist;
     wishlistBtn.querySelector('i').classList.toggle('bi-heart-fill');
@@ -655,30 +640,4 @@ function setupButtonStates() {
   return { updateButtonStates };
 }
 
-// 评分显示
-function displayRating(rating) {
-  const ratingContainer = document.getElementById('product-rating');
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  
-  let starsHtml = '';
-  
-  // 添加完整星星
-  for (let i = 0; i < fullStars; i++) {
-    starsHtml += '<i class="bi bi-star-fill"></i>';
-  }
-  
-  // 添加半星
-  if (hasHalfStar) {
-    starsHtml += '<i class="bi bi-star-half"></i>';
-  }
-  
-  // 添加空星
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-  for (let i = 0; i < emptyStars; i++) {
-    starsHtml += '<i class="bi bi-star"></i>';
-  }
-  
-  ratingContainer.innerHTML = starsHtml;
-}
 

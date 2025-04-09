@@ -1,12 +1,6 @@
 <?php
-/**
- * Categories API
- * 
- * Handles CRUD operations for product categories
- */
-ini_set('display_errors', 1); // 显示错误
-ini_set('display_startup_errors', 1); // 显示启动错误
-error_reporting(E_ALL); // 显示所有错误
+//Categories API
+
 // Include common functions
 require_once '../includes/functions.php';
 
@@ -52,13 +46,7 @@ switch ($method) {
         break;
 }
 
-/**
- * Handle GET request
- * 
- * @param array $categories Categories data
- * @param int|null $id Category ID
- * @return void
- */
+//Get request
 function handleGetRequest($categories, $id) {
     global $db_config;
     
@@ -91,12 +79,7 @@ function handleGetRequest($categories, $id) {
     jsonResponse(true, "Categories retrieved successfully", $categories, 200);
 }
 
-/**
- * Handle POST request
- * 
- * @param array $categories Categories data
- * @return void
- */
+//Handle POST request
 function handlePostRequest($categories) {
     global $db_config;
     
@@ -129,13 +112,7 @@ function handlePostRequest($categories) {
     jsonResponse(true, "New category loaded", $newCategory, 201);
 }
 
-/**
- * Handle PUT request
- * 
- * @param array $categories Categories data
- * @param int $id Category ID
- * @return void
- */
+//put request
 function handlePutRequest($categories, $id) {
     global $db_config;
     
@@ -172,13 +149,7 @@ function handlePutRequest($categories, $id) {
     jsonResponse(true, "Updated category", $categories[$index], 200);
 }
 
-/**
- * Handle DELETE request
- * 
- * @param array $categories Categories data
- * @param int $id Category ID
- * @return void
- */
+//Handle DELETE request
 function handleDeleteRequest($categories, $id) {
     global $db_config;
     
@@ -216,13 +187,7 @@ function handleDeleteRequest($categories, $id) {
     jsonResponse(true, ['message' => 'Category deleted successfully'], null, 200);
 }
 
-/**
- * Find category by ID
- * 
- * @param array $categories Categories data
- * @param int $id Category ID
- * @return array|null Category data or null if not found
- */
+//find category by ID
 function findCategoryById($categories, $id) {
     foreach ($categories as $category) {
         if ($category['id'] === $id) {
@@ -233,13 +198,7 @@ function findCategoryById($categories, $id) {
     return null;
 }
 
-/**
- * Find category index by ID
- * 
- * @param array $categories Categories data
- * @param int $id Category ID
- * @return int|null Category index or null if not found
- */
+//find category index by ID
 function findCategoryIndexById($categories, $id) {
     foreach ($categories as $index => $category) {
         if ($category['id'] === $id) {

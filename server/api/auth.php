@@ -85,9 +85,7 @@ try {
     jsonResponse(false, 'Internal server error: ' . $e->getMessage(), null, 500);
 }
 
-/**
- * Handle user login
- */
+//Handle user login
 function handleLogin() {
     // Only accept POST requests
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -188,16 +186,14 @@ function handleLogin() {
     }
 }
 
-/**
- * Handle user registration
- */
+// Handle user registration
 function handleRegister() {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         jsonResponse(false, 'Method not allowed', null, 405);
     }
 
     $data = json_decode(file_get_contents('php://input'), true);
-    error_log("Register Request Data: " . print_r($data, true), 0); // Debug the incoming registration data
+    error_log("Register Request Data: " . print_r($data, true), 0); // Debug 
 
     if (!isset($data['username']) || !isset($data['email']) || !isset($data['password'])) {
         jsonResponse(false, 'Username, email, and password are required', null, 400);
@@ -264,9 +260,7 @@ function handleRegister() {
     ], 201);
 }
 
-/**
- * Handle user status check
- */
+// Handle user status check
 function handleStatus() {
     if (!isset($_SESSION['user_id'])) {
         jsonResponse(true, 'Not logged in', ['isLoggedIn' => false]);
@@ -320,9 +314,7 @@ function handleStatus() {
     }
 }
 
-/**
- * Handle user logout
- */
+//Handle user logout
 function handleLogout() {
     // Clear session data
     $_SESSION = array();
