@@ -1,7 +1,6 @@
 <?php
 // Users API
 
-
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
@@ -98,10 +97,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
         jsonResponse(false, 'Method not allowed', null, 405);
 }
 
-/**
- * Get all users (admin only)
- * Optional filters: search, limit, offset
- */
+// Get all users admin only
 function getUsers() {
     $search = isset($_GET['search']) ? sanitize($_GET['search']) : null;
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
@@ -195,10 +191,7 @@ function getUsers() {
     ]);
 }
 
-/**
- * Get a single user by ID
- * @param int $userId User ID
- */
+//get user by ID
 function getUser($userId) {
     // Check if user is retrieving their own profile or is admin
     if ($userId != $_SESSION['user_id'] && !isAdmin()) {
@@ -228,10 +221,7 @@ function getUser($userId) {
     }
 }
 
-/**
- * Update user profile
- * @param int $userId User ID
- */
+// Update user profile
 function updateUser($userId) {
     // Get JSON data
     $data = json_decode(file_get_contents('php://input'), true);
@@ -349,10 +339,7 @@ function updateUser($userId) {
     }
 }
 
-/**
- * Delete a user (admin only)
- * @param int $userId User ID
- */
+//delete user (admin only)
 function deleteUser($userId) {
     // Admin cannot delete their own account
     if ($userId == $_SESSION['user_id']) {
@@ -371,10 +358,7 @@ function deleteUser($userId) {
     }
 }
 
-/**
- * Toggle user active status (admin only)
- * @param int $userId User ID
- */
+// Toggle user status (active/inactive) admin only
 function toggleUserStatus($userId) {
     // Admin cannot disable their own account
     if ($userId == $_SESSION['user_id']) {
@@ -411,11 +395,7 @@ function toggleUserStatus($userId) {
     }
 }
 
-/**
- * Toggle user admin status (admin only)
- * @param int $userId User ID
- * @param bool $isAdmin Whether to make the user an admin
- */
+// Toggle user admin status admin only
 function toggleAdminStatus($userId, $isAdmin) {
     $conn = getConnection();
     
@@ -444,10 +424,7 @@ function toggleAdminStatus($userId, $isAdmin) {
     }
 }
 
-/**
- * Upload user profile image
- * @param int $userId User ID
- */
+// Upload profile image
 function uploadProfileImage($userId) {
     if (!isset($_FILES['image'])) {
         jsonResponse(false, 'No image provided', null, 400);
@@ -479,9 +456,7 @@ function uploadProfileImage($userId) {
     }
 }
 
-/**
- * Check if username is available
- */
+// Check if username is available
 function checkUsername() {
     try {
         // Log the start of the function
@@ -540,9 +515,7 @@ function checkUsername() {
     }
 }
 
-/**
- * Check if email is available
- */
+// Check if email is available
 function checkEmail() {
     try {
         // Log the start of the function

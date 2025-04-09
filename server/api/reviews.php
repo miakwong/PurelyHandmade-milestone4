@@ -1,9 +1,6 @@
 <?php
-/**
- * Reviews API
- * 
- * Handles CRUD operations for product reviews
- */
+// Reviews API
+ 
 ini_set('display_errors', 0);
 error_reporting(0);
 
@@ -74,9 +71,7 @@ try {
     errorResponse('Internal server error', 500);
 }
 
-/**
- * Handle GET request for reviews
- */
+//Handle GET request
 function handleGetRequest($productId, $reviews) {
     try {
         // Filter reviews for the product
@@ -121,9 +116,7 @@ function handleGetRequest($productId, $reviews) {
     }
 }
 
-/**
- * Handle POST request for adding a review
- */
+//Handle POST request for adding a review
 function handlePostRequest(&$reviews) {
     global $db_config;
     
@@ -220,9 +213,7 @@ function handlePostRequest(&$reviews) {
     }
 }
 
-/**
- * Calculate review statistics
- */
+// Calculate review statistics
 function calculateReviewStats($reviews) {
     $totalReviews = count($reviews);
     $ratings = array_column($reviews, 'rating');

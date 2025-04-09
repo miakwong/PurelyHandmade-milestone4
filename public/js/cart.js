@@ -2,7 +2,7 @@
 
 // Define cart API object
 const cartAPI = {
-  // 内部方法：检查登录状态
+  // check login status
   _checkLogin: async function() {
     const isLoggedIn = await checkUserLogin();
     if (!isLoggedIn) {

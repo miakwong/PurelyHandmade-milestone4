@@ -1,7 +1,5 @@
 <?php
-/**
- * Database connection handler
- */
+//Database connection handler
 
 // Load database configuration parameters
 if (!defined('DB_HOST') && file_exists(__DIR__ . '/../includes/db_credentials.php')) {
@@ -10,11 +8,7 @@ if (!defined('DB_HOST') && file_exists(__DIR__ . '/../includes/db_credentials.ph
     die("Error: Database credentials file not found. Please create server/includes/db_credentials.php.");
 }
 
-/**
- * Get database connection
- * 
- * @return PDO Database connection object
- */
+// connect to db
 function getDbConnection() {
     try {
         $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
