@@ -115,26 +115,6 @@ try {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     echo "Table created: product_reviews\n";
     
-    // Create carts table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS carts (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        user_id INT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    echo "Table created: carts\n";
-    
-    // Create cart_items table
-    $pdo->exec("CREATE TABLE IF NOT EXISTS cart_items (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        cart_id INT NOT NULL,
-        product_id INT NOT NULL,
-        quantity INT NOT NULL DEFAULT 1,
-        FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
-        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-    echo "Table created: cart_items\n";
-    
     // Create orders table
     $pdo->exec("CREATE TABLE IF NOT EXISTS orders (
         id INT PRIMARY KEY AUTO_INCREMENT,

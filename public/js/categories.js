@@ -57,14 +57,10 @@ const CategoryManager = {
 
     // Handle category filter selection
     handleCategoryFilter(categoryId) {
-        // Update breadcrumb
-        const breadcrumbCategory = document.getElementById('breadcrumb-category');
-        const categoryName = categoryId === 'all' ? 'All Products' : 
-            document.querySelector(`#category-${categoryId} + label`).textContent;
-        breadcrumbCategory.textContent = categoryName;
-
         // Update product list title
         const productListTitle = document.getElementById('product-list-title');
+        const categoryName = categoryId === 'all' ? 'All Products' : 
+            document.querySelector(`#category-${categoryId} + label`).textContent;
         productListTitle.textContent = categoryName;
 
         // Trigger product list refresh with new category filter

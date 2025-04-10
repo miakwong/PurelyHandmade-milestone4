@@ -246,18 +246,15 @@ const users = {
     }
 };
 
-// Cart API
-const cart = {
-    getCart: async () => await get('cart.php'),
-    addToCart: async (productId, quantity = 1) => await post('cart.php?action=add', { product_id: productId, quantity }),
-    updateCart: async (productId, quantity) => await post('cart.php?action=update', { product_id: productId, quantity }),
-    removeFromCart: async (productId) => await post('cart.php?action=remove', { product_id: productId }),
-    clearCart: async () => await post('cart.php?action=clear')
+// Orders API
+const orders = {
+    createOrder: async (orderData) => await post('orders.php?action=create', orderData),
+    getUserOrders: async (userId) => await get(`orders.php?user_id=${userId}`)
 };
 
 // Reviews API
 const reviews = {
-    getProductReviews: async (productId) => await get('reviews.php?action=get', { product_id: productId }),
+    getProductReviews: async (productId) => await get(`reviews.php?product_id=${productId}`),
     addReview: async (productId, rating, reviewText) => await post('reviews.php?action=add', { 
         product_id: productId, 
         rating, 
@@ -276,7 +273,7 @@ const api = {
     products,
     categories,
     users,
-    cart,
+    orders,
     reviews
 };
 

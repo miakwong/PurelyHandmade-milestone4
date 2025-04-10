@@ -113,7 +113,6 @@ function getUsers() {
             FROM users 
             WHERE 1=1";
     $params = [];
-    $types = "";
     
     // Add search filter
     if ($search) {
@@ -123,7 +122,6 @@ function getUsers() {
         $params[] = $searchParam;
         $params[] = $searchParam;
         $params[] = $searchParam;
-        $types .= "ssss";
     }
     
     // Add sorting
@@ -133,21 +131,15 @@ function getUsers() {
     $sql .= " LIMIT ? OFFSET ?";
     $params[] = $limit;
     $params[] = $offset;
-    $types .= "ii";
     
     // Execute query
-    $conn = getConnection();
-    $stmt = $conn->prepare($sql);
+    $pdo = getConnection();
+    $stmt = $pdo->prepare($sql);
     
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt->execute($params);
     
     $users = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         // Add image URL if exists
         if ($row['image_path']) {
             $row['image_url'] = UPLOADS_URL . '/images/' . $row['image_path'];
@@ -164,7 +156,6 @@ function getUsers() {
     // Count total users for pagination
     $countSql = "SELECT COUNT(*) as total FROM users WHERE 1=1";
     $countParams = [];
-    $countTypes = "";
     
     if ($search) {
         $countSql .= " AND (username LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?)";
@@ -173,18 +164,11 @@ function getUsers() {
         $countParams[] = $searchParam;
         $countParams[] = $searchParam;
         $countParams[] = $searchParam;
-        $countTypes .= "ssss";
     }
     
-    $countStmt = $conn->prepare($countSql);
-    
-    if (!empty($countParams)) {
-        $countStmt->bind_param($countTypes, ...$countParams);
-    }
-    
-    $countStmt->execute();
-    $countResult = $countStmt->get_result();
-    $totalCount = $countResult->fetch_assoc()['total'];
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute($countParams);
+    $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     jsonResponse(true, 'Users retrieved successfully', [
         'users' => $users,
@@ -203,16 +187,16 @@ function getUser($userId) {
         jsonResponse(false, 'You are not authorized to view this user', null, 403);
     }
     
-    $conn = getConnection();
+    $pdo = getConnection();
     $sql = "SELECT id, username, email, first_name, last_name, image_path, is_admin, is_active, created_at 
             FROM users 
             WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$userId]);
     
-    if ($user = $result->fetch_assoc()) {
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($user) {
         // Add image URL if exists
         if ($user['image_path']) {
             $user['image_url'] = UPLOADS_URL . '/images/' . $user['image_path'];
@@ -237,20 +221,18 @@ function updateUser($userId) {
     }
     
     // Check if user exists
-    $conn = getConnection();
+    $pdo = getConnection();
     $checkSql = "SELECT id FROM users WHERE id = ?";
-    $checkStmt = $conn->prepare($checkSql);
-    $checkStmt->bind_param("i", $userId);
-    $checkStmt->execute();
+    $checkStmt = $pdo->prepare($checkSql);
+    $checkStmt->execute([$userId]);
     
-    if ($checkStmt->get_result()->num_rows === 0) {
+    if ($checkStmt->rowCount() === 0) {
         jsonResponse(false, 'User not found', null, 404);
     }
     
     // Build update query
     $updateFields = [];
     $params = [];
-    $types = "";
     
     // Only allow admin to update username and email
     if (isAdmin()) {
@@ -259,17 +241,15 @@ function updateUser($userId) {
             
             // Check if username is already taken
             $checkUsernameSql = "SELECT id FROM users WHERE username = ? AND id != ?";
-            $checkUsernameStmt = $conn->prepare($checkUsernameSql);
-            $checkUsernameStmt->bind_param("si", $username, $userId);
-            $checkUsernameStmt->execute();
+            $checkUsernameStmt = $pdo->prepare($checkUsernameSql);
+            $checkUsernameStmt->execute([$username, $userId]);
             
-            if ($checkUsernameStmt->get_result()->num_rows > 0) {
+            if ($checkUsernameStmt->rowCount() > 0) {
                 jsonResponse(false, 'Username already taken', null, 409);
             }
             
             $updateFields[] = "username = ?";
             $params[] = $username;
-            $types .= "s";
         }
         
         if (isset($data['email'])) {
@@ -282,17 +262,15 @@ function updateUser($userId) {
             
             // Check if email is already taken
             $checkEmailSql = "SELECT id FROM users WHERE email = ? AND id != ?";
-            $checkEmailStmt = $conn->prepare($checkEmailSql);
-            $checkEmailStmt->bind_param("si", $email, $userId);
-            $checkEmailStmt->execute();
+            $checkEmailStmt = $pdo->prepare($checkEmailSql);
+            $checkEmailStmt->execute([$email, $userId]);
             
-            if ($checkEmailStmt->get_result()->num_rows > 0) {
+            if ($checkEmailStmt->rowCount() > 0) {
                 jsonResponse(false, 'Email already taken', null, 409);
             }
             
             $updateFields[] = "email = ?";
             $params[] = $email;
-            $types .= "s";
         }
     }
     
@@ -300,13 +278,11 @@ function updateUser($userId) {
     if (isset($data['first_name'])) {
         $updateFields[] = "first_name = ?";
         $params[] = sanitize($data['first_name']);
-        $types .= "s";
     }
     
     if (isset($data['last_name'])) {
         $updateFields[] = "last_name = ?";
         $params[] = sanitize($data['last_name']);
-        $types .= "s";
     }
     
     // Update password if provided
@@ -321,7 +297,6 @@ function updateUser($userId) {
         $passwordHash = password_hash($password, PASSWORD_DEFAULT, ['cost' => PASSWORD_COST]);
         $updateFields[] = "password_hash = ?";
         $params[] = $passwordHash;
-        $types .= "s";
     }
     
     if (empty($updateFields)) {
@@ -330,14 +305,12 @@ function updateUser($userId) {
     
     // Add user ID to params
     $params[] = $userId;
-    $types .= "i";
     
     // Execute update
     $sql = "UPDATE users SET " . implode(", ", $updateFields) . " WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
+    $stmt = $pdo->prepare($sql);
     
-    if ($stmt->execute()) {
+    if ($stmt->execute($params)) {
         jsonResponse(true, 'User updated successfully');
     } else {
         jsonResponse(false, 'Failed to update user', null, 500);
@@ -351,12 +324,11 @@ function deleteUser($userId) {
         jsonResponse(false, 'You cannot delete your own admin account', null, 400);
     }
     
-    $conn = getConnection();
+    $pdo = getConnection();
     $sql = "DELETE FROM users WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $userId);
+    $stmt = $pdo->prepare($sql);
     
-    if ($stmt->execute() && $stmt->affected_rows > 0) {
+    if ($stmt->execute([$userId]) && $stmt->rowCount() > 0) {
         jsonResponse(true, 'User deleted successfully');
     } else {
         jsonResponse(false, 'User not found or could not be deleted', null, 404);
@@ -370,28 +342,26 @@ function toggleUserStatus($userId) {
         jsonResponse(false, 'You cannot disable your own admin account', null, 400);
     }
     
-    $conn = getConnection();
+    $pdo = getConnection();
     
     // Get current status
     $sql = "SELECT is_active FROM users WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$userId]);
     
-    if ($result->num_rows === 0) {
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$user) {
         jsonResponse(false, 'User not found', null, 404);
     }
     
-    $user = $result->fetch_assoc();
     $newStatus = $user['is_active'] ? 0 : 1;
     
     // Update status
     $updateSql = "UPDATE users SET is_active = ? WHERE id = ?";
-    $updateStmt = $conn->prepare($updateSql);
-    $updateStmt->bind_param("ii", $newStatus, $userId);
+    $updateStmt = $pdo->prepare($updateSql);
     
-    if ($updateStmt->execute()) {
+    if ($updateStmt->execute([$newStatus, $userId])) {
         jsonResponse(true, 'User status updated successfully', [
             'is_active' => (bool)$newStatus
         ]);
@@ -402,25 +372,23 @@ function toggleUserStatus($userId) {
 
 // Toggle user admin status admin only
 function toggleAdminStatus($userId, $isAdmin) {
-    $conn = getConnection();
+    $pdo = getConnection();
     
     // Check if user exists
     $sql = "SELECT id FROM users WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$userId]);
     
-    if ($stmt->get_result()->num_rows === 0) {
+    if ($stmt->rowCount() === 0) {
         jsonResponse(false, 'User not found', null, 404);
     }
     
     // Update admin status
     $updateSql = "UPDATE users SET is_admin = ? WHERE id = ?";
-    $updateStmt = $conn->prepare($updateSql);
+    $updateStmt = $pdo->prepare($updateSql);
     $adminStatus = $isAdmin ? 1 : 0;
-    $updateStmt->bind_param("ii", $adminStatus, $userId);
     
-    if ($updateStmt->execute()) {
+    if ($updateStmt->execute([$adminStatus, $userId])) {
         jsonResponse(true, 'User admin status updated successfully', [
             'is_admin' => (bool)$adminStatus
         ]);
@@ -443,12 +411,11 @@ function uploadProfileImage($userId) {
     
     if ($filename) {
         // Update user with image path
-        $conn = getConnection();
+        $pdo = getConnection();
         $sql = "UPDATE users SET image_path = ? WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("si", $filename, $userId);
+        $stmt = $pdo->prepare($sql);
         
-        if ($stmt->execute()) {
+        if ($stmt->execute([$filename, $userId])) {
             jsonResponse(true, 'Profile image uploaded successfully', [
                 'image_path' => $filename,
                 'image_url' => UPLOADS_URL . '/images/' . $filename
