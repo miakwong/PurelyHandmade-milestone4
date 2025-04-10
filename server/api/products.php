@@ -75,12 +75,32 @@ function handleGetRequest($id) {
                 return;
             }
             
+            // Get product information
             $stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
             $stmt->execute([$id]);
             $product = $stmt->fetch();
             
             if ($product === false) {
                 errorResponse('Product not found', 404);
+            }
+            
+            // Get product images from product_images table
+            $imagesStmt = $pdo->prepare("SELECT image_path FROM product_images WHERE product_id = ? ORDER BY is_primary DESC");
+            $imagesStmt->execute([$id]);
+            $imageRows = $imagesStmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Create images array
+            $images = [];
+            foreach ($imageRows as $row) {
+                $images[] = $row['image_path'];
+            }
+            
+            // Add images array to product
+            $product['images'] = $images;
+            
+            // If no images in product_images table but we have a single image in products table
+            if (empty($images) && !empty($product['image'])) {
+                $product['images'] = [$product['image']];
             }
             
             // Ensure numeric fields are properly typed
@@ -200,6 +220,14 @@ function handleGetRequest($id) {
             }
             if (isset($product['stock'])) {
                 $product['stock'] = (int)$product['stock'];
+            }
+            
+            // For list view, we only need main image in the images array
+            // We don't fetch all images for performance reasons
+            if (!empty($product['image'])) {
+                $product['images'] = [$product['image']];
+            } else {
+                $product['images'] = [];
             }
         }
         

@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // URL Parameters
+  // Get product ID from URL
   const urlParams = new URLSearchParams(window.location.search);
   const productId = urlParams.get("id");
   
@@ -9,60 +9,98 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
-  // Load product details
+  // Load product details and reviews
   loadProductDetails(productId);
-  
-  // Load reviews for this product
   loadProductReviews(productId);
   
   // Setup review form handlers
   setupReviewForm(productId);
 });
 
-//Load product details from the API
+// Load product details from the API
 function loadProductDetails(productId) {
-  // Use API to fetch product details
-  fetch(`${config.apiUrl}/products.php?id=${productId}`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json();
-    })
+  // Show loading indicator
+  const container = document.querySelector(".container");
+  const loadingIndicator = document.createElement("div");
+  loadingIndicator.className = "text-center my-5";
+  loadingIndicator.id = "loading-indicator";
+  loadingIndicator.innerHTML = `
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading product details...</p>
+  `;
+  
+  // Insert the loading indicator if it doesn't exist
+  if (!document.getElementById("loading-indicator")) {
+    container.insertBefore(loadingIndicator, container.firstChild);
+  }
+  
+  // Fetch product data from API
+  api.products.getProduct(productId)
     .then(data => {
+      // Remove loading indicator
+      const indicator = document.getElementById("loading-indicator");
+      if (indicator) {
+        indicator.remove();
+      }
+      
       if (data.success && data.data) {
         displayProductDetails(data.data);
       } else {
-        throw new Error(data?.message || "Invalid product data");
+        throw new Error(data.message || "Invalid product data");
       }
     })
     .catch(error => {
       console.error("Error loading product:", error);
-      showErrorMessage("Failed to load product details. Please try again later.");
+      showErrorMessage("Failed to load product details. Please try again later. Error: " + error.message);
     });
 }
 
-//Display product details 
+// Display product details on page
 function displayProductDetails(product) {
+  console.log("Product data received:", product); // 调试信息
+  
   // Set product name and details
   document.getElementById("product-name").textContent = product.name;
   document.getElementById("product-description").textContent = product.description;
   
-  // Set product price
-  if (product.onSale && product.salePrice) {
-    document.getElementById("product-price").textContent = `$${product.salePrice.toFixed(2)}`;
-    document.getElementById("product-original-price").textContent = `$${product.price.toFixed(2)}`;
-    document.getElementById("product-original-price").style.display = "inline-block";
-    document.getElementById("sale-badge").style.display = "inline-block";
-  } else {
-    document.getElementById("product-price").textContent = `$${product.price.toFixed(2)}`;
-    document.getElementById("product-original-price").style.display = "none";
-    document.getElementById("sale-badge").style.display = "none";
+  // Handle price display
+  const priceElement = document.getElementById("product-price");
+  if (priceElement) {
+    // Parse price as float and check validity
+    const regularPrice = parseFloat(product.price);
+    const formattedRegularPrice = !isNaN(regularPrice) ? `$${regularPrice.toFixed(2)}` : '$0.00';
+    
+    // Check if product is on sale and has valid sale price
+    if (product.onSale && product.salePrice && parseFloat(product.salePrice) < regularPrice) {
+        const salePrice = parseFloat(product.salePrice);
+        const formattedSalePrice = !isNaN(salePrice) ? `$${salePrice.toFixed(2)}` : '$0.00';
+        
+        priceElement.innerHTML = `
+            <span class="original-price text-muted"><s>${formattedRegularPrice}</s></span>
+            <span class="sale-price text-danger">${formattedSalePrice}</span>
+            <span class="badge bg-danger ms-2">Sale</span>
+        `;
+    } else {
+        // Regular price display
+        priceElement.innerHTML = `<span>${formattedRegularPrice}</span>`;
+    }
   }
   
-  // Set stock information
-  document.getElementById("stock-info").textContent = 
-    product.in_stock ? `${product.stock_quantity} in stock` : "Out of stock";
+  // Set stock status
+  const stockStatusElement = document.getElementById("stock-status");
+  if (stockStatusElement) {
+    if (product.in_stock || (product.stock_quantity && product.stock_quantity > 0)) {
+        stockStatusElement.textContent = "In Stock";
+        stockStatusElement.classList.add("text-success");
+        stockStatusElement.classList.remove("text-danger");
+    } else {
+        stockStatusElement.textContent = "Out of Stock";
+        stockStatusElement.classList.add("text-danger");
+        stockStatusElement.classList.remove("text-success");
+    }
+  }
   
   // Setup product rating stars
   const ratingElem = document.getElementById("product-rating");
@@ -72,40 +110,83 @@ function displayProductDetails(product) {
   document.getElementById("review-count").textContent = 
     `(${product.reviewCount || 0} reviews)`;
   
-  // Set main product image
-  const mainImage = document.getElementById("main-product-image");
-  if (product.images && product.images.length > 0) {
-    mainImage.src = product.images[0];
-    mainImage.alt = product.name;
+  // Handle images
+  const mainImageElement = document.getElementById("main-product-image");
+  const thumbnailContainer = document.getElementById("thumbnail-container");
+  
+  // Clear any existing thumbnails
+  if (thumbnailContainer) {
+    thumbnailContainer.innerHTML = '';
+  }
+  
+  // Database image handling
+  console.log("Product images:", product.images); // 调试图片数组
+  
+  // Check if we have an images array from product_images table
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    console.log(`Found ${product.images.length} images in array`); // 调试图片数量
     
-    // Generate thumbnails
+    // Set the main image to the first image in the array
+    if (mainImageElement) {
+      mainImageElement.src = product.images[0];
+      mainImageElement.alt = product.name;
+    }
+    
+    // Generate thumbnails from the images array
     generateThumbnails(product.images, product.name);
+  } 
+  // Handle case with single image from products table
+  else if (product.image) {
+    console.log("Only found single image:", product.image); // 调试单图片情况
+    
+    if (mainImageElement) {
+      mainImageElement.src = product.image;
+      mainImageElement.alt = product.name;
+    }
+    
+    // Create a single thumbnail for the main image
+    generateThumbnails([product.image], product.name);
+  } 
+  // No images available
+  else {
+    console.log("No images found for product"); // 调试无图片情况
+    
+    // Set a default "no image" placeholder
+    if (mainImageElement) {
+      mainImageElement.src = "/public/images/no-image.jpg";
+      mainImageElement.alt = "No image available";
+    }
+  }
+  
+  // Update stock status message
+  const stockInfoElement = document.getElementById('stock-info');
+  if (stockInfoElement) {
+    if (product.in_stock && product.stock_quantity > 0) {
+      stockInfoElement.textContent = `${product.stock_quantity} in stock`;
+      stockInfoElement.classList.add('text-success');
+      stockInfoElement.classList.remove('text-danger');
+    } else {
+      stockInfoElement.textContent = "Out of stock";
+      stockInfoElement.classList.add('text-danger');
+      stockInfoElement.classList.remove('text-success');
+    }
   }
   
   // Update breadcrumb navigation
   if (product.category_id) {
-    console.log('Fetching category for ID:', product.category_id);
-    // get category info from API
-    fetch(`${config.apiUrl}/categories.php?id=${product.category_id}`)
-      .then(response => {
-        console.log('Category API response status:', response.status);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
+    api.categories.getCategory(product.category_id)
       .then(data => {
-        console.log('Category API response data:', data);
-        if (data.success && data.data) {
-          const category = data.data;
-          console.log('Category data:', category);
+        if (data.success && data.category) {
+          const category = data.category;
+          
           // update breadcrumb links
           const breadcrumbCategory = document.getElementById("breadcrumb-category-link");
           const breadcrumbItem = document.getElementById("breadcrumb-item");
           
           if (breadcrumbCategory && breadcrumbItem) {
             breadcrumbCategory.textContent = category.name;
-            breadcrumbCategory.href = `${config.baseUrl}/public/index.html?category=${category.id}`;
+            // Fix the href for category link to ensure it works correctly
+            breadcrumbCategory.href = `/~miakuang/PurelyHandmade/public/index.html?category=${category.id}`;
             breadcrumbItem.textContent = product.name;
           }
           
@@ -113,21 +194,14 @@ function displayProductDetails(product) {
           const productCategory = document.getElementById("product-category");
           if (productCategory) {
             productCategory.textContent = category.name;
-            productCategory.href = `${config.baseUrl}/public/index.html?category=${category.id}`;
+            productCategory.href = `/~miakuang/PurelyHandmade/public/index.html?category=${category.id}`;
           }
         } else {
-          console.error('Invalid category data structure:', data);
-          throw new Error(data?.message || 'Invalid category data');
+          console.error("Category data not found or invalid");
         }
       })
       .catch(error => {
         console.error("Error loading category:", error);
-        // Set default category text if category loading fails
-        const productCategory = document.getElementById("product-category");
-        if (productCategory) {
-          productCategory.textContent = "Uncategorized";
-          productCategory.href = `${config.baseUrl}/public/index.html`;
-        }
       });
   }
   
@@ -157,23 +231,65 @@ function displayProductDetails(product) {
       });
   });
   
-  // Quantity control buttons
-  document.getElementById("decrease-quantity").addEventListener("click", function() {
-    const quantityInput = document.getElementById("product-quantity");
-    const currentQuantity = parseInt(quantityInput.value) || 1;
-    if (currentQuantity > 1) {
-      quantityInput.value = currentQuantity - 1;
-    }
-  });
-  
-  document.getElementById("increase-quantity").addEventListener("click", function() {
-    const quantityInput = document.getElementById("product-quantity");
-    const currentQuantity = parseInt(quantityInput.value) || 1;
-    const maxStock = product.stock_quantity || 10;
-    if (currentQuantity < maxStock) {
-      quantityInput.value = currentQuantity + 1;
-    }
-  });
+  // Set up quantity selector
+  const quantityInput = document.getElementById("product-quantity");
+  const incrementBtn = document.getElementById("quantity-increment");
+  const decrementBtn = document.getElementById("quantity-decrement");
+  const maxQuantity = product.stock_quantity || 10; // Default to 10 if stock not specified
+
+  if (quantityInput) {
+      // Set initial value
+      quantityInput.value = 1;
+      
+      // Update min/max attributes
+      quantityInput.setAttribute("min", "1");
+      quantityInput.setAttribute("max", maxQuantity.toString());
+      
+      // Handle manual input
+      quantityInput.addEventListener("change", () => {
+          let value = parseInt(quantityInput.value, 10);
+          
+          // Validate the value
+          if (isNaN(value) || value < 1) {
+              value = 1;
+          } else if (value > maxQuantity) {
+              value = maxQuantity;
+          }
+          
+          // Update the input value
+          quantityInput.value = value;
+      });
+  }
+
+  if (incrementBtn) {
+      incrementBtn.addEventListener("click", () => {
+          if (quantityInput) {
+              let value = parseInt(quantityInput.value, 10);
+              if (isNaN(value)) {
+                  value = 0;
+              }
+              
+              if (value < maxQuantity) {
+                  quantityInput.value = value + 1;
+              }
+          }
+      });
+  }
+
+  if (decrementBtn) {
+      decrementBtn.addEventListener("click", () => {
+          if (quantityInput) {
+              let value = parseInt(quantityInput.value, 10);
+              if (isNaN(value)) {
+                  value = 2; // This will result in 1 after decrement
+              }
+              
+              if (value > 1) {
+                  quantityInput.value = value - 1;
+              }
+          }
+      });
+  }
   
   // Setup image gallery
   setupImageGallery();
@@ -185,12 +301,9 @@ function displayProductDetails(product) {
   // button setup
   const { updateButtonStates } = setupButtonStates();
   updateButtonStates(product.stock_quantity);
-  
-  // Display product rating
-  displayRating(product.rating);
 }
 
-//Generate HTML for thumbnail images
+// Generate HTML for thumbnail images
 function generateThumbnails(images, productName) {
   const thumbnailContainer = document.getElementById("thumbnail-container");
   thumbnailContainer.innerHTML = ''; // Clear existing thumbnails
@@ -219,92 +332,44 @@ function generateThumbnails(images, productName) {
   });
 }
 
-//Load reviews for a product
+// Load reviews for a product
 function loadProductReviews(productId) {
-  console.log('Loading reviews for product ID:', productId);
-  
-  // Validate product ID
-  if (!productId || isNaN(productId)) {
-    console.error('Invalid product ID:', productId);
-    showErrorMessage('Invalid product ID');
-    return;
-  }
+  // Show loading indicator in reviews tab
+  const reviewsContainer = document.getElementById("reviews-container");
+  reviewsContainer.innerHTML = `
+    <div class="text-center py-3">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Loading reviews...</p>
+    </div>
+  `;
 
-  fetch(`${config.apiUrl}/reviews.php?action=get&product_id=${productId}`, {
-    credentials: 'include'
-  })
-    .then(response => {
-      console.log('Reviews API response status:', response.status);
-      
-      // Handle different HTTP status codes
-      if (response.status === 404) {
-        throw new Error('Product not found');
-      } else if (response.status === 500) {
-        return response.text().then(text => {
-          console.error('Server error response:', text);
-          try {
-            const data = JSON.parse(text);
-            throw new Error(data.message || 'Server error occurred');
-          } catch (e) {
-            if (text.includes('<!DOCTYPE HTML')) {
-              throw new Error('Server configuration error. Please try again later.');
-            }
-            throw new Error('Server error occurred: ' + text);
-          }
-        });
-      } else if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return response.json();
-    })
+  // Fetch reviews from API
+  api.reviews.getProductReviews(productId)
     .then(data => {
-      console.log('Reviews API response data:', data);
-      
-      if (data.success && data.data) {
-        const reviews = data.data.reviews || [];
-        const stats = data.data.stats || {
-          avg_rating: 0,
-          total_reviews: 0,
-          rating_distribution: {
-            '5_star': 0,
-            '4_star': 0,
-            '3_star': 0,
-            '2_star': 0,
-            '1_star': 0
-          }
-        };
-        
-        console.log('Processed reviews:', reviews);
-        console.log('Processed stats:', stats);
-        
-        displayReviews(reviews, stats);
+      if (data.success) {
+        displayReviews(data.reviews, data.stats);
       } else {
-        console.error('Invalid reviews data structure:', data);
-        document.getElementById("reviews-container").innerHTML = `
+        reviewsContainer.innerHTML = `
           <div class="alert alert-warning">
-            <p>${data.message || 'No reviews available'}</p>
+            <p>${data.message || 'Failed to load reviews'}</p>
           </div>
         `;
       }
     })
     .catch(error => {
-      console.error('Error loading reviews:', error);
-      console.error('Error stack:', error.stack);
-      document.getElementById("reviews-container").innerHTML = `
+      console.error("Error loading reviews:", error);
+      reviewsContainer.innerHTML = `
         <div class="alert alert-danger">
-          <p>Failed to load reviews: ${error.message}</p>
-          <p>Please try again later or contact support if the problem persists.</p>
+          <p>Failed to load reviews. Please try again later. Error: ${error.message}</p>
         </div>
       `;
     });
 }
 
-//Display reviews and statistics
+// Display reviews and statistics
 function displayReviews(reviews, stats) {
-  console.log('Displaying reviews:', reviews);
-  console.log('Displaying stats:', stats);
-  
   // Update review statistics
   const avgRating = parseFloat(stats.avg_rating) || 0;
   const totalReviews = parseInt(stats.total_reviews) || 0;
@@ -320,7 +385,7 @@ function displayReviews(reviews, stats) {
   const reviewListContainer = document.getElementById("review-list");
   reviewListContainer.innerHTML = ''; // Clear existing reviews
   
-  if (!reviews || reviews.length === 0) {
+  if (reviews.length === 0) {
     reviewListContainer.innerHTML = `
       <div class="text-center my-4">
         <p>This product doesn't have any reviews yet. Be the first to review it!</p>
@@ -346,11 +411,8 @@ function displayReviews(reviews, stats) {
     
     reviewEl.innerHTML = `
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <div>
-          <h6 class="mb-0">${review.user_name || review.username}</h6>
-          <div class="text-warning">
-            ${generateStarsHtml(review.rating)}
-          </div>
+        <div class="text-warning">
+          ${generateStarsHtml(review.rating)}
         </div>
         <span class="text-muted small">${formattedDate}</span>
       </div>
@@ -361,7 +423,7 @@ function displayReviews(reviews, stats) {
   });
 }
 
-//Update the rating breakdown display
+// Update the rating breakdown display
 function updateRatingBreakdown(stats) {
   const totalReviews = parseInt(stats.total_reviews) || 0;
   if (totalReviews === 0) return;
@@ -395,12 +457,6 @@ function updateRatingBreakdown(stats) {
   }
 }
 
-//Stars part
-function getStarName(num) {
-  const names = ["one", "two", "three", "four", "five"];
-  return names[num - 1];
-}
-
 // Generate HTML for star ratings
 function generateStarsHtml(rating) {
   let starsHtml = '';
@@ -426,114 +482,112 @@ function generateStarsHtml(rating) {
   return starsHtml;
 }
 
-// display rating stars
-function displayRating(rating) {
-  const ratingContainer = document.getElementById('product-rating');
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  
-  let starsHtml = '';
-  
-  for (let i = 0; i < fullStars; i++) {
-    starsHtml += '<i class="bi bi-star-fill"></i>';
-  }
-  
-  if (hasHalfStar) {
-    starsHtml += '<i class="bi bi-star-half"></i>';
-  }
-  
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-  for (let i = 0; i < emptyStars; i++) {
-    starsHtml += '<i class="bi bi-star"></i>';
-  }
-  
-  ratingContainer.innerHTML = starsHtml;
-}
-
 // Setup review form
 function setupReviewForm(productId) {
-  const reviewForm = document.getElementById('review-form');
-  if (!reviewForm) {
-    console.warn('Review form not found');
-    return;
-  }
-
-  // Check login status from backend
-  fetch(`${config.apiUrl}/auth.php?action=status`, {
-    method: 'GET',
-    credentials: 'include'
-  })
+  // Check login status to show appropriate form
+  api.auth.checkLoginStatus()
     .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+      if (response.success && response.isLoggedIn) {
+        // User is logged in, show form with their info pre-filled
+        document.getElementById("review-name").value = response.user.username;
+        document.getElementById("review-name").disabled = true;
+        document.getElementById("review-email").value = response.user.email;
+        document.getElementById("review-email").disabled = true;
+      } else {
+        // Show login prompt
+        const reviewForm = document.getElementById("review-form");
+        reviewForm.innerHTML = `
+          <div class="alert alert-info">
+            <p>You need to <a href="../user/login.html">log in</a> to write a review.</p>
+          </div>
+        `;
       }
-      return response.json();
-    })
-    .then(data => {
-      if (!data.success) {
-        throw new Error(data?.message || 'Failed to check login status');
-      }
-      return data.data.isLoggedIn;
-    })
-    .then(isLoggedIn => {
-      if (!isLoggedIn) {
-        // Hide review form and show login prompt
-        const reviewSection = document.getElementById('review-section');
-        if (reviewSection) {
-          reviewSection.innerHTML = `
-            <div class="alert alert-info">
-              Please <a href="${config.baseUrl}/public/views/auth/login.html">login</a> to leave a review.
-            </div>
-          `;
-        }
-        return;
-      }
-
-      // User is logged in, setup review form
-      reviewForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const rating = document.getElementById('review-rating').value;
-        const comment = document.getElementById('review-comment').value;
-        
-        try {
-          const response = await fetch(`${config.apiUrl}/reviews.php?action=add`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              product_id: productId,
-              rating: parseFloat(rating),
-              review_text: comment
-            }),
-            credentials: 'include'
-          });
-          
-          const result = await response.json();
-          
-          if (result.success) {
-            showToast('Success', 'Review submitted successfully', 'success');
-            // Reload reviews
-            loadProductReviews(productId);
-            // Reset form
-            reviewForm.reset();
-          } else {
-            showToast('Error', result?.message || 'Failed to submit review', 'error');
-          }
-        } catch (error) {
-          console.error('Error submitting review:', error);
-          showToast('Error', 'Failed to submit review', 'error');
-        }
-      });
     })
     .catch(error => {
-      console.error('Error checking login status:', error);
-      showToast('Error', 'Failed to check login status', 'error');
+      console.error("Error checking login status:", error);
     });
+  
+  // Rating star selection
+  const ratingStars = document.querySelectorAll(".rating-star");
+  ratingStars.forEach(star => {
+    star.addEventListener("click", function() {
+      const rating = parseInt(this.getAttribute("data-rating"));
+      document.getElementById("rating-value").value = rating;
+      
+      // Update visual state of stars
+      ratingStars.forEach(s => {
+        const starRating = parseInt(s.getAttribute("data-rating"));
+        s.classList.remove("bi-star-fill", "bi-star");
+        s.classList.add(starRating <= rating ? "bi-star-fill" : "bi-star");
+      });
+    });
+    
+    // Hover effects
+    star.addEventListener("mouseenter", function() {
+      const hoverRating = parseInt(this.getAttribute("data-rating"));
+      ratingStars.forEach(s => {
+        const starRating = parseInt(s.getAttribute("data-rating"));
+        if (starRating <= hoverRating) {
+          s.classList.add("text-warning");
+        }
+      });
+    });
+    
+    star.addEventListener("mouseleave", function() {
+      ratingStars.forEach(s => {
+        s.classList.remove("text-warning");
+      });
+    });
+  });
+  
+  // Review form submission
+  const reviewForm = document.getElementById("review-form");
+  reviewForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+    
+    // Get form values
+    const rating = parseInt(document.getElementById("rating-value").value);
+    const reviewText = document.getElementById("review-text").value.trim();
+    
+    // Validate form
+    if (rating < 1 || rating > 5) {
+      showToast("Error", "Please select a rating", "error");
+      return;
+    }
+    
+    if (reviewText.length < 10) {
+      showToast("Error", "Review text must be at least 10 characters", "error");
+      return;
+    }
+    
+    // Submit review via API
+    api.reviews.addReview(productId, rating, reviewText)
+      .then(response => {
+        if (response.success) {
+          showToast("Success", "Your review has been submitted!", "success");
+          
+          // Clear form
+          document.getElementById("rating-value").value = 0;
+          document.getElementById("review-text").value = "";
+          ratingStars.forEach(s => {
+            s.classList.remove("bi-star-fill");
+            s.classList.add("bi-star");
+          });
+          
+          // Reload reviews to show the new one
+          loadProductReviews(productId);
+        } else {
+          showToast("Error", response.message, "error");
+        }
+      })
+      .catch(error => {
+        console.error("Error submitting review:", error);
+        showToast("Error", "Failed to submit review. Please try again later.", "error");
+      });
+  });
 }
 
-//Show a toast notification
+// Show a toast notification
 function showToast(title, message, type) {
   const toastContainer = document.getElementById("toast-container");
   
@@ -568,10 +622,8 @@ function showToast(title, message, type) {
     toast.remove();
   });
 }
-/**
- * Show an error message in the product container
- * @param {string} message - Error message to display
- */
+
+// Show an error message
 function showErrorMessage(message) {
   const container = document.querySelector(".container");
   container.innerHTML = `
@@ -611,7 +663,7 @@ function setupImageGallery() {
   });
 }
 
-//control quantity
+// Setup quantity control
 function setupQuantityControl() {
   const decreaseBtn = document.getElementById('decrease-quantity');
   const increaseBtn = document.getElementById('increase-quantity');
@@ -620,7 +672,7 @@ function setupQuantityControl() {
   
   let maxStock = 10; // default max stock
   
-  //update max stock
+  // Update max stock
   function updateMaxStock(stock) {
     maxStock = stock;
     quantityInput.max = maxStock;
@@ -654,9 +706,6 @@ function setupQuantityControl() {
 function setupButtonStates() {
   const addToCartBtn = document.getElementById('add-to-cart-btn');
   const buyNowBtn = document.getElementById('buy-now-btn');
-  const wishlistBtn = document.getElementById('add-to-wishlist-btn');
-  
-  let isInWishlist = false;
   
   function updateButtonStates(stock) {
     const isAvailable = stock > 0;
@@ -676,20 +725,6 @@ function setupButtonStates() {
     }
   }
   
-  // wishlist add/remove
-  wishlistBtn.addEventListener('click', () => {
-    isInWishlist = !isInWishlist;
-    wishlistBtn.querySelector('i').classList.toggle('bi-heart-fill');
-    wishlistBtn.querySelector('i').classList.toggle('bi-heart');
-    
-    if (isInWishlist) {
-      showToast('Added to wishlist', 'success');
-    } else {
-      showToast('Removed from wishlist', 'info');
-    }
-  });
-  
   return { updateButtonStates };
 }
-
 

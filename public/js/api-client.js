@@ -13,47 +13,67 @@ const get = async (endpoint, params = {}) => {
     const queryString = Object.keys(params).length > 0
         ? '?' + new URLSearchParams(params).toString()
         : '';
-    const response = await fetch(apiUrl(endpoint) + queryString, {
-        method: 'GET',
-        credentials: 'include'
-    });
-    return handleResponse(response);
+    try {
+        const response = await fetch(apiUrl(endpoint) + queryString, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        return handleResponse(response);
+    } catch (error) {
+        console.error("API GET error:", error);
+        throw new Error("Network error: " + error.message);
+    }
 };
 
 // POST request
 const post = async (endpoint, data = null, formData = null) => {
-    const options = {
-        method: 'POST',
-        credentials: 'include'
-    };
-    if (formData) {
-        options.body = formData;
-    } else if (data) {
-        options.headers = { 'Content-Type': 'application/json' };
-        options.body = JSON.stringify(data);
+    try {
+        const options = {
+            method: 'POST',
+            credentials: 'include'
+        };
+        if (formData) {
+            options.body = formData;
+        } else if (data) {
+            options.headers = { 'Content-Type': 'application/json' };
+            options.body = JSON.stringify(data);
+        }
+        const response = await fetch(apiUrl(endpoint), options);
+        return handleResponse(response);
+    } catch (error) {
+        console.error("API POST error:", error);
+        throw new Error("Network error: " + error.message);
     }
-    const response = await fetch(apiUrl(endpoint), options);
-    return handleResponse(response);
 };
 
 // PUT request
 const put = async (endpoint, data) => {
-    const response = await fetch(apiUrl(endpoint), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(data)
-    });
-    return handleResponse(response);
+    try {
+        const response = await fetch(apiUrl(endpoint), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(data)
+        });
+        return handleResponse(response);
+    } catch (error) {
+        console.error("API PUT error:", error);
+        throw new Error("Network error: " + error.message);
+    }
 };
 
 // DELETE request
 const del = async (endpoint) => {
-    const response = await fetch(apiUrl(endpoint), {
-        method: 'DELETE',
-        credentials: 'include'
-    });
-    return handleResponse(response);
+    try {
+        const response = await fetch(apiUrl(endpoint), {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        return handleResponse(response);
+    } catch (error) {
+        console.error("API DELETE error:", error);
+        throw new Error("Network error: " + error.message);
+    }
 };
 
 // Handle API response
@@ -108,48 +128,137 @@ const products = {
     createProduct: async (productData, productImages = null) => {
         if (productImages) {
             const formData = new FormData();
+            
+            // Add all product data to form
             for (const key in productData) {
-                formData.append(key, productData[key]);
+                if (key !== 'images') { // Don't add images array as a separate field
+                    formData.append(key, productData[key]);
+                }
             }
+            
+            // Add images to form
             for (let i = 0; i < productImages.length; i++) {
-                formData.append('images[]', productImages[i]);
+                formData.append('product_images[]', productImages[i]);
             }
+            
+            // Set primary image if specified
+            if (productData.primaryImageIndex !== undefined) {
+                formData.append('primary_image_index', productData.primaryImageIndex);
+            }
+            
             return await post('products.php', null, formData);
         }
         return await post('products.php', productData);
     },
-    updateProduct: async (id, productData) => await put(`products.php?id=${id}`, productData),
-    deleteProduct: async (id) => await del(`products.php?id=${id}`)
+    updateProduct: async (id, productData, productImages = null) => {
+        if (productImages) {
+            const formData = new FormData();
+            
+            // Add all product data to form
+            for (const key in productData) {
+                if (key !== 'images') {
+                    formData.append(key, productData[key]);
+                }
+            }
+            
+            // Add images to form
+            for (let i = 0; i < productImages.length; i++) {
+                formData.append('product_images[]', productImages[i]);
+            }
+            
+            // Add method override for PUT
+            formData.append('_method', 'PUT');
+            
+            return await post(`products.php?id=${id}`, null, formData);
+        }
+        return await put(`products.php?id=${id}`, productData);
+    },
+    deleteProduct: async (id) => await del(`products.php?id=${id}`),
+    
+    // Product images specific methods
+    addProductImage: async (productId, imageFile, isPrimary = false) => {
+        const formData = new FormData();
+        formData.append('product_id', productId);
+        formData.append('image', imageFile);
+        formData.append('is_primary', isPrimary ? '1' : '0');
+        return await post('product_images.php?action=add', null, formData);
+    },
+    
+    setMainProductImage: async (productId, imageId) => {
+        return await put('product_images.php?action=set_primary', {
+            product_id: productId,
+            image_id: imageId
+        });
+    },
+    
+    deleteProductImage: async (imageId) => {
+        return await del(`product_images.php?id=${imageId}`);
+    }
 };
 
 // Categories API
 const categories = {
     getCategories: async () => await get('categories.php'),
     getCategory: async (id) => await get(`categories.php?id=${id}`),
-    createCategory: async (categoryData) => await post('categories.php', categoryData),
-    updateCategory: async (id, categoryData) => await put(`categories.php?id=${id}`, categoryData),
+    createCategory: async (categoryData, categoryImage = null) => {
+        if (categoryImage) {
+            const formData = new FormData();
+            for (const key in categoryData) {
+                formData.append(key, categoryData[key]);
+            }
+            formData.append('image', categoryImage);
+            return await post('categories.php', null, formData);
+        }
+        return await post('categories.php', categoryData);
+    },
+    updateCategory: async (id, categoryData, categoryImage = null) => {
+        if (categoryImage) {
+            const formData = new FormData();
+            for (const key in categoryData) {
+                formData.append(key, categoryData[key]);
+            }
+            formData.append('image', categoryImage);
+            // Add method override for PUT
+            formData.append('_method', 'PUT');
+            return await post(`categories.php?id=${id}`, null, formData);
+        }
+        return await put(`categories.php?id=${id}`, categoryData);
+    },
     deleteCategory: async (id) => await del(`categories.php?id=${id}`)
 };
+
 // Users API
 const users = {
     getUsers: async () => await get('users.php'),
     getUser: async (id) => await get(`users.php?id=${id}`),
-    updateUser: async (id, userData) => await put(`users.php?id=${id}`, userData)
+    updateUser: async (id, userData, userAvatar = null) => {
+        if (userAvatar) {
+            const formData = new FormData();
+            for (const key in userData) {
+                formData.append(key, userData[key]);
+            }
+            formData.append('avatar', userAvatar);
+            // Add method override for PUT
+            formData.append('_method', 'PUT');
+            return await post(`users.php?id=${id}`, null, formData);
+        }
+        return await put(`users.php?id=${id}`, userData);
+    }
 };
 
 // Cart API
 const cart = {
     getCart: async () => await get('cart.php'),
-    addToCart: async (productId, quantity = 1) => await post('cart.php', { product_id: productId, quantity }),
-    updateCart: async (productId, quantity) => await put('cart.php', { product_id: productId, quantity }),
-    removeFromCart: async (productId) => await del(`cart.php?product_id=${productId}`),
-    clearCart: async () => await del('cart.php')
+    addToCart: async (productId, quantity = 1) => await post('cart.php?action=add', { product_id: productId, quantity }),
+    updateCart: async (productId, quantity) => await post('cart.php?action=update', { product_id: productId, quantity }),
+    removeFromCart: async (productId) => await post('cart.php?action=remove', { product_id: productId }),
+    clearCart: async () => await post('cart.php?action=clear')
 };
 
 // Reviews API
 const reviews = {
-    getProductReviews: async (productId) => await get('reviews.php', { product_id: productId }),
-    addReview: async (productId, rating, reviewText) => await post('reviews.php', { 
+    getProductReviews: async (productId) => await get('reviews.php?action=get', { product_id: productId }),
+    addReview: async (productId, rating, reviewText) => await post('reviews.php?action=add', { 
         product_id: productId, 
         rating, 
         review_text: reviewText 

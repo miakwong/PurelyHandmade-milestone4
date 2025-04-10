@@ -366,44 +366,44 @@ function initializeFilterAccordion() {
   const filterTitles = document.querySelectorAll('.filter-group-title');
   
   filterTitles.forEach(title => {
-    // 获取内容元素
+    // Get content element
     const content = title.nextElementSibling;
     if (!content) return;
     
-    // 添加额外的CSS样式，确保内容初始可见
+    // Add CSS styles to make content initially visible
     content.style.display = 'block';
     
-    // 初始箭头方向为向上(表示内容已展开)
+    // Initial arrow direction is up (indicating content is expanded)
     const arrow = title.querySelector('i');
     if (arrow) {
       arrow.classList.remove('bi-chevron-down');
       arrow.classList.add('bi-chevron-up');
     }
     
-    // 添加点击事件
+    // Add click event
     title.addEventListener('click', function() {
       const content = this.nextElementSibling;
       if (!content) return;
       
-      // 切换内容显示/隐藏状态
+      // Toggle content visibility
       const isVisible = content.style.display !== 'none';
       
-      // 切换显示状态
+      // Toggle display state
       if (isVisible) {
         content.style.display = 'none';
       } else {
         content.style.display = 'block';
       }
       
-      // 切换箭头方向 - 向下表示折叠，向上表示展开
+      // Toggle arrow direction - down means collapsed, up means expanded
       const arrow = this.querySelector('i');
       if (arrow) {
         if (isVisible) {
-          // 如果是可见的，点击后隐藏，箭头应该指向下方
+          // If visible, will be hidden after click, arrow should point down
           arrow.classList.remove('bi-chevron-up');
           arrow.classList.add('bi-chevron-down');
         } else {
-          // 如果是隐藏的，点击后显示，箭头应该指向上方
+          // If hidden, will be visible after click, arrow should point up
           arrow.classList.remove('bi-chevron-down');
           arrow.classList.add('bi-chevron-up');
         }
@@ -411,26 +411,26 @@ function initializeFilterAccordion() {
     });
   });
   
-  // 确保筛选功能的事件监听器已添加
-  // 价格筛选
+  // Ensure filter event listeners are attached
+  // Price filter
   const priceApplyButton = document.getElementById('apply-price-filter');
   if (priceApplyButton) {
     priceApplyButton.addEventListener('click', applyFiltersAndSort);
   }
   
-  // 评分筛选
+  // Rating filter
   const ratingInputs = document.querySelectorAll('input[name="rating-filter"]');
   ratingInputs.forEach(input => {
     input.addEventListener('change', applyFiltersAndSort);
   });
   
-  // 特价商品筛选
+  // Sale filter
   const saleCheckbox = document.getElementById('filter-sale');
   if (saleCheckbox) {
     saleCheckbox.addEventListener('change', applyFiltersAndSort);
   }
   
-  // 重置筛选按钮
+  // Reset filter button
   const resetButton = document.getElementById('reset-filters');
   if (resetButton) {
     resetButton.addEventListener('click', resetFilters);

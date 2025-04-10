@@ -61,27 +61,45 @@ function showToast(message, type = 'success') {
 // Initialize event listeners
 function initializeEventListeners() {
   // Sort selector
-  document.getElementById('sort-select').addEventListener('change', applyFiltersAndSort);
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', applyFiltersAndSort);
+  }
   
   // Products per page selector
-  document.getElementById('products-per-page').addEventListener('change', function() {
-    setProductsPerPage(parseInt(this.value));
-    applyFiltersAndSort();
-  });
+  const productsPerPage = document.getElementById('products-per-page');
+  if (productsPerPage) {
+    productsPerPage.addEventListener('change', function() {
+      setProductsPerPage(parseInt(this.value));
+      applyFiltersAndSort();
+    });
+  }
   
   // Price filter
-  document.getElementById('apply-price-filter').addEventListener('click', applyFiltersAndSort);
+  const applyPriceFilter = document.getElementById('apply-price-filter');
+  if (applyPriceFilter) {
+    applyPriceFilter.addEventListener('click', applyFiltersAndSort);
+  }
   
   // Reset filters
-  document.getElementById('reset-filters').addEventListener('click', resetFilters);
+  const resetFiltersBtn = document.getElementById('reset-filters');
+  if (resetFiltersBtn) {
+    resetFiltersBtn.addEventListener('click', resetFilters);
+  }
   
   // Rating filter
-  document.querySelectorAll('input[name="rating-filter"]').forEach(input => {
-    input.addEventListener('change', applyFiltersAndSort);
-  });
+  const ratingInputs = document.querySelectorAll('input[name="rating-filter"]');
+  if (ratingInputs.length > 0) {
+    ratingInputs.forEach(input => {
+      input.addEventListener('change', applyFiltersAndSort);
+    });
+  }
   
   // Deals filter
-  document.getElementById('filter-sale').addEventListener('change', applyFiltersAndSort);
+  const filterSale = document.getElementById('filter-sale');
+  if (filterSale) {
+    filterSale.addEventListener('change', applyFiltersAndSort);
+  }
 }
 
 // Load navbar and footer
@@ -113,14 +131,6 @@ function loadLayoutComponents() {
     .then(html => {
       document.getElementById('navbar-placeholder').innerHTML = html;
       console.log('Navbar loaded successfully');
-      
-      // Ensure DOM elements exist before updating cart count
-      setTimeout(() => {
-        if (typeof updateCartCount === 'function') {
-          updateCartCount();
-          console.log('Cart count updated after navbar loaded');
-        }
-      }, 100);
     })
     .catch(error => {
       console.error('Error loading navbar:', error);
@@ -187,12 +197,19 @@ function initializePage() {
   // Initialize URL parameters
   initializeUrlParams();
   
-  // Load categories and products
-  loadCategories();
-  loadProducts();
+  // Load categories and products if functions exist
+  if (typeof loadCategories === 'function') {
+    loadCategories();
+  }
   
-  // Initialize filter accordion functionality
-  initializeFilterAccordion();
+  if (typeof loadProducts === 'function') {
+    loadProducts();
+  }
+  
+  // Initialize filter accordion functionality if function exists
+  if (typeof initializeFilterAccordion === 'function') {
+    initializeFilterAccordion();
+  }
   
   // Initialize event listeners
   initializeEventListeners();
@@ -201,3 +218,4 @@ function initializePage() {
 // Attach UI functions to the global window object
 window.showToast = showToast;
 window.initializePage = initializePage;
+window.loadLayoutComponents = loadLayoutComponents;
