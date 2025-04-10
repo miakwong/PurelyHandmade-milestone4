@@ -9,6 +9,7 @@
 6. [Authentication](#6-authentication)
 7. [Development Guidelines](#7-development-guidelines)
 8. [Deployment Configuration](#8-deployment-configuration)
+9. [10. 精简实施计划](#10-精简实施计划)
 
 ## 1. Project Structure
 
@@ -728,253 +729,143 @@ function getImageUrl(filename) {
 }
 ```
 
----
+## 10. 精简实施计划
 
-## Implementation Plan
+为了在有限时间内完成项目，我们需要精简实施计划，专注于核心功能。
 
-1. **Phase 1: Setup**
-   - Create directory structure
-   - Configure .htaccess
-   - Setup configuration files
+### 10.1 核心功能优先级
 
-2. **Phase 2: Backend Basics**
-   - Implement basic API endpoints
-   - Create JSON storage files
-   - Setup authentication
+以下是按优先级排列的功能列表：
 
-3. **Phase 3: Frontend Integration**
-   - Update frontend to use API instead of localStorage
-   - Implement proper error handling
-   - Update paths and configuration
+#### 高优先级（必须完成）
+1. **产品浏览**：列表页面、详情页面
+2. **分类过滤**：根据分类筛选产品
+3. **简单搜索**：基于产品名称的搜索功能
+4. **购物车基本功能**：添加、删除、更新数量
 
-4. **Phase 4: Testing & Refinement**
-   - Test all functionality
-   - Optimize performance
-   - Document any issues
+#### 中优先级（如果时间允许）
+1. **用户登录/注册**：基本账户管理
+2. **价格过滤**：根据价格范围筛选产品
+3. **排序功能**：根据价格、名称排序
 
-5. **Phase 5: Additional Features**
-   - Add checkout process
-   - Implement user profiles
-   - Add image upload functionality
+#### 低优先级（可以放弃）
+1. **产品评论**：可以使用静态示例评论代替
+2. **用户资料**：简化为基本信息
+3. **下单流程**：仅展示界面，不实现完整逻辑
+4. **高级筛选**：评分筛选等
 
----
+### 10.2 技术简化方案
 
-This documentation provides a blueprint for implementing a simple but functional e-commerce system that works with the existing frontend code while requiring minimal backend complexity. 
+#### 数据存储简化
+1. **使用JSON文件存储**：不使用MySQL数据库，改为简单的JSON文件存储
+2. **简化数据结构**：减少数据表和字段数量
+3. **购物车存储**：购物车数据完全使用浏览器的localStorage存储，无需后端数据库支持
+4. **无购物车表**：系统不保留购物车表，用户下单后直接创建订单记录
 
-### Server API Endpoints
+#### API简化
+1. **合并API端点**：减少API端点数量，简化路由
+2. **简化认证流程**：使用基本的session认证
+3. **减少API参数**：只保留必要的过滤参数
 
-#### Authentication API (`server/api/auth.php`)
-- Handles user login, registration, and session management
-- Implements password hashing and validation
-- Returns JSON responses with success/error messages
+#### 前端简化
+1. **减少交互动画**：专注于基本功能
+2. **简化UI组件**：使用简单的Bootstrap组件
+3. **减少页面数量**：合并功能相似的页面
 
-#### Products API (`server/api/products.php`)
-- Handles CRUD operations for products
-- Supports filtering by category, search terms
-- Handles product image uploads
-- Returns JSON responses with product data
+### 10.3 具体实施步骤
 
-#### Categories API (`server/api/categories.php`)
-- Handles CRUD operations for product categories
-- Supports listing all categories or getting a single category
-- Can include associated products in response data
-- Returns JSON responses with category data
+1. **阶段1：基础结构**（2小时）
+   - 完善目录结构
+   - 配置基本环境
+   - 准备静态数据文件
 
-#### Cart API (`server/api/cart.php`)
-- Handles shopping cart operations 
-- Requires user authentication for all operations
-- Key functionalities:
-  - Get cart contents with product details and calculated totals
-  - Add products to cart with quantity validation
-  - Update product quantities in cart
-  - Remove products from cart
-  - Clear all items from cart
-- Returns JSON responses with cart data and operation status 
+2. **阶段2：产品功能**（5小时）
+   - 实现产品列表页面
+   - 实现产品详情页面
+   - 实现基本分类筛选
+   - 实现产品搜索
 
-## Data Structure
+3. **阶段3：购物车功能**（3小时）
+   - 实现侧滑购物车面板
+   - 实现购物车基本操作（添加、删除、更新数量）
+   - 实现购物车持久化（localStorage）
+   - 添加直接下单功能，跳过结账流程
 
-### Database Schema
+4. **阶段4：用户功能**（3小时）
+   - 实现简单登录/注册
+   - 实现session管理
 
-#### User Table
-- `id`: Primary key, auto-incrementing integer
-- `username`: Unique username (VARCHAR 50)
-- `email`: Unique email address (VARCHAR 100)
-- `password`: Hashed password (VARCHAR 255)
-- `name`: User's full name (VARCHAR 100)
-- `avatar`: User's avatar image (LONGBLOB, nullable)
-- `birthday`: User's date of birth (DATE)
-- `gender`: User's gender (ENUM: 'male', 'female', 'other')
-- `role`: User role (ENUM: 'user' or 'admin')
-- `created_at`: Timestamp of account creation
+5. **阶段5：测试及修复**（2小时）
+   - 功能测试
+   - 修复关键问题
+   - 清理代码
 
-Default test users:
-1. Admin user:
-   - Username: miakuang
-   - Email: miakuang@example.com
-   - Password: miakuang
-   - Role: admin
+### 10.4 技术债务记录
 
-2. Test users (for review data):
-   - Username: testuser1, testuser2, testuser3
-   - Email: testuser[1-3]@example.com
-   - Password: password123
-   - Role: user
-   - Avatar: /~miakuang/PurelyHandmade/server/uploads/images/avatars/default-avatar-[1-3].jpg
+以下功能将作为技术债务记录，在未来版本中实现：
 
-#### Category Table
-- id: int (Primary Key)
-- name: varchar(100)
-- slug: varchar(100) UNIQUE
-- description: text
-- image: varchar(255)
+1. 完整的用户评论系统
+2. 高级筛选功能
+3. 完整的订单管理系统
+4. 用户资料完善
+5. 管理员后台
 
-#### Product Table
-- id: int (Primary Key)
-- category_id: int (Foreign Key references Categories)
-- name: varchar(100)
-- slug: varchar(100) UNIQUE
-- description: text
-- price: decimal(10,2)
-- stock_quantity: int
-- image: varchar(255)
-- is_featured: boolean
-- in_stock: boolean
-- created_at: timestamp
+### 10.5 简化后的数据结构
 
-#### Product_Images Table
-- id: int (Primary Key)
-- product_id: int (Foreign Key references Products)
-- image_path: varchar(255)
-- is_primary: boolean
+#### 产品（Products）
+- id
+- name
+- description
+- price
+- salePrice (可选)
+- categoryId
+- image
+- stock
 
-#### Order Table
-- id: int (Primary Key)
-- user_id: int (Foreign Key references Users)
-- order_number: varchar(50) UNIQUE
-- total_amount: decimal(10,2)
-- status: varchar(20)
-- created_at: timestamp
+#### 分类（Categories）
+- id
+- name
+- description
 
-#### Order_Item Table
-- id: int (Primary Key)
-- order_id: int (Foreign Key references Orders)
-- product_id: int (Foreign Key references Products)
-- quantity: int
-- price: decimal(10,2)
+#### 用户（Users）
+- id
+- username
+- email
+- password
+- isAdmin
 
-#### Product_Reviews Table
-- id: int (Primary Key)
-- product_id: int (Foreign Key references Products)
-- user_id: int (Foreign Key references Users)
-- rating: decimal(2,1) (range 1-5)
-- review_text: text
-- created_at: timestamp
+#### 订单（Orders）
+- id
+- user_id
+- order_number
+- total_amount
+- status
+- created_at
 
-### Data Files Structure
+#### 订单项（Order_Items）
+- id
+- order_id
+- product_id
+- quantity
+- price
 
-The application uses JSON files to store data:
+### 10.6 简化后的API
 
-- `server/data/users.json`: Stores user registration and profile information
-- `server/data/products.json`: Contains product listings with details
-- `server/data/categories.json`: Stores product categories information
-- `server/data/orders.json`: Tracks customer orders and their status
-- `server/data/comments.json`: Stores product reviews and ratings
+#### 产品API
+- `GET /api/products.php` - 获取所有产品（支持基本过滤）
+- `GET /api/products.php?id={id}` - 获取单个产品
 
-## API Endpoints
+#### 分类API
+- `GET /api/categories.php` - 获取所有分类
 
-### Authentication API
-- POST `/server/api/auth/register.php` - Register a new user
-- POST `/server/api/auth/login.php` - Authenticate user and start session
-- GET `/server/api/auth/status.php` - Check current user login status
-- POST `/server/api/auth/logout.php` - End user session
+#### 认证API
+- `POST /api/auth.php?action=login` - 用户登录
+- `POST /api/auth.php?action=register` - 用户注册
+- `GET /api/auth.php?action=status` - 检查登录状态
+- `POST /api/auth.php?action=logout` - 用户登出
 
-### Products API
-- GET `/server/api/products/get.php` - Get products (with optional filtering)
-- GET `/server/api/products/get.php?id={id}` - Get a specific product
-- POST `/server/api/products/create.php` - Create a new product (admin only)
-- PUT `/server/api/products/update.php` - Update a product (admin only)
-- DELETE `/server/api/products/delete.php` - Delete a product (admin only)
+#### 订单API
+- `POST /api/orders.php?action=create` - 创建新订单
+- `GET /api/orders.php?user_id={id}` - 获取用户订单历史
 
-### Categories API
-- GET `/server/api/categories/get.php` - Get all categories
-- GET `/server/api/categories/get.php?id={id}` - Get a specific category
-- POST `/server/api/categories/create.php` - Create a new category (admin only)
-- PUT `/server/api/categories/update.php` - Update a category (admin only)
-- DELETE `/server/api/categories/delete.php` - Delete a category (admin only)
-
-### Cart API
-- GET `/server/api/cart/get.php` - Get current user's cart
-- POST `/server/api/cart/add.php` - Add item to cart
-- PUT `/server/api/cart/update.php` - Update cart item quantity
-- DELETE `/server/api/cart/remove.php` - Remove item from cart
-- DELETE `/server/api/cart/clear.php` - Clear entire cart
-
-### Users API
-- GET `/server/api/users/get.php` - Get current user profile
-- PUT `/server/api/users/update.php` - Update user profile 
-
-// Define cart API object inside an IIFE to avoid global namespace pollution
-const cartAPI = (function() {
-  // Define cart API object
-  const api = {
-  }
-})();
-
-### User Registration Process
-
-1. **Frontend Validation**:
-   - Form validation for required fields
-   - Password strength check
-   - Password confirmation match
-   - Email format validation
-   - Username format validation
-   - Terms and conditions acceptance
-
-2. **Backend Validation**:
-   - Username uniqueness check via `users.php?action=check_username`
-   - Email uniqueness check via `users.php?action=check_email`
-   - Password hashing using bcrypt
-   - Input sanitization
-   - SQL injection prevention
-
-3. **Data Flow**:
-   ```
-   Frontend -> Check Username -> Check Email -> Register User -> Response
-   ```
-
-4. **API Endpoints**:
-   - `users.php?action=check_username`
-     - Method: GET
-     - Parameters: username
-     - Response: { success: boolean, data: { available: boolean, message: string } }
-   
-   - `users.php?action=check_email`
-     - Method: GET
-     - Parameters: email
-     - Response: { success: boolean, data: { available: boolean, message: string } }
-   
-   - `auth.php?action=register`
-     - Method: POST
-     - Parameters: userData object
-     - Response: { success: boolean, message: string }
-
-5. **Security Measures**:
-   - All API calls use HTTPS
-   - Input sanitization on both frontend and backend
-   - Parameterized SQL queries
-   - Password hashing with bcrypt
-   - CSRF protection
-   - Rate limiting for API calls
-
-6. **Error Handling**:
-   - Frontend validation errors
-   - Backend validation errors
-   - Duplicate username/email errors
-   - Network errors
-   - Server errors
-
-7. **User Feedback**:
-   - Real-time validation feedback
-   - Toast notifications for success/error
-   - Clear error messages
-   - Loading states during API calls
+这种精简方案将帮助我们在有限时间内完成项目的核心功能，保证基本用户体验，同时为未来版本留出扩展空间。
