@@ -20,71 +20,8 @@ function displayPaginatedProducts() {
   const productsToShow = filteredProducts.slice(startIndex, endIndex);
   
   productsToShow.forEach(product => {
-    // Generate star rating HTML based on product's rating from the database
-    // Ensure rating has a default value if not provided by the backend
-    const rating = typeof product.rating === 'number' ? product.rating : 0;
-    
-    // Calculate stars display (full, half, empty)
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    
-    let starsHtml = '<span class="text-warning">';
-    // Add full stars
-    for (let j = 0; j < fullStars; j++) {
-      starsHtml += '<i class="bi bi-star-fill"></i> ';
-    }
-    // Add half star if needed
-    if (hasHalfStar) {
-      starsHtml += '<i class="bi bi-star-half"></i> ';
-    }
-    // Add empty stars
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    for (let j = 0; j < emptyStars; j++) {
-      starsHtml += '<i class="bi bi-star"></i> ';
-    }
-    
-    // Add review count from database (default to 0 if not available)
-    const reviewCount = typeof product.reviewCount === 'number' ? product.reviewCount : 0;
-    
-    // Show review count with appropriate plural/singular text
-    const reviewText = reviewCount === 1 ? 'review' : 'reviews';
-    starsHtml += `<span class="text-muted ms-1">(${reviewCount} ${reviewText})</span></span>`;
-    
-    // Price display
-    let priceHtml = '';
-    if (product.onSale && product.salePrice) {
-      priceHtml = `
-        <span class="product-price">$${product.salePrice.toFixed(2)}</span>
-        <span class="product-price-discount">$${product.price.toFixed(2)}</span>
-      `;
-    } else {
-      priceHtml = `<span class="product-price">$${product.price.toFixed(2)}</span>`;
-    }
-    
-    // Ensure image path is valid
-    const imagePath = product.images && product.images.length > 0 ? product.images[0] : 'images/placeholder.jpg';
-    
-    // Create product card HTML
-    const productHtml = `
-      <div class="col-lg-4 col-md-6 col-sm-6 product-item">
-        <div class="product-card">
-          <a href="views/product/product_detail.html?id=${product.id}" class="product-card-link">
-            <img src="${imagePath}" class="card-img-top product-img" alt="${product.name}">
-            ${product.onSale ? '<div class="product-badge">Sale</div>' : ''}
-            <div class="card-body">
-              <h5 class="card-title">${product.name}</h5>
-              <div class="mb-2">${priceHtml}</div>
-              <div class="mb-2">${starsHtml}</div>
-              <p class="card-text text-muted">${product.description ? product.description.substring(0, 60) + '...' : 'No description available'}</p>
-            </div>
-          </a>
-        </div>
-        <button class="btn btn-primary btn-sm add-to-cart-btn" data-product-id="${product.id}">
-          <i class="bi bi-cart-plus"></i> Add to Cart
-        </button>
-      </div>
-    `;
-    
+    // Create product card using the createProductCard function
+    const productHtml = createProductCard(product);
     productsContainer.innerHTML += productHtml;
   });
   
@@ -212,4 +149,93 @@ function setProductsPerPage(count) {
   currentPage = 1;
   displayPaginatedProducts();
   updatePagination();
+}
+
+function createProductCard(product) {
+  // Generate star rating HTML based on product's rating from the database
+  // Ensure rating has a default value if not provided by the backend
+  const rating = typeof product.rating === 'number' ? product.rating : 0;
+  
+  // Calculate stars display (full, half, empty)
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  
+  let starsHtml = '<span class="text-warning">';
+  // Add full stars
+  for (let j = 0; j < fullStars; j++) {
+    starsHtml += '<i class="bi bi-star-fill"></i> ';
+  }
+  // Add half star if needed
+  if (hasHalfStar) {
+    starsHtml += '<i class="bi bi-star-half"></i> ';
+  }
+  // Add empty stars
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  for (let j = 0; j < emptyStars; j++) {
+    starsHtml += '<i class="bi bi-star"></i> ';
+  }
+  
+  // Add review count from database (default to 0 if not available)
+  const reviewCount = typeof product.reviewCount === 'number' ? product.reviewCount : 0;
+  
+  // Show review count with appropriate plural/singular text
+  const reviewText = reviewCount === 1 ? 'review' : 'reviews';
+  starsHtml += `<span class="text-muted ms-1">(${reviewCount} ${reviewText})</span></span>`;
+  
+  // Price display - ensure we convert strings to numbers before using toFixed
+  let priceHtml = '';
+  
+  // Make sure to parse prices as floats before using toFixed
+  const price = parseFloat(product.price || 0);
+  const salePrice = parseFloat(product.salePrice || 0);
+  
+  if (product.onSale && salePrice > 0) {
+    priceHtml = `
+      <span class="product-price">$${salePrice.toFixed(2)}</span>
+      <span class="product-price-discount">$${price.toFixed(2)}</span>
+    `;
+  } else {
+    priceHtml = `<span class="product-price">$${price.toFixed(2)}</span>`;
+  }
+  
+  // Ensure image path is valid
+  let imagePath;
+  if (product.images && product.images.length > 0) {
+    imagePath = product.images[0];
+  } else if (product.image) {
+    imagePath = product.image;
+  } else {
+    imagePath = 'images/placeholder.jpg';
+  }
+  
+  // Make sure image path is complete
+  if (imagePath && typeof getImageUrl === 'function') {
+    imagePath = getImageUrl(imagePath);
+  } else if (imagePath && window.config && window.config.imagesUrl) {
+    // Handle relative paths
+    if (!imagePath.startsWith('http') && !imagePath.startsWith('/')) {
+      imagePath = `${window.config.imagesUrl}/${imagePath}`;
+    }
+  }
+  
+  // Create product card HTML
+  return `
+    <div class="col-lg-4 col-md-6 col-sm-6 product-item">
+      <div class="product-card">
+        <a href="views/product/product_detail.html?id=${product.id}" class="product-card-link">
+          <img src="${imagePath}" class="card-img-top product-img" alt="${product.name}">
+          ${product.onSale ? '<div class="product-badge">Sale</div>' : ''}
+          <div class="card-body">
+            <h5 class="card-title">${product.name}</h5>
+            <div class="mb-2">${priceHtml}</div>
+            <div class="mb-2">${starsHtml}</div>
+            <p class="card-text text-muted">${product.description ? product.description.substring(0, 60) + '...' : 'No description available'}</p>
+          </div>
+        </a>
+      </div>
+      <button class="btn btn-primary btn-sm add-to-cart-btn" data-product-id="${product.id}">
+        <i class="bi bi-cart-plus"></i> Add to Cart
+      </button>
+    </div>
+  `;
 } 

@@ -130,14 +130,6 @@ const categories = {
     updateCategory: async (id, categoryData) => await put(`categories.php?id=${id}`, categoryData),
     deleteCategory: async (id) => await del(`categories.php?id=${id}`)
 };
-
-// Comments API
-const comments = {
-    getProductComments: async (productId) => await get(`comments.php?product=${productId}`),
-    createComment: async (commentData) => await post('comments.php', commentData),
-    deleteComment: async (commentId) => await del(`comments.php?id=${commentId}`)
-};
-
 // Users API
 const users = {
     getUsers: async () => await get('users.php'),
@@ -156,12 +148,17 @@ const cart = {
 
 // Reviews API
 const reviews = {
-    getProductReviews: async (productId) => await get('reviews.php', { action: 'get', product_id: productId }),
-    addReview: async (productId, rating, reviewText) => await post('reviews.php?action=add', { 
+    getProductReviews: async (productId) => await get('reviews.php', { product_id: productId }),
+    addReview: async (productId, rating, reviewText) => await post('reviews.php', { 
         product_id: productId, 
         rating, 
         review_text: reviewText 
-    })
+    }),
+    updateReview: async (reviewId, rating, reviewText) => await put(`reviews.php?id=${reviewId}`, {
+        rating,
+        review_text: reviewText
+    }),
+    deleteReview: async (reviewId) => await del(`reviews.php?id=${reviewId}`)
 };
 
 // Export APIs
@@ -169,7 +166,6 @@ const api = {
     auth,
     products,
     categories,
-    comments,
     users,
     cart,
     reviews

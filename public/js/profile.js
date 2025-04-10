@@ -1,245 +1,431 @@
-// Profile page functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // get user ID from url
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('id');
-    
-    if (!userId) {
-        showToast('Invalid user profile', 'error');
-        window.location.href = 'login.html';
-        return;
-    }
+// Product related functionality
 
-    // Load user profile data
-    loadUserProfile(userId);
-    
-    // Set up event listeners
-    setupEventListeners();
-});
+// Product variables
+let productsList = [];
+let categoriesList = [];
+let filteredProducts = [];
 
-// Load user profile data from API
-async function loadUserProfile(userId) {
-    try {
-        const response = await fetch(`${config.apiUrl}/auth.php?action=status`, {
-            method: 'GET',
-            credentials: 'include'
+// Make filteredProducts globally available
+window.filteredProducts = filteredProducts;
+
+// Filter criteria
+let filterCriteria = {
+  categories: [],
+  priceMin: null,
+  priceMax: null,
+  rating: 0,
+  onSale: false
+};
+
+// Load products
+function loadProducts() {
+  // Use API to get products
+  fetch(`${config.apiUrl}/products.php`)
+    .then(response => response.json())
+    .then(res => {
+      if(res.success) {
+        // Process products data
+        productsList = res.data.map(product => {
+          // Make sure categoryId is available - might be category_id in API response
+          if (product.category_id !== undefined && product.categoryId === undefined) {
+            product.categoryId = parseInt(product.category_id);
+          }
+          
+          // Set discount price for featured products (20% off = 80% of original price)
+          // Convert is_featured to boolean and check if it's true
+          const isFeatured = product.is_featured === 1 || product.is_featured === '1' || product.is_featured === true;
+          
+          if (isFeatured) {
+            product.onSale = true;
+            // Calculate sale price (20% discount = 80% of original price)
+            const originalPrice = parseFloat(product.price);
+            product.salePrice = parseFloat((originalPrice * 0.8).toFixed(2));
+            console.log(`Product on sale: ${product.name}, Original: $${originalPrice}, Sale: $${product.salePrice}`);
+          } else {
+            product.onSale = false;
+          }
+          
+          return product;
         });
+        
+        console.log('Products loaded and processed:', productsList.length);
+        
+        applyFiltersAndSort();
+      } else {
+        console.error('Error loading products:', res.message);
+        document.getElementById('products-container').innerHTML = 
+          '<p class="text-center w-100">An error occurred while loading products. Please try again later.</p>';
+      }
+    })
+    .catch(error => {
+      console.error('Error loading products:', error);
+      document.getElementById('products-container').innerHTML = 
+        '<p class="text-center w-100">An error occurred while loading products. Please try again later.</p>';
+    });
+}
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+// Load categories
+function loadCategories() {
+  // Use API to get categories
+  fetch(`${config.apiUrl}/categories.php`)
+    .then(response => response.json())
+    .then(res => {
+      if(!res.success) {
+        console.error('Error loading categories:', res.message);
+        return;
+      }
+      
+      categoriesList = res.data;
+      
+      // Generate category filter options
+      const categoryFiltersContainer = document.getElementById('category-filters');
+      const allCategoriesCheckbox = document.getElementById('category-all');
+      
+      // Listen for all categories checkbox
+      allCategoriesCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+          // Uncheck all other categories
+          document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+          });
+          filterCriteria.categories = [];
+          
+          // Remove category parameter from URL
+          const url = new URL(window.location);
+          url.searchParams.delete('category');
+          window.history.replaceState({}, '', url);
+          
+          // Reset active category ID
+          activeCategoryId = null;
         }
-
-        const result = await response.json();
-        console.log('Profile response:', result);
-
-        if (result.success && result.data.isLoggedIn) {
-            const user = result.data.user;
-            console.log('User data:', user);
+        applyFiltersAndSort();
+      });
+      
+      // Add individual category checkboxes
+      categoriesList.forEach(category => {
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'form-check';
+        
+        const checkbox = document.createElement('input');
+        checkbox.className = 'form-check-input category-checkbox';
+        checkbox.type = 'checkbox';
+        checkbox.id = `category-${category.id}`;
+        checkbox.value = category.id;
+        
+        // If this category is specified in URL parameters, check it
+        if (activeCategoryId === category.id) {
+          checkbox.checked = true;
+          allCategoriesCheckbox.checked = false;
+          filterCriteria.categories.push(category.id);
+          
+          // Update title
+          document.getElementById('product-list-title').textContent = category.name;
+        }
+        
+        checkbox.addEventListener('change', function() {
+          const categoryId = parseInt(this.value);
+          
+          if (this.checked) {
+            // Uncheck "All Categories"
+            document.getElementById('category-all').checked = false;
             
-            // check if current user has permission to view this profile
-            if (user.id.toString() !== userId && !user.isAdmin) {
-                showToast('You do not have permission to view this profile', 'error');
-                window.location.href = 'login.html';
-                return;
-            }
-
-            updateProfileUI(user);
+            // Add to filtered categories
+            filterCriteria.categories.push(categoryId);
             
-            // Show admin tab if user is admin
-            if (user.isAdmin) {
-                document.getElementById('admin-tab-container').style.display = 'block';
+            // Update URL with this category
+            const url = new URL(window.location);
+            url.searchParams.set('category', categoryId);
+            window.history.replaceState({}, '', url);
+            
+            // Update active category ID
+            activeCategoryId = categoryId;
+            
+            // Update title if only one category is selected
+            if (document.querySelectorAll('.category-checkbox:checked').length === 1) {
+              const categoryName = categoriesList.find(c => c.id === categoryId)?.name || 'Products';
+              document.getElementById('product-list-title').textContent = categoryName;
             }
-        } else {
-            // Redirect to login if not logged in
-            window.location.href = 'login.html';
-        }
-    } catch (error) {
-        console.error('Error loading profile:', error);
-        showToast('Failed to load profile data', 'error');
-    }
-}
-
-// Update UI with user data
-function updateProfileUI(user) {
-    if (!user) {
-        console.error('No user data provided');
-        return;
-    }
-
-    // Update basic info
-    document.getElementById('user-full-name').textContent = user.name || 'User';
-    document.getElementById('user-email').textContent = user.email || '';
-    document.getElementById('join-date').textContent = user.joinDate ? new Date(user.joinDate).toLocaleDateString() : '';
-
-    // Update profile details
-    const nameParts = user.name ? user.name.split(' ') : ['', ''];
-    document.getElementById('first-name').textContent = nameParts[0] || '';
-    document.getElementById('last-name').textContent = nameParts.slice(1).join(' ') || '';
-    document.getElementById('email-display').textContent = user.email || '';
-    document.getElementById('birthday-display').textContent = user.birthday ? new Date(user.birthday).toLocaleDateString() : 'Not set';
-    document.getElementById('gender-display').textContent = user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'Not set';
-    
-    // Update avatar if exists
-    if (user.avatar) {
-        document.getElementById('profile-img').src = `data:image/jpeg;base64,${user.avatar}`;
-    }
-
-    // Update form fields for editing
-    document.getElementById('firstName').value = nameParts[0] || '';
-    document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
-    document.getElementById('email').value = user.email || '';
-    document.getElementById('birthday').value = user.birthday || '';
-    
-    // Set gender radio button
-    if (user.gender) {
-        const genderRadio = document.querySelector(`input[name="gender"][value="${user.gender}"]`);
-        if (genderRadio) {
-            genderRadio.checked = true;
-        }
-    }
-}
-
-// Set up event listeners
-function setupEventListeners() {
-    // Profile form submission
-    document.getElementById('save-profile').addEventListener('click', saveProfile);
-    
-    // Password change form submission
-    document.getElementById('change-password-form').addEventListener('submit', changePassword);
-    
-    // Avatar upload
-    document.getElementById('avatar-upload').addEventListener('change', handleAvatarUpload);
-}
-
-// Save profile changes
-async function saveProfile() {
-    const form = document.getElementById('profile-form');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    const profileData = {
-        name: `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`,
-        email: document.getElementById('email').value,
-        birthday: document.getElementById('birthday').value,
-        gender: document.querySelector('input[name="gender"]:checked').value
-    };
-
-    try {
-        const response = await fetch(`${config.apiUrl}/users.php?action=update`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(profileData),
-            credentials: 'include'
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showToast('Profile updated successfully');
-            // Close modal and reload profile
-            bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide();
-            loadUserProfile();
-        } else {
-            showToast(result.message || 'Failed to update profile', 'error');
-        }
-    } catch (error) {
-        console.error('Error updating profile:', error);
-        showToast('Failed to update profile', 'error');
-    }
-}
-
-// Change password
-async function changePassword(event) {
-    event.preventDefault();
-    const form = event.target;
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    const currentPassword = document.getElementById('current-password').value;
-    const newPassword = document.getElementById('new-password').value;
-    const confirmPassword = document.getElementById('confirm-password').value;
-
-    if (newPassword !== confirmPassword) {
-        showToast('New passwords do not match', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${config.apiUrl}/users.php?action=change-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                currentPassword,
-                newPassword
-            }),
-            credentials: 'include'
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showToast('Password changed successfully');
-            form.reset();
-        } else {
-            showToast(result.message || 'Failed to change password', 'error');
-        }
-    } catch (error) {
-        console.error('Error changing password:', error);
-        showToast('Failed to change password', 'error');
-    }
-}
-
-// Handle avatar upload
-async function handleAvatarUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // Validate file type and size
-    if (!file.type.startsWith('image/')) {
-        showToast('Please upload an image file', 'error');
-        return;
-    }
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        showToast('Image size should be less than 5MB', 'error');
-        return;
-    }
-
-    // Convert image to base64
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        try {
-            const response = await fetch(`${config.apiUrl}/users.php?action=update-avatar`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    avatar: e.target.result.split(',')[1]
-                }),
-                credentials: 'include'
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showToast('Avatar updated successfully');
-                // Update avatar preview
-                document.getElementById('profile-img').src = e.target.result;
-            } else {
-                showToast(result.message || 'Failed to update avatar', 'error');
+          } else {
+            // Remove from filtered categories
+            const index = filterCriteria.categories.indexOf(categoryId);
+            if (index !== -1) {
+              filterCriteria.categories.splice(index, 1);
             }
-        } catch (error) {
-            console.error('Error updating avatar:', error);
-            showToast('Failed to update avatar', 'error');
-        }
-    };
-    reader.readAsDataURL(file);
+            
+            // If no categories are checked, automatically check "All Categories"
+            const checkedCategories = document.querySelectorAll('.category-checkbox:checked');
+            if (checkedCategories.length === 0) {
+              document.getElementById('category-all').checked = true;
+              
+              // Remove category parameter from URL
+              const url = new URL(window.location);
+              url.searchParams.delete('category');
+              window.history.replaceState({}, '', url);
+              
+              // Reset active category ID
+              activeCategoryId = null;
+              
+              // Reset title
+              document.getElementById('product-list-title').textContent = 'All Products';
+            } else if (checkedCategories.length === 1) {
+              // If only one category remains selected, update URL and title
+              const remainingCategoryId = parseInt(checkedCategories[0].value);
+              const url = new URL(window.location);
+              url.searchParams.set('category', remainingCategoryId);
+              window.history.replaceState({}, '', url);
+              
+              // Update active category ID
+              activeCategoryId = remainingCategoryId;
+              
+              // Update title
+              const categoryName = categoriesList.find(c => c.id === remainingCategoryId)?.name || 'Products';
+              document.getElementById('product-list-title').textContent = categoryName;
+            }
+          }
+          
+          applyFiltersAndSort();
+        });
+        
+        const label = document.createElement('label');
+        label.className = 'form-check-label';
+        label.htmlFor = `category-${category.id}`;
+        label.textContent = category.name;
+        
+        checkboxDiv.appendChild(checkbox);
+        checkboxDiv.appendChild(label);
+        categoryFiltersContainer.appendChild(checkboxDiv);
+      });
+    })
+    .catch(error => {
+      console.error('Error loading categories:', error);
+    });
+}
+
+// Initialize page from URL parameters
+function initializeUrlParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has('category')) {
+    const categoryParam = urlParams.get('category');
+    activeCategoryId = parseInt(categoryParam);
+    console.log('Category ID from URL:', activeCategoryId);
+    
+    // Add to filter criteria
+    if (!isNaN(activeCategoryId)) {
+      filterCriteria.categories = [activeCategoryId];
+    }
+  }
+}
+
+// Apply filters and sorting
+function applyFiltersAndSort() {
+  // Get price range
+  const minPrice = document.getElementById('price-min').value;
+  const maxPrice = document.getElementById('price-max').value;
+  filterCriteria.priceMin = minPrice ? parseFloat(minPrice) : null;
+  filterCriteria.priceMax = maxPrice ? parseFloat(maxPrice) : null;
+  
+  // Get rating filter
+  const ratingValue = document.querySelector('input[name="rating-filter"]:checked').value;
+  filterCriteria.rating = parseFloat(ratingValue);
+  
+  // Get sale filter
+  filterCriteria.onSale = document.getElementById('filter-sale').checked;
+  
+  console.log('Filter criteria:', JSON.stringify(filterCriteria));
+  
+  // Apply filters
+  filteredProducts = productsList.filter(product => {
+    // Category filter
+    if (filterCriteria.categories.length > 0) {
+      // Get categoryId from product, ensuring it's a number
+      const productCategoryId = parseInt(product.categoryId || product.category_id || 0);
+      
+      // Debug logging for category filtering
+      if (productCategoryId === filterCriteria.categories[0]) {
+        console.log('Product matches category:', product.name, productCategoryId);
+      }
+      
+      if (!filterCriteria.categories.includes(productCategoryId)) {
+        return false;
+      }
+    }
+    
+    // Price filter
+    if (filterCriteria.priceMin !== null) {
+      const price = product.onSale && product.salePrice ? product.salePrice : product.price;
+      if (price < filterCriteria.priceMin) {
+        return false;
+      }
+    }
+    
+    if (filterCriteria.priceMax !== null) {
+      const price = product.onSale && product.salePrice ? product.salePrice : product.price;
+      if (price > filterCriteria.priceMax) {
+        return false;
+      }
+    }
+    
+    // Rating filter
+    if (filterCriteria.rating > 0 && product.rating < filterCriteria.rating) {
+      return false;
+    }
+    
+    // Sale filter
+    if (filterCriteria.onSale && !product.onSale) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  // Make sure window.filteredProducts is updated
+  window.filteredProducts = filteredProducts;
+  
+  console.log('Filtered products count:', filteredProducts.length);
+  
+  // Apply sorting
+  const sortOption = document.getElementById('sort-select').value;
+  
+  switch (sortOption) {
+    case 'price-low':
+      filteredProducts.sort((a, b) => {
+        const priceA = a.onSale && a.salePrice ? a.salePrice : a.price;
+        const priceB = b.onSale && b.salePrice ? b.salePrice : b.price;
+        return priceA - priceB;
+      });
+      break;
+    case 'price-high':
+      filteredProducts.sort((a, b) => {
+        const priceA = a.onSale && a.salePrice ? a.salePrice : a.price;
+        const priceB = b.onSale && b.salePrice ? b.salePrice : b.price;
+        return priceB - priceA;
+      });
+      break;
+    case 'rating':
+      filteredProducts.sort((a, b) => b.rating - a.rating);
+      break;
+    case 'newest':
+      // Assume newer products have higher IDs
+      filteredProducts.sort((a, b) => b.id - a.id);
+      break;
+    case 'featured':
+    default:
+      // Keep original order or sort by some feature
+      break;
+  }
+  
+  // Update product count
+  document.getElementById('product-count').textContent = `Showing ${filteredProducts.length} products`;
+  
+  // Display paginated products
+  displayPaginatedProducts();
+  
+  // Update pagination controls
+  updatePagination();
+}
+
+// Reset filters
+function resetFilters() {
+  // Reset categories
+  document.getElementById('category-all').checked = true;
+  document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+    checkbox.checked = false;
+  });
+  filterCriteria.categories = [];
+  
+  // Reset price
+  document.getElementById('price-min').value = '';
+  document.getElementById('price-max').value = '';
+  filterCriteria.priceMin = null;
+  filterCriteria.priceMax = null;
+  
+  // Reset rating
+  document.getElementById('rating-all').checked = true;
+  filterCriteria.rating = 0;
+  
+  // Reset sale
+  document.getElementById('filter-sale').checked = false;
+  filterCriteria.onSale = false;
+  
+  // Reset sorting
+  document.getElementById('sort-select').value = 'featured';
+  
+  // Reset pagination
+  currentPage = 1;
+  
+  // Update product display
+  applyFiltersAndSort();
+  
+  // Update breadcrumb and title
+  if (activeCategoryId) {
+    activeCategoryId = null;
+    document.getElementById('breadcrumb-category').textContent = 'All Products';
+    document.getElementById('product-list-title').textContent = 'All Products';
+    
+    // Remove URL parameter
+    const url = new URL(window.location);
+    url.searchParams.delete('category');
+    window.history.replaceState({}, '', url);
+  }
+}
+
+// Initialize filter accordion
+function initializeFilterAccordion() {
+  const filterTitles = document.querySelectorAll('.filter-group-title');
+  
+  filterTitles.forEach(title => {
+    // Initialize all content sections to be visible by default
+    const content = title.nextElementSibling;
+    if (content) {
+      content.style.maxHeight = content.scrollHeight + 'px';
+    }
+    
+    // Update arrow initially
+    const arrow = title.querySelector('i');
+    if (arrow) {
+      arrow.classList.remove('bi-chevron-down');
+      arrow.classList.add('bi-chevron-up');
+    }
+    
+    // Add click event
+    title.addEventListener('click', function() {
+      const content = this.nextElementSibling;
+      if (!content) return;
+      
+      // Toggle arrow direction
+      const arrow = this.querySelector('i');
+      if (arrow) {
+        arrow.classList.toggle('bi-chevron-down');
+        arrow.classList.toggle('bi-chevron-up');
+      }
+      
+      // Toggle content display
+      if (content.style.maxHeight) {
+        content.style.maxHeight = null;
+      } else {
+        content.style.maxHeight = content.scrollHeight + 'px';
+      }
+    });
+  });
+  
+  // Make sure event listeners for filter controls are attached
+  const priceApplyButton = document.getElementById('apply-price-filter');
+  if (priceApplyButton) {
+    priceApplyButton.addEventListener('click', applyFiltersAndSort);
+  }
+  
+  const ratingInputs = document.querySelectorAll('input[name="rating-filter"]');
+  ratingInputs.forEach(input => {
+    input.addEventListener('change', applyFiltersAndSort);
+  });
+  
+  const saleCheckbox = document.getElementById('filter-sale');
+  if (saleCheckbox) {
+    saleCheckbox.addEventListener('change', applyFiltersAndSort);
+  }
+  
+  const resetButton = document.getElementById('reset-filters');
+  if (resetButton) {
+    resetButton.addEventListener('click', resetFilters);
+  }
 } 

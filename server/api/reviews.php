@@ -1,243 +1,417 @@
 <?php
 // Reviews API
- 
+
+// Initialize error handling
 ini_set('display_errors', 0);
-error_reporting(0);
+ini_set('log_errors', 1);
+ini_set('error_log', '../logs/php_errors.log');
 
-// Include common functions
-require_once '../includes/functions.php';
+// Include common files
+require_once __DIR__ . '/../includes/db_credentials.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
 
-// Get database configuration
-global $db_config;
-if (!isset($db_config)) {
-    $db_config = require_once '../config/database.php';
+// Set headers
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit;
 }
 
 // Get the HTTP method
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Get action and product ID from query string
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+// Get product ID from query string if available
 $productId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : null;
+$reviewId = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
+// Handle request based on HTTP method
 try {
-    // Set headers
-    header('Content-Type: application/json');
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: GET, POST");
-    header("Access-Control-Allow-Headers: Content-Type");
-
-    // Load reviews from JSON file
-    if (!file_exists($db_config['files']['reviews'])) {
-        errorResponse('Reviews file not found', 500);
-    }
-    
-    if (!is_readable($db_config['files']['reviews'])) {
-        errorResponse('Reviews file is not readable', 500);
-    }
-    
-    $reviews = loadJsonData($db_config['files']['reviews']);
-    if ($reviews === null) {
-        errorResponse('Failed to load reviews data', 500);
-    }
-
-    // Handle request based on HTTP method
     switch ($method) {
         case 'GET':
-            if ($action === 'get' && $productId) {
-                handleGetRequest($productId, $reviews);
-            } else {
-                errorResponse('Invalid request parameters', 400);
-            }
+            handleGetRequest($productId, $reviewId);
             break;
-        
+            
         case 'POST':
-            if ($action === 'add') {
-                // Check if user is logged in
-                if (!isset($_SESSION['user_id'])) {
-                    errorResponse('You must be logged in to post a review', 401);
-                }
-                handlePostRequest($reviews);
-            } else {
-                errorResponse('Invalid action', 400);
-            }
+            // Require authentication for creating reviews
+            requireLogin();
+            handlePostRequest();
             break;
-        
+            
+        case 'PUT':
+            // Require authentication for updating reviews
+            requireLogin();
+            handlePutRequest($reviewId);
+            break;
+            
+        case 'DELETE':
+            // Require authentication for deleting reviews
+            requireLogin();
+            handleDeleteRequest($reviewId);
+            break;
+            
         default:
+            // Method not allowed
             errorResponse('Method not allowed', 405);
             break;
     }
 } catch (Exception $e) {
-    errorResponse('Internal server error', 500);
+    error_log("Reviews API Error: " . $e->getMessage());
+    jsonResponse(false, "Server error occurred. Please try again later.", null, 500);
 }
 
-//Handle GET request
-function handleGetRequest($productId, $reviews) {
+/**
+ * Handle GET request
+ * 
+ * @param int|null $productId Product ID
+ * @param int|null $reviewId Review ID
+ * @return void
+ */
+function handleGetRequest($productId, $reviewId) {
+    // Get a single review by ID
+    if ($reviewId !== null) {
+        try {
+            $pdo = getConnection();
+            if (!$pdo) {
+                error_log("Database connection failed in review retrieval");
+                jsonResponse(false, "Database connection failed", null, 500);
+                return;
+            }
+            
+            $stmt = $pdo->prepare("SELECT * FROM product_reviews WHERE id = ?");
+            $stmt->execute([$reviewId]);
+            $review = $stmt->fetch();
+            
+            if ($review === false) {
+                errorResponse('Review not found', 404);
+            }
+            
+            jsonResponse(true, "Review loaded", $review, 200);
+        } catch (PDOException $e) {
+            error_log("Database Error: " . $e->getMessage());
+            errorResponse('Failed to load review', 500);
+        }
+    }
+    
+    // Get all reviews for a product
+    if ($productId !== null) {
+        try {
+            $pdo = getConnection();
+            if (!$pdo) {
+                error_log("Database connection failed in reviews retrieval");
+                jsonResponse(false, "Database connection failed", null, 500);
+                return;
+            }
+            
+            $stmt = $pdo->prepare("SELECT r.*, u.username, u.avatar 
+                                  FROM product_reviews r 
+                                  LEFT JOIN users u ON r.user_id = u.id 
+                                  WHERE r.product_id = ? 
+                                  ORDER BY r.created_at DESC");
+            $stmt->execute([$productId]);
+            $reviews = $stmt->fetchAll();
+            
+            // Also get review stats
+            $stats = calculateReviewStats($productId);
+            
+            jsonResponse(true, "Reviews loaded", [
+                'reviews' => $reviews,
+                'stats' => $stats
+            ], 200);
+        } catch (PDOException $e) {
+            error_log("Database Error: " . $e->getMessage());
+            errorResponse('Failed to load reviews', 500);
+        }
+    }
+    
+    // No product ID provided
+    errorResponse('Product ID is required', 400);
+}
+
+/**
+ * Handle POST request
+ * 
+ * @return void
+ */
+function handlePostRequest() {
+    // Get JSON input data
+    $data = getJsonInput();
+    
+    // Validate required fields
+    validateRequired($data, ['product_id', 'rating', 'review_text']);
+    
+    // Get user ID from session
+    $userId = $_SESSION['user_id'] ?? null;
+    if (!$userId) {
+        errorResponse('User not authenticated', 401);
+    }
+    
     try {
-        // Filter reviews for the product
-        $productReviews = array_filter($reviews, function($review) use ($productId) {
-            return $review['product_id'] === $productId;
-        });
-        
-        if (empty($productReviews)) {
-            // Return empty reviews instead of error
-            $response = [
-                'success' => true,
-                'reviews' => [],
-                'stats' => [
-                    'total_reviews' => 0,
-                    'avg_rating' => 0,
-                    'rating_distribution' => [
-                        'five_star' => 0,
-                        'four_star' => 0,
-                        'three_star' => 0,
-                        'two_star' => 0,
-                        'one_star' => 0
-                    ]
-                ]
-            ];
-            jsonResponse(true, "Response loaded", $response, 200);
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in review creation");
+            jsonResponse(false, "Database connection failed", null, 500);
             return;
         }
         
-        // Calculate statistics
-        $stats = calculateReviewStats($productReviews);
+        // Check if user already reviewed this product
+        $stmt = $pdo->prepare("SELECT id FROM product_reviews WHERE user_id = ? AND product_id = ?");
+        $stmt->execute([$userId, (int)$data['product_id']]);
+        $existingReview = $stmt->fetch();
         
-        // Format the response
-        $response = [
-            'success' => true,
-            'reviews' => array_values($productReviews),
-            'stats' => $stats
-        ];
-        
-        jsonResponse(true, "All Response loaded", $response, 200);
-    } catch (Exception $e) {
-        errorResponse('Failed to retrieve reviews', 500);
-    }
-}
-
-//Handle POST request for adding a review
-function handlePostRequest(&$reviews) {
-    global $db_config;
-    
-    // Get user ID from session
-    $userId = $_SESSION['user_id'];
-    
-    // Get review data
-    $productId = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
-    $rating = isset($_POST['rating']) ? floatval($_POST['rating']) : 0;
-    $reviewText = isset($_POST['review_text']) ? trim($_POST['review_text']) : '';
-    
-    // Validate data
-    if ($productId <= 0) {
-        errorResponse('Invalid product ID', 400);
-    }
-    
-    if ($rating < 1 || $rating > 5) {
-        errorResponse('Rating must be between 1 and 5', 400);
-    }
-    
-    if (empty($reviewText)) {
-        errorResponse('Review text is required', 400);
-    }
-    
-    try {
-        // Check if product exists
-        $products = loadJsonData($db_config['files']['products']);
-        $productExists = false;
-        foreach ($products as $product) {
-            if ($product['id'] === $productId) {
-                $productExists = true;
-                break;
-            }
+        if ($existingReview) {
+            errorResponse('You have already reviewed this product', 400);
         }
         
-        if (!$productExists) {
-            errorResponse('Product not found', 404);
-        }
+        // Insert new review
+        $stmt = $pdo->prepare("INSERT INTO product_reviews (product_id, user_id, rating, review_text, created_at) 
+                              VALUES (?, ?, ?, ?, NOW())");
+        $result = $stmt->execute([
+            (int)$data['product_id'],
+            $userId,
+            (int)$data['rating'],
+            sanitize($data['review_text'])
+        ]);
         
-        // Check if user has already reviewed this product
-        foreach ($reviews as $review) {
-            if ($review['product_id'] === $productId && $review['user_id'] === $userId) {
-                errorResponse('You have already reviewed this product', 400);
-            }
-        }
-        
-        // Generate new review ID
-        $existingIds = array_column($reviews, 'id');
-        $newId = generateId($existingIds);
-        
-        // Create new review
-        $newReview = [
-            'id' => $newId,
-            'product_id' => $productId,
-            'user_id' => $userId,
-            'rating' => $rating,
-            'review_text' => $reviewText,
-            'created_at' => date('c')
-        ];
-        
-        // Add new review to array
-        $reviews[] = $newReview;
-        
-        // Save updated reviews data
-        if (!saveJsonData($db_config['files']['reviews'], $reviews)) {
+        if (!$result) {
             errorResponse('Failed to save review', 500);
         }
         
-        // Update product rating and review count
-        $productReviews = array_filter($reviews, function($review) use ($productId) {
-            return $review['product_id'] === $productId;
-        });
-        $stats = calculateReviewStats($productReviews);
+        $newReviewId = $pdo->lastInsertId();
         
-        // Update product data
-        foreach ($products as &$product) {
-            if ($product['id'] === $productId) {
-                $product['rating'] = $stats['avg_rating'];
-                $product['reviewCount'] = $stats['total_reviews'];
-                break;
-            }
-        }
+        // Get the new review
+        $stmt = $pdo->prepare("SELECT r.*, u.username, u.avatar 
+                              FROM product_reviews r 
+                              LEFT JOIN users u ON r.user_id = u.id 
+                              WHERE r.id = ?");
+        $stmt->execute([$newReviewId]);
+        $newReview = $stmt->fetch();
         
-        if (!saveJsonData($db_config['files']['products'], $products)) {
-            errorResponse('Failed to update product rating', 500);
-        }
+        // Update product rating
+        updateProductRating((int)$data['product_id']);
         
-        jsonResponse(true, 'Review submitted successfully', [
-            'review' => $newReview,
-            'stats' => $stats
-        ], 201);
-    } catch (Exception $e) {
-        errorResponse('Failed to submit review', 500);
+        // Return the new review
+        jsonResponse(true, "Review submitted successfully", $newReview, 201);
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        errorResponse('Failed to save review', 500);
     }
 }
 
-// Calculate review statistics
-function calculateReviewStats($reviews) {
-    $totalReviews = count($reviews);
-    $ratings = array_column($reviews, 'rating');
-    $avgRating = $totalReviews > 0 ? array_sum($ratings) / $totalReviews : 0;
-    
-    $ratingDistribution = [
-        '5_star' => 0,
-        '4_star' => 0,
-        '3_star' => 0,
-        '2_star' => 0,
-        '1_star' => 0
-    ];
-    
-    foreach ($ratings as $rating) {
-        $starCount = floor($rating);
-        if ($starCount >= 1 && $starCount <= 5) {
-            $key = $starCount . '_star';
-            $ratingDistribution[$key]++;
+/**
+ * Calculate review statistics for a product
+ * 
+ * @param int $productId Product ID
+ * @return array Review statistics
+ */
+function calculateReviewStats($productId) {
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in review stats calculation");
+            return [
+                'average' => 0,
+                'count' => 0,
+                'distribution' => []
+            ];
         }
+        
+        // Get average rating
+        $stmt = $pdo->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM product_reviews WHERE product_id = ?");
+        $stmt->execute([$productId]);
+        $result = $stmt->fetch();
+        
+        // Get rating distribution
+        $stmt = $pdo->prepare("SELECT rating, COUNT(*) as count FROM product_reviews WHERE product_id = ? GROUP BY rating ORDER BY rating DESC");
+        $stmt->execute([$productId]);
+        $distribution = $stmt->fetchAll();
+        
+        return [
+            'average' => round($result['avg_rating'] ?? 0, 1),
+            'count' => (int)$result['count'],
+            'distribution' => $distribution
+        ];
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        return [
+            'average' => 0,
+            'count' => 0,
+            'distribution' => []
+        ];
+    }
+}
+
+/**
+ * Update product rating
+ * 
+ * @param int $productId Product ID
+ * @return bool Success flag
+ */
+function updateProductRating($productId) {
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in product rating update");
+            return false;
+        }
+        
+        // Get review stats
+        $stats = calculateReviewStats($productId);
+        
+        // Update product
+        $stmt = $pdo->prepare("UPDATE products SET rating = ?, reviewCount = ? WHERE id = ?");
+        return $stmt->execute([
+            $stats['average'],
+            $stats['count'],
+            $productId
+        ]);
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Handle PUT request to update a review
+ * 
+ * @param int $reviewId Review ID
+ * @return void
+ */
+function handlePutRequest($reviewId) {
+    // Check if review ID is provided
+    if ($reviewId === null) {
+        errorResponse('Review ID is required', 400);
     }
     
-    return [
-        'total_reviews' => $totalReviews,
-        'avg_rating' => round($avgRating, 1),
-        'rating_distribution' => $ratingDistribution
-    ];
+    // Get JSON input data
+    $data = getJsonInput();
+    
+    // Validate required fields
+    validateRequired($data, ['rating', 'review_text']);
+    
+    // Get user ID from session
+    $userId = $_SESSION['user_id'] ?? null;
+    
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in review update");
+            jsonResponse(false, "Database connection failed", null, 500);
+            return;
+        }
+        
+        // Check if review exists and belongs to user
+        $stmt = $pdo->prepare("SELECT product_id FROM product_reviews WHERE id = ?");
+        $stmt->execute([$reviewId]);
+        $review = $stmt->fetch();
+        
+        if (!$review) {
+            errorResponse('Review not found', 404);
+        }
+        
+        // Check if user owns this review
+        $stmt = $pdo->prepare("SELECT id FROM product_reviews WHERE id = ? AND user_id = ?");
+        $stmt->execute([$reviewId, $userId]);
+        $userReview = $stmt->fetch();
+        
+        if (!$userReview) {
+            errorResponse('You can only update your own reviews', 403);
+        }
+        
+        // Update review
+        $stmt = $pdo->prepare("UPDATE product_reviews SET rating = ?, review_text = ? WHERE id = ?");
+        $result = $stmt->execute([
+            (int)$data['rating'],
+            sanitize($data['review_text']),
+            $reviewId
+        ]);
+        
+        if (!$result) {
+            errorResponse('Failed to update review', 500);
+        }
+        
+        // Get the updated review
+        $stmt = $pdo->prepare("SELECT r.*, u.username, u.avatar 
+                              FROM product_reviews r 
+                              LEFT JOIN users u ON r.user_id = u.id 
+                              WHERE r.id = ?");
+        $stmt->execute([$reviewId]);
+        $updatedReview = $stmt->fetch();
+        
+        // Update product rating
+        updateProductRating($review['product_id']);
+        
+        // Return the updated review
+        jsonResponse(true, "Review updated successfully", $updatedReview, 200);
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        errorResponse('Failed to update review', 500);
+    }
+}
+
+/**
+ * Handle DELETE request to remove a review
+ * 
+ * @param int $reviewId Review ID
+ * @return void
+ */
+function handleDeleteRequest($reviewId) {
+    // Check if review ID is provided
+    if ($reviewId === null) {
+        errorResponse('Review ID is required', 400);
+    }
+    
+    // Get user ID from session
+    $userId = $_SESSION['user_id'] ?? null;
+    $isAdmin = $_SESSION['is_admin'] ?? false;
+    
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in review deletion");
+            jsonResponse(false, "Database connection failed", null, 500);
+            return;
+        }
+        
+        // Get product ID first for later rating update
+        $stmt = $pdo->prepare("SELECT product_id FROM product_reviews WHERE id = ?");
+        $stmt->execute([$reviewId]);
+        $review = $stmt->fetch();
+        
+        if (!$review) {
+            errorResponse('Review not found', 404);
+        }
+        
+        // Check if user owns this review or is admin
+        if (!$isAdmin) {
+            $stmt = $pdo->prepare("SELECT id FROM product_reviews WHERE id = ? AND user_id = ?");
+            $stmt->execute([$reviewId, $userId]);
+            $userReview = $stmt->fetch();
+            
+            if (!$userReview) {
+                errorResponse('You can only delete your own reviews', 403);
+            }
+        }
+        
+        // Delete review
+        $stmt = $pdo->prepare("DELETE FROM product_reviews WHERE id = ?");
+        $result = $stmt->execute([$reviewId]);
+        
+        if (!$result) {
+            errorResponse('Failed to delete review', 500);
+        }
+        
+        // Update product rating
+        updateProductRating($review['product_id']);
+        
+        // Return success response
+        jsonResponse(true, "Review deleted successfully", null, 200);
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        errorResponse('Failed to delete review', 500);
+    }
 }

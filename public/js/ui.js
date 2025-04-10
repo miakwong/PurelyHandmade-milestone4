@@ -86,19 +86,27 @@ function initializeEventListeners() {
 
 // Load navbar and footer
 function loadLayoutComponents() {
-  const navbarUrl = config.production 
-    ? `${config.baseUrl}/layout/navbar.html` 
-    : 'layout/navbar.html';
-    
-  const footerUrl = config.production 
-    ? `${config.baseUrl}/layout/footer.html` 
-    : 'layout/footer.html';
+  // Correctly handle paths for production vs development
+  let navbarUrl, footerUrl;
+  
+  // In production (on cosc360 server)
+  if (config.production) {
+    navbarUrl = `${config.baseUrl}/public/layout/navbar.html`;
+    footerUrl = `${config.baseUrl}/public/layout/footer.html`;
+  } else {
+    // In development
+    navbarUrl = 'layout/navbar.html';
+    footerUrl = 'layout/footer.html';
+  }
+  
+  console.log('Loading navbar from:', navbarUrl);
+  console.log('Loading footer from:', footerUrl);
     
   // Load navbar
   fetch(navbarUrl)
     .then(response => {
       if (!response.ok) {
-        throw new Error(`Failed to load navbar (${response.status})`);
+        throw new Error(`Failed to load navbar (${response.status} ${response.statusText}) from ${navbarUrl}`);
       }
       return response.text();
     })
@@ -111,15 +119,29 @@ function loadLayoutComponents() {
         if (typeof updateCartCount === 'function') {
           updateCartCount();
           console.log('Cart count updated after navbar loaded');
-        } else {
-          console.error('updateCartCount function not found');
         }
       }, 100);
     })
     .catch(error => {
       console.error('Error loading navbar:', error);
-      document.getElementById('navbar-placeholder').innerHTML =
-        '<div class="alert alert-danger">Failed to load navigation bar. Please check console for details.</div>';
+      // Try alternative path as fallback
+      const fallbackUrl = config.production ? 
+        `${config.baseUrl}/layout/navbar.html` : 
+        `../layout/navbar.html`;
+      
+      console.log('Trying fallback navbar path:', fallbackUrl);
+      
+      fetch(fallbackUrl)
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('navbar-placeholder').innerHTML = html;
+          console.log('Navbar loaded from fallback path');
+        })
+        .catch(err => {
+          console.error('Fallback navbar load failed:', err);
+          document.getElementById('navbar-placeholder').innerHTML =
+            '<div class="alert alert-danger">Failed to load navigation bar. Please refresh the page or check console for details.</div>';
+        });
     });
 
   // Load footer
@@ -136,8 +158,24 @@ function loadLayoutComponents() {
     })
     .catch(error => {
       console.error('Error loading footer:', error);
-      document.getElementById('footer-placeholder').innerHTML =
-        '<div class="alert alert-danger">Failed to load footer. Please check console for details.</div>';
+      // Try alternative path as fallback
+      const fallbackUrl = config.production ? 
+        `${config.baseUrl}/layout/footer.html` : 
+        `../layout/footer.html`;
+      
+      console.log('Trying fallback footer path:', fallbackUrl);
+      
+      fetch(fallbackUrl)
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('footer-placeholder').innerHTML = html;
+          console.log('Footer loaded from fallback path');
+        })
+        .catch(err => {
+          console.error('Fallback footer load failed:', err);
+          document.getElementById('footer-placeholder').innerHTML =
+            '<div class="alert alert-danger">Failed to load footer. Please refresh the page or check console for details.</div>';
+        });
     });
 }
 

@@ -33,7 +33,7 @@ function loadProductDetails(productId) {
       if (data.success && data.data) {
         displayProductDetails(data.data);
       } else {
-        throw new Error("Invalid product data");
+        throw new Error(data?.message || "Invalid product data");
       }
     })
     .catch(error => {
@@ -84,12 +84,21 @@ function displayProductDetails(product) {
   
   // Update breadcrumb navigation
   if (product.category_id) {
+    console.log('Fetching category for ID:', product.category_id);
     // get category info from API
     fetch(`${config.apiUrl}/categories.php?id=${product.category_id}`)
-      .then(response => response.json())
+      .then(response => {
+        console.log('Category API response status:', response.status);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
       .then(data => {
-        if (data.success) {
-          const category = data.category;
+        console.log('Category API response data:', data);
+        if (data.success && data.data) {
+          const category = data.data;
+          console.log('Category data:', category);
           // update breadcrumb links
           const breadcrumbCategory = document.getElementById("breadcrumb-category-link");
           const breadcrumbItem = document.getElementById("breadcrumb-item");
@@ -104,12 +113,21 @@ function displayProductDetails(product) {
           const productCategory = document.getElementById("product-category");
           if (productCategory) {
             productCategory.textContent = category.name;
-            productCategory.href = `../../index.html?category=${category.id}`;
+            productCategory.href = `${config.baseUrl}/public/index.html?category=${category.id}`;
           }
+        } else {
+          console.error('Invalid category data structure:', data);
+          throw new Error(data?.message || 'Invalid category data');
         }
       })
       .catch(error => {
         console.error("Error loading category:", error);
+        // Set default category text if category loading fails
+        const productCategory = document.getElementById("product-category");
+        if (productCategory) {
+          productCategory.textContent = "Uncategorized";
+          productCategory.href = `${config.baseUrl}/public/index.html`;
+        }
       });
   }
   
@@ -203,29 +221,80 @@ function generateThumbnails(images, productName) {
 
 //Load reviews for a product
 function loadProductReviews(productId) {
-  fetch(`${config.apiUrl}/reviews.php?action=get&product_id=${productId}`)
+  console.log('Loading reviews for product ID:', productId);
+  
+  // Validate product ID
+  if (!productId || isNaN(productId)) {
+    console.error('Invalid product ID:', productId);
+    showErrorMessage('Invalid product ID');
+    return;
+  }
+
+  fetch(`${config.apiUrl}/reviews.php?action=get&product_id=${productId}`, {
+    credentials: 'include'
+  })
     .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to load reviews');
+      console.log('Reviews API response status:', response.status);
+      
+      // Handle different HTTP status codes
+      if (response.status === 404) {
+        throw new Error('Product not found');
+      } else if (response.status === 500) {
+        return response.text().then(text => {
+          console.error('Server error response:', text);
+          try {
+            const data = JSON.parse(text);
+            throw new Error(data.message || 'Server error occurred');
+          } catch (e) {
+            if (text.includes('<!DOCTYPE HTML')) {
+              throw new Error('Server configuration error. Please try again later.');
+            }
+            throw new Error('Server error occurred: ' + text);
+          }
+        });
+      } else if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       return response.json();
     })
     .then(data => {
-      const actual = data.data;
-      if (actual.success) {
-        displayReviews(actual.reviews, actual.stats);
+      console.log('Reviews API response data:', data);
+      
+      if (data.success && data.data) {
+        const reviews = data.data.reviews || [];
+        const stats = data.data.stats || {
+          avg_rating: 0,
+          total_reviews: 0,
+          rating_distribution: {
+            '5_star': 0,
+            '4_star': 0,
+            '3_star': 0,
+            '2_star': 0,
+            '1_star': 0
+          }
+        };
+        
+        console.log('Processed reviews:', reviews);
+        console.log('Processed stats:', stats);
+        
+        displayReviews(reviews, stats);
       } else {
+        console.error('Invalid reviews data structure:', data);
         document.getElementById("reviews-container").innerHTML = `
           <div class="alert alert-warning">
-            <p>${actual.message}</p>
+            <p>${data.message || 'No reviews available'}</p>
           </div>
         `;
       }
     })
     .catch(error => {
+      console.error('Error loading reviews:', error);
+      console.error('Error stack:', error.stack);
       document.getElementById("reviews-container").innerHTML = `
         <div class="alert alert-danger">
-          <p>Failed to load reviews. Please try again later.</p>
+          <p>Failed to load reviews: ${error.message}</p>
+          <p>Please try again later or contact support if the problem persists.</p>
         </div>
       `;
     });
@@ -233,6 +302,9 @@ function loadProductReviews(productId) {
 
 //Display reviews and statistics
 function displayReviews(reviews, stats) {
+  console.log('Displaying reviews:', reviews);
+  console.log('Displaying stats:', stats);
+  
   // Update review statistics
   const avgRating = parseFloat(stats.avg_rating) || 0;
   const totalReviews = parseInt(stats.total_reviews) || 0;
@@ -248,7 +320,7 @@ function displayReviews(reviews, stats) {
   const reviewListContainer = document.getElementById("review-list");
   reviewListContainer.innerHTML = ''; // Clear existing reviews
   
-  if (reviews.length === 0) {
+  if (!reviews || reviews.length === 0) {
     reviewListContainer.innerHTML = `
       <div class="text-center my-4">
         <p>This product doesn't have any reviews yet. Be the first to review it!</p>
@@ -274,8 +346,11 @@ function displayReviews(reviews, stats) {
     
     reviewEl.innerHTML = `
       <div class="d-flex justify-content-between align-items-center mb-2">
-        <div class="text-warning">
-          ${generateStarsHtml(review.rating)}
+        <div>
+          <h6 class="mb-0">${review.user_name || review.username}</h6>
+          <div class="text-warning">
+            ${generateStarsHtml(review.rating)}
+          </div>
         </div>
         <span class="text-muted small">${formattedDate}</span>
       </div>
@@ -377,111 +452,88 @@ function displayRating(rating) {
 
 // Setup review form
 function setupReviewForm(productId) {
-  // Check login status to show appropriate form
-  api.auth.checkLoginStatus()
+  const reviewForm = document.getElementById('review-form');
+  if (!reviewForm) {
+    console.warn('Review form not found');
+    return;
+  }
+
+  // Check login status from backend
+  fetch(`${config.apiUrl}/auth.php?action=status`, {
+    method: 'GET',
+    credentials: 'include'
+  })
     .then(response => {
-      if (response.success && response.isLoggedIn) {
-        // User is logged in, show form with their info pre-filled
-        document.getElementById("review-name").value = response.user.username;
-        document.getElementById("review-name").disabled = true;
-        document.getElementById("review-email").value = response.user.email;
-        document.getElementById("review-email").disabled = true;
-      } else {
-        // Show login prompt
-        const reviewForm = document.getElementById("review-form");
-        reviewForm.innerHTML = `
-          <div class="alert alert-info">
-            <p>You need to <a href="../user/login.html">log in</a> to write a review.</p>
-          </div>
-        `;
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
+      return response.json();
     })
-    .catch(error => {
-      console.error("Error checking login status:", error);
-    });
-  
-  // Rating star selection
-  const ratingStars = document.querySelectorAll(".rating-star");
-  ratingStars.forEach(star => {
-    star.addEventListener("click", function() {
-      const rating = parseInt(this.getAttribute("data-rating"));
-      document.getElementById("rating-value").value = rating;
-      
-      // Update visual state of stars
-      ratingStars.forEach(s => {
-        const starRating = parseInt(s.getAttribute("data-rating"));
-        s.classList.remove("bi-star-fill", "bi-star");
-        s.classList.add(starRating <= rating ? "bi-star-fill" : "bi-star");
-      });
-    });
-    
-    // Hover effects
-    star.addEventListener("mouseenter", function() {
-      const hoverRating = parseInt(this.getAttribute("data-rating"));
-      ratingStars.forEach(s => {
-        const starRating = parseInt(s.getAttribute("data-rating"));
-        if (starRating <= hoverRating) {
-          s.classList.add("text-warning");
+    .then(data => {
+      if (!data.success) {
+        throw new Error(data?.message || 'Failed to check login status');
+      }
+      return data.data.isLoggedIn;
+    })
+    .then(isLoggedIn => {
+      if (!isLoggedIn) {
+        // Hide review form and show login prompt
+        const reviewSection = document.getElementById('review-section');
+        if (reviewSection) {
+          reviewSection.innerHTML = `
+            <div class="alert alert-info">
+              Please <a href="${config.baseUrl}/public/views/auth/login.html">login</a> to leave a review.
+            </div>
+          `;
         }
-      });
-    });
-    
-    star.addEventListener("mouseleave", function() {
-      ratingStars.forEach(s => {
-        s.classList.remove("text-warning");
-      });
-    });
-  });
-  
-  // Review form submission
-  const reviewForm = document.getElementById("review-form");
-  reviewForm.addEventListener("submit", function(event) {
-    event.preventDefault();
-    
-    // Get form values
-    const rating = parseInt(document.getElementById("rating-value").value);
-    const reviewText = document.getElementById("review-text").value.trim();
-    
-    // Validate form
-    if (rating < 1 || rating > 5) {
-      showToast("Error", "Please select a rating", "error");
-      return;
-    }
-    
-    if (reviewText.length < 10) {
-      showToast("Error", "Review text must be at least 10 characters", "error");
-      return;
-    }
-    
-    // Submit review via API
-    api.reviews.addReview(productId, rating, reviewText)
-      .then(response => {
-        if (response.success) {
-          showToast("Success", "Your review has been submitted!", "success");
-          
-          // Clear form
-          document.getElementById("rating-value").value = 0;
-          document.getElementById("review-text").value = "";
-          ratingStars.forEach(s => {
-            s.classList.remove("bi-star-fill");
-            s.classList.add("bi-star");
+        return;
+      }
+
+      // User is logged in, setup review form
+      reviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const rating = document.getElementById('review-rating').value;
+        const comment = document.getElementById('review-comment').value;
+        
+        try {
+          const response = await fetch(`${config.apiUrl}/reviews.php?action=add`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              product_id: productId,
+              rating: parseFloat(rating),
+              review_text: comment
+            }),
+            credentials: 'include'
           });
           
-          // Reload reviews to show the new one
-          loadProductReviews(productId);
-        } else {
-          showToast("Error", response.message, "error");
+          const result = await response.json();
+          
+          if (result.success) {
+            showToast('Success', 'Review submitted successfully', 'success');
+            // Reload reviews
+            loadProductReviews(productId);
+            // Reset form
+            reviewForm.reset();
+          } else {
+            showToast('Error', result?.message || 'Failed to submit review', 'error');
+          }
+        } catch (error) {
+          console.error('Error submitting review:', error);
+          showToast('Error', 'Failed to submit review', 'error');
         }
-      })
-      .catch(error => {
-        console.error("Error submitting review:", error);
-        showToast("Error", "Failed to submit review. Please try again later.", "error");
       });
-  });
+    })
+    .catch(error => {
+      console.error('Error checking login status:', error);
+      showToast('Error', 'Failed to check login status', 'error');
+    });
 }
 
 //Show a toast notification
-
 function showToast(title, message, type) {
   const toastContainer = document.getElementById("toast-container");
   

@@ -34,6 +34,23 @@
       justify-content: space-between;
       align-items: center;
       cursor: pointer;
+      padding: 8px 0;
+      transition: all 0.3s ease;
+    }
+
+    .filter-group-title:hover {
+      color: #0d6efd;
+    }
+
+    .filter-group-content {
+      display: block;
+      overflow: hidden;
+      padding-left: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .filter-group-content .form-check {
+      margin-bottom: 8px;
     }
 
     .price-range-inputs {
@@ -328,8 +345,8 @@
   <script src="js/api-client.js"></script>
 
   <!-- Modular JS files -->
-  <script src="js/products.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/products.js"></script>
   <script src="js/cart.js"></script>
   <script src="js/pagination.js"></script>
 
@@ -339,14 +356,40 @@
 
     // Initialize after page load
     document.addEventListener('DOMContentLoaded', function () {
-      // Initialize the page
-      initializePage();
+      // Initialize URL parameters first
+      if (typeof initializeUrlParams === 'function') {
+        initializeUrlParams();
+      } else {
+        // Fallback for direct URL parameter parsing
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('category')) {
+          activeCategoryId = parseInt(urlParams.get('category'));
+          console.log('Direct URL parsing: category ID =', activeCategoryId);
+        }
+      }
 
-      // Check for items to add to the cart after login
-      setTimeout(() => {
-        // Delay execution to ensure addToCart function is loaded
-        checkPendingCartItems();
-      }, 500);
+      // Load navbar and footer
+      if (typeof loadLayoutComponents === 'function') {
+        loadLayoutComponents();
+      } else if (typeof window.loadLayoutComponents === 'function') {
+        window.loadLayoutComponents();
+      } else {
+        console.error('Layout loading function not found. Make sure ui.js is loaded correctly.');
+      }
+
+      // Initialize the filter accordion
+      if (typeof initializeFilterAccordion === 'function') {
+        initializeFilterAccordion();
+      }
+
+      // Load categories and products
+      if (typeof loadCategories === 'function') {
+        loadCategories();
+      }
+
+      if (typeof loadProducts === 'function') {
+        loadProducts();
+      }
     });
 
     // Check for items to add to the cart after login

@@ -1,11 +1,26 @@
 <?php
-//Categories API
+// Categories API
 
-// Include common functions
-require_once '../includes/functions.php';
+// Initialize error handling
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', '../logs/php_errors.log');
 
-// Get database configuration
-$db_config = require_once '../config/database.php';
+// Include common files
+require_once __DIR__ . '/../includes/db_credentials.php';
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/functions.php';
+
+// Set headers
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit;
+}
 
 // Get the HTTP method
 $method = $_SERVER['REQUEST_METHOD'];
@@ -13,198 +28,253 @@ $method = $_SERVER['REQUEST_METHOD'];
 // Get category ID from query string if available
 $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
-// Load categories from JSON file
-$categories = loadJsonData($db_config['files']['categories']);
-
 // Handle request based on HTTP method
-switch ($method) {
-    case 'GET':
-        handleGetRequest($categories, $id);
-        break;
-        
-    case 'POST':
-        // Require admin for creating categories
-        requireAdmin();
-        handlePostRequest($categories);
-        break;
-        
-    case 'PUT':
-        // Require admin for updating categories
-        requireAdmin();
-        handlePutRequest($categories, $id);
-        break;
-        
-    case 'DELETE':
-        // Require admin for deleting categories
-        requireAdmin();
-        handleDeleteRequest($categories, $id);
-        break;
-        
-    default:
-        // Method not allowed
-        errorResponse('Method not allowed', 405);
-        break;
+try {
+    switch ($method) {
+        case 'GET':
+            handleGetRequest($id);
+            break;
+            
+        case 'POST':
+            // Require admin for creating categories
+            requireAdmin();
+            handlePostRequest();
+            break;
+            
+        case 'PUT':
+            // Require admin for updating categories
+            requireAdmin();
+            handlePutRequest($id);
+            break;
+            
+        case 'DELETE':
+            // Require admin for deleting categories
+            requireAdmin();
+            handleDeleteRequest($id);
+            break;
+            
+        default:
+            // Method not allowed
+            errorResponse('Method not allowed', 405);
+            break;
+    }
+} catch (Exception $e) {
+    error_log("Categories API Error: " . $e->getMessage());
+    jsonResponse(false, "Server error occurred. Please try again later.", null, 500);
 }
 
-//Get request
-function handleGetRequest($categories, $id) {
-    global $db_config;
-    
+// Handle GET request
+function handleGetRequest($id) {
     // Get a single category by ID
     if ($id !== null) {
-        $category = findCategoryById($categories, $id);
-        
-        if ($category === null) {
-            errorResponse('Category not found', 404);
-        }
-        
-        // If products are requested with the category
-        if (isset($_GET['with_products']) && $_GET['with_products'] === '1') {
-            // Load products for this category
-            $products = loadJsonData($db_config['files']['products']);
+        try {
+            $pdo = getConnection();
+            if (!$pdo) {
+                error_log("Database connection failed in category retrieval");
+                jsonResponse(false, "Database connection failed", null, 500);
+                return;
+            }
             
-            // Filter products by category ID
-            $categoryProducts = array_filter($products, function($product) use ($id) {
-                return $product['categoryId'] === $id;
-            });
+            $stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");
+            $stmt->execute([$id]);
+            $category = $stmt->fetch();
             
-            // Add products to category data
-            $category['products'] = array_values($categoryProducts);
+            if ($category === false) {
+                errorResponse('Category not found', 404);
+            }
+            
+            // If products are requested with the category
+            if (isset($_GET['with_products']) && $_GET['with_products'] === '1') {
+                $productsStmt = $pdo->prepare("SELECT * FROM products WHERE categoryId = ?");
+                $productsStmt->execute([$id]);
+                $categoryProducts = $productsStmt->fetchAll();
+                
+                // Add products to category data
+                $category['products'] = $categoryProducts;
+            }
+            
+            jsonResponse(true, "Category retrieved successfully", $category, 200);
+        } catch (PDOException $e) {
+            error_log("Database Error: " . $e->getMessage());
+            errorResponse('Failed to load category', 500);
         }
-        
-        jsonResponse(true, "Categories retrieved successfully", $category, 200);
     }
     
     // Return all categories
-    jsonResponse(true, "Categories retrieved successfully", $categories, 200);
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in categories retrieval");
+            jsonResponse(false, "Database connection failed", null, 500);
+            return;
+        }
+        
+        $stmt = $pdo->prepare("SELECT * FROM categories ORDER BY name");
+        $stmt->execute();
+        $categories = $stmt->fetchAll();
+        
+        jsonResponse(true, "Categories retrieved successfully", $categories, 200);
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        errorResponse('Failed to load categories', 500);
+    }
 }
 
-//Handle POST request
-function handlePostRequest($categories) {
-    global $db_config;
-    
+// Handle POST request
+function handlePostRequest() {
     // Get JSON input data
     $data = getJsonInput();
     
     // Validate required fields
     validateRequired($data, ['name']);
     
-    // Generate new category ID
-    $existingIds = array_column($categories, 'id');
-    $newId = generateId($existingIds);
-    
-    // Create new category
-    $newCategory = [
-        'id' => $newId,
-        'name' => sanitize($data['name']),
-        'description' => isset($data['description']) ? sanitize($data['description']) : ''
-    ];
-    
-    // Add new category to array
-    $categories[] = $newCategory;
-    
-    // Save updated categories data
-    if (!saveJsonData($db_config['files']['categories'], $categories)) {
-        errorResponse('Failed to save category', 500);
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in category creation");
+            jsonResponse(false, "Database connection failed", null, 500);
+            return;
+        }
+        
+        // Create new category
+        $stmt = $pdo->prepare("INSERT INTO categories (name, description) VALUES (?, ?)");
+        $result = $stmt->execute([
+            sanitize($data['name']),
+            isset($data['description']) ? sanitize($data['description']) : ''
+        ]);
+        
+        if (!$result) {
+            errorResponse('Failed to save category', 500);
+        }
+        
+        $newCategoryId = $pdo->lastInsertId();
+        
+        // Get the new category
+        $stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");
+        $stmt->execute([$newCategoryId]);
+        $newCategory = $stmt->fetch();
+        
+        // Return the new category
+        jsonResponse(true, "Category created successfully", $newCategory, 201);
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
+        errorResponse('Failed to create category', 500);
     }
-    
-    // Return the new category
-    jsonResponse(true, "New category loaded", $newCategory, 201);
 }
 
-//put request
-function handlePutRequest($categories, $id) {
-    global $db_config;
-    
+// Handle PUT request
+function handlePutRequest($id) {
     // Check if ID is provided
     if ($id === null) {
         errorResponse('Category ID is required', 400);
-    }
-    
-    // Find category index
-    $index = findCategoryIndexById($categories, $id);
-    
-    if ($index === null) {
-        errorResponse('Category not found', 404);
     }
     
     // Get JSON input data
     $data = getJsonInput();
     
-    // Update category fields
-    if (isset($data['name'])) {
-        $categories[$index]['name'] = sanitize($data['name']);
-    }
-    
-    if (isset($data['description'])) {
-        $categories[$index]['description'] = sanitize($data['description']);
-    }
-    
-    // Save updated categories data
-    if (!saveJsonData($db_config['files']['categories'], $categories)) {
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in category update");
+            jsonResponse(false, "Database connection failed", null, 500);
+            return;
+        }
+        
+        // Check if category exists
+        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ?");
+        $stmt->execute([$id]);
+        
+        if (!$stmt->fetch()) {
+            errorResponse('Category not found', 404);
+        }
+        
+        // Update fields
+        $updateFields = [];
+        $params = [];
+        
+        if (isset($data['name'])) {
+            $updateFields[] = "name = ?";
+            $params[] = sanitize($data['name']);
+        }
+        
+        if (isset($data['description'])) {
+            $updateFields[] = "description = ?";
+            $params[] = sanitize($data['description']);
+        }
+        
+        if (empty($updateFields)) {
+            errorResponse('No fields to update', 400);
+        }
+        
+        // Add ID to params
+        $params[] = $id;
+        
+        // Update category
+        $sql = "UPDATE categories SET " . implode(", ", $updateFields) . " WHERE id = ?";
+        $stmt = $pdo->prepare($sql);
+        $result = $stmt->execute($params);
+        
+        if (!$result) {
+            errorResponse('Failed to update category', 500);
+        }
+        
+        // Get the updated category
+        $stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");
+        $stmt->execute([$id]);
+        $updatedCategory = $stmt->fetch();
+        
+        // Return the updated category
+        jsonResponse(true, "Category updated successfully", $updatedCategory, 200);
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
         errorResponse('Failed to update category', 500);
     }
-    
-    // Return the updated category
-    jsonResponse(true, "Updated category", $categories[$index], 200);
 }
 
-//Handle DELETE request
-function handleDeleteRequest($categories, $id) {
-    global $db_config;
-    
+// Handle DELETE request
+function handleDeleteRequest($id) {
     // Check if ID is provided
     if ($id === null) {
         errorResponse('Category ID is required', 400);
     }
     
-    // Find category index
-    $index = findCategoryIndexById($categories, $id);
-    
-    if ($index === null) {
-        errorResponse('Category not found', 404);
-    }
-    
-    // Check if there are products using this category
-    $products = loadJsonData($db_config['files']['products']);
-    $productsUsingCategory = array_filter($products, function($product) use ($id) {
-        return $product['categoryId'] === $id;
-    });
-    
-    if (!empty($productsUsingCategory)) {
-        errorResponse('Cannot delete category with associated products', 400);
-    }
-    
-    // Remove category from array
-    array_splice($categories, $index, 1);
-    
-    // Save updated categories data
-    if (!saveJsonData($db_config['files']['categories'], $categories)) {
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in category deletion");
+            jsonResponse(false, "Database connection failed", null, 500);
+            return;
+        }
+        
+        // Check if category exists
+        $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ?");
+        $stmt->execute([$id]);
+        
+        if (!$stmt->fetch()) {
+            errorResponse('Category not found', 404);
+        }
+        
+        // Check if there are products using this category
+        $stmt = $pdo->prepare("SELECT COUNT(*) AS count FROM products WHERE categoryId = ?");
+        $stmt->execute([$id]);
+        $result = $stmt->fetch();
+        
+        if ($result['count'] > 0) {
+            errorResponse('Cannot delete category with associated products', 400);
+        }
+        
+        // Delete category
+        $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
+        $result = $stmt->execute([$id]);
+        
+        if (!$result) {
+            errorResponse('Failed to delete category', 500);
+        }
+        
+        // Return success response
+        jsonResponse(true, "Category deleted successfully", null, 200);
+    } catch (PDOException $e) {
+        error_log("Database Error: " . $e->getMessage());
         errorResponse('Failed to delete category', 500);
     }
-    
-    // Return success response
-    jsonResponse(true, ['message' => 'Category deleted successfully'], null, 200);
-}
-
-//find category by ID
-function findCategoryById($categories, $id) {
-    foreach ($categories as $category) {
-        if ($category['id'] === $id) {
-            return $category;
-        }
-    }
-    
-    return null;
-}
-
-//find category index by ID
-function findCategoryIndexById($categories, $id) {
-    foreach ($categories as $index => $category) {
-        if ($category['id'] === $id) {
-            return $index;
-        }
-    }
-    
-    return null;
 } 
