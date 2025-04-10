@@ -47,15 +47,12 @@ function loadProductDetails(productId) {
 
 // Display product details on page
 function displayProductDetails(product) {
-  // Simplified category detection - only check the most common patterns
   let categoryId = product.category_id || product.categoryId;
   let categoryName = product.categoryName || "Unknown Category";
   
-  // Update product object with detected category info
   product.category_id = categoryId;
   product.categoryName = categoryName;
   
-  // Cache DOM elements to avoid repeated lookups
   const elements = {
     name: document.getElementById("product-name"),
     description: document.getElementById("product-description"),
@@ -75,53 +72,43 @@ function displayProductDetails(product) {
     detailsContent: document.getElementById("details-content")
   };
   
-  // Set basic product info
   if (elements.name) elements.name.textContent = product.name || "Product Name Not Available";
   if (elements.description) elements.description.textContent = product.description || "No description available";
   
-  // Set tab content for product details
   if (elements.detailsContent) {
     elements.detailsContent.innerHTML = `
       <p>${product.description || "No description available"}</p>
     `;
   }
   
-  // Handle price display
   if (elements.price) {
     const regularPrice = parseFloat(product.price);
     const formattedRegularPrice = !isNaN(regularPrice) ? `$${regularPrice.toFixed(2)}` : '$0.00';
     
-    // Check for sale status
     const isSale = product.onSale === true || product.is_featured === 1 || product.is_featured === '1';
     const hasSalePrice = product.salePrice && parseFloat(product.salePrice) < regularPrice;
     
     if (isSale) {
-      // Calculate sale price
       const salePrice = hasSalePrice 
         ? parseFloat(product.salePrice) 
         : parseFloat((regularPrice * 0.8).toFixed(2));
       
-      const formattedSalePrice = !isNaN(salePrice) ? `$${salePrice.toFixed(2)}` : '$0.00';
-      
-      // Update price display
+        const formattedSalePrice = !isNaN(salePrice) ? `$${salePrice.toFixed(2)}` : '$0.00';
+        
       elements.price.innerHTML = `
-          <span class="original-price text-muted"><s>${formattedRegularPrice}</s></span>
-          <span class="sale-price text-danger">${formattedSalePrice}</span>
-          <span class="badge bg-danger ms-2">Sale</span>
-      `;
+            <span class="original-price text-muted"><s>${formattedRegularPrice}</s></span>
+            <span class="sale-price text-danger">${formattedSalePrice}</span>
+            <span class="badge bg-danger ms-2">Sale</span>
+        `;
       
-      // Show sale badge
       if (elements.saleBadge) elements.saleBadge.style.display = "inline-block";
     } else {
-      // Regular price display
       elements.price.innerHTML = `<span>${formattedRegularPrice}</span>`;
       
-      // Hide sale badge
       if (elements.saleBadge) elements.saleBadge.style.display = "none";
     }
   }
   
-  // Update stock status
   const isInStock = product.in_stock || (product.stock_quantity && product.stock_quantity > 0);
   const stockQuantity = product.stock_quantity || 0;
   
@@ -130,31 +117,25 @@ function displayProductDetails(product) {
     elements.stockStatus.className = isInStock ? "text-success" : "text-danger";
   }
   
-  // Update stock info
   if (elements.stockInfo) {
     elements.stockInfo.textContent = isInStock ? `${stockQuantity} in stock` : "Out of stock";
     elements.stockInfo.className = isInStock ? "text-success" : "text-danger";
   }
   
-  // Setup product rating stars
   if (elements.rating) {
     elements.rating.innerHTML = generateStarsHtml(product.rating);
   }
   
-  // Set review count
   if (elements.reviewCount) {
     elements.reviewCount.textContent = `(${product.reviewCount || 0} reviews)`;
   }
   
-  // Handle images
   if (elements.thumbnailContainer) {
     elements.thumbnailContainer.innerHTML = '';
   }
   
-  // Use a single approach for all image handling
   const productImages = [];
   
-  // Try to get images from different possible sources
   if (product.images && Array.isArray(product.images) && product.images.length > 0) {
     productImages.push(...product.images);
   } else if (product.image) {
@@ -162,42 +143,35 @@ function displayProductDetails(product) {
   }
   
   if (productImages.length > 0) {
-    // Set main image
     if (elements.mainImage) {
       elements.mainImage.src = productImages[0];
       elements.mainImage.alt = product.name;
     }
     
-    // Generate thumbnails
     generateThumbnails(productImages, product.name);
   } else if (elements.mainImage) {
-    // No images available
     elements.mainImage.src = "/public/images/no-image.jpg";
     elements.mainImage.alt = "No image available";
   }
   
-  // Update breadcrumb navigation
   updateBreadcrumbNavigation(product, categoryId, categoryName);
   
-  // Add to cart button handler
   if (elements.addToCartBtn) {
     elements.addToCartBtn.addEventListener("click", function() {
       const quantity = parseInt(elements.quantityInput?.value) || 1;
       
       if (typeof window.addToCart === 'function') {
         window.addToCart(product.id, quantity);
-        showToast("Success", "Product added to cart!", "success");
-      } else {
-        showToast("Error", "Shopping cart functionality is temporarily unavailable.", "error");
+        window.showToast("Product added to cart!", "success");
+        } else {
+          window.showToast("Shopping cart functionality is temporarily unavailable.", "error");
       }
     });
   }
   
-  // Setup quantity selector with max value
   const maxQuantity = stockQuantity || 10;
   setupQuantityControls(elements.quantityInput, elements.incrementBtn, elements.decrementBtn, maxQuantity);
   
-  // Setup button states
   if (elements.addToCartBtn && elements.buyNowBtn) {
     const isAvailable = isInStock;
     elements.addToCartBtn.disabled = !isAvailable;
@@ -208,7 +182,7 @@ function displayProductDetails(product) {
       elements.addToCartBtn.classList.remove('btn-secondary');
       elements.buyNowBtn.classList.add('btn-outline-primary');
       elements.buyNowBtn.classList.remove('btn-secondary');
-    } else {
+        } else {
       elements.addToCartBtn.classList.add('btn-secondary');
       elements.addToCartBtn.classList.remove('btn-primary');
       elements.buyNowBtn.classList.add('btn-secondary');
@@ -217,49 +191,43 @@ function displayProductDetails(product) {
   }
 }
 
-// Setup quantity controls - consolidated function
+// Setup quantity controls
 function setupQuantityControls(quantityInput, incrementBtn, decrementBtn, maxQuantity) {
   if (!quantityInput) return;
   
-  // Set initial value
-  quantityInput.value = 1;
-  
-  // Update min/max attributes
-  quantityInput.setAttribute("min", "1");
-  quantityInput.setAttribute("max", maxQuantity.toString());
-  
-  // Handle manual input
-  quantityInput.addEventListener("change", () => {
-    let value = parseInt(quantityInput.value, 10);
-    
-    // Validate the value
-    if (isNaN(value) || value < 1) {
-      value = 1;
-    } else if (value > maxQuantity) {
-      value = maxQuantity;
-    }
-    
-    // Update the input value
-    quantityInput.value = value;
-  });
-  
-  // Setup increment/decrement buttons
+      quantityInput.value = 1;
+      
+      quantityInput.setAttribute("min", "1");
+      quantityInput.setAttribute("max", maxQuantity.toString());
+      
+      quantityInput.addEventListener("change", () => {
+          let value = parseInt(quantityInput.value, 10);
+          
+          if (isNaN(value) || value < 1) {
+              value = 1;
+          } else if (value > maxQuantity) {
+              value = maxQuantity;
+          }
+          
+          quantityInput.value = value;
+      });
+
   if (incrementBtn) {
-    incrementBtn.addEventListener("click", () => {
+      incrementBtn.addEventListener("click", () => {
       let value = parseInt(quantityInput.value, 10) || 0;
-      if (value < maxQuantity) {
-        quantityInput.value = value + 1;
-      }
-    });
+              if (value < maxQuantity) {
+                  quantityInput.value = value + 1;
+          }
+      });
   }
-  
+
   if (decrementBtn) {
-    decrementBtn.addEventListener("click", () => {
+      decrementBtn.addEventListener("click", () => {
       let value = parseInt(quantityInput.value, 10) || 2;
-      if (value > 1) {
-        quantityInput.value = value - 1;
-      }
-    });
+              if (value > 1) {
+                  quantityInput.value = value - 1;
+          }
+      });
   }
 }
 
@@ -268,7 +236,7 @@ function generateThumbnails(images, productName) {
   const thumbnailContainer = document.getElementById("thumbnail-container");
   if (!thumbnailContainer) return;
   
-  thumbnailContainer.innerHTML = ''; // Clear existing thumbnails
+  thumbnailContainer.innerHTML = '';
   const mainImage = document.getElementById('main-product-image');
   
   images.forEach((imgSrc, index) => {
@@ -280,10 +248,8 @@ function generateThumbnails(images, productName) {
     img.alt = `${productName} - Image ${index + 1}`;
     img.className = "thumbnail-img" + (index === 0 ? " active" : "");
     
-    // Click handler to change main image
     img.addEventListener("click", function() {
       if (mainImage) {
-        // Fade effect
         mainImage.style.opacity = '0';
         
         setTimeout(() => {
@@ -293,7 +259,6 @@ function generateThumbnails(images, productName) {
         }, 300);
       }
       
-      // Update active thumbnail
       document.querySelectorAll(".thumbnail-img").forEach(thumb => {
         thumb.classList.remove("active");
       });
@@ -306,68 +271,37 @@ function generateThumbnails(images, productName) {
 }
 
 // Load reviews for a product
-function loadProductReviews(productId) {
+function loadProductReviews(productId, forceRefresh = false) {
   const reviewList = document.getElementById("review-list");
-  
   if (!reviewList) return;
   
-  // Show loading indicator
-  reviewList.innerHTML = `
-    <div class="text-center py-3">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-      <p class="mt-2">Loading reviews...</p>
-    </div>
-  `;
-
-  // 使用config.js中的getApiUrl函数
-  const url = getApiUrl(`product_reviews.php?product_id=${productId}`);
+  reviewList.innerHTML = `<div class="text-center py-3">Loading reviews...</div>`;
   
-  fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // 灵活处理数据结构 - 有些API返回data.data.reviews，有些可能是data.reviews
-        let reviews = [];
-        let stats = { avg_rating: 0, total_reviews: 0, rating_distribution: {} };
-        
-        if (data.data) {
-          // 新的API结构: data.data.reviews 和 data.data.stats
-          reviews = data.data.reviews || [];
-          stats = data.data.stats || stats;
-        } else {
-          // 旧的API结构: data.reviews 和 data.stats
-          reviews = data.reviews || [];
-          stats = data.stats || stats;
-        }
-        
-        displayReviews(reviews, stats);
-      } else {
-        reviewList.innerHTML = `
-          <div class="alert alert-warning">
-            <p>${data.message || 'Failed to load reviews'}</p>
-          </div>
-        `;
-      }
-    })
-    .catch(error => {
-      console.error("Error loading reviews:", error);
-      reviewList.innerHTML = `
-        <div class="alert alert-danger">
-          <p>Failed to load reviews. Please try again later.</p>
-        </div>
-      `;
-    });
+  const timestamp = forceRefresh ? `&_t=${new Date().getTime()}` : '';
+  const url = getApiUrl(`product_reviews.php?product_id=${productId}${timestamp}`);
+
+  fetch(url, {
+    method: 'GET',
+    credentials: 'include',
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      displayReviews(data.data.reviews, data.data.stats);
+    } else {
+      reviewList.innerHTML = `<div class="alert alert-warning">Failed to load reviews: ${data.message}</div>`;
+    }
+  })
+  .catch(error => {
+    reviewList.innerHTML = `<div class="alert alert-danger">Error loading reviews. Please try again later.</div>`;
+  });
 }
 
 // Display reviews and statistics
 function displayReviews(reviews, stats) {
-  // 确保数据有效性
   if (!reviews) reviews = [];
   if (!stats) stats = { avg_rating: 0, total_reviews: 0, rating_distribution: {} };
   
-  // 更新评论统计信息
   const avgRating = parseFloat(stats.avg_rating) || 0;
   const totalReviews = parseInt(stats.total_reviews) || 0;
   
@@ -382,10 +316,8 @@ function displayReviews(reviews, stats) {
   if (elements.avgStars) elements.avgStars.innerHTML = generateStarsHtml(avgRating);
   if (elements.totalReviews) elements.totalReviews.textContent = `Based on ${totalReviews} reviews`;
   
-  // 更新评分分布
   updateRatingBreakdown(stats);
   
-  // 显示评论列表
   if (!elements.reviewList) return;
   
   elements.reviewList.innerHTML = '';
@@ -399,10 +331,8 @@ function displayReviews(reviews, stats) {
     return;
   }
   
-  // 按日期排序（最新优先）
   reviews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   
-  // 显示每条评论
   reviews.forEach(review => {
     const reviewEl = document.createElement("div");
     reviewEl.className = "review-item mb-4 pb-4 border-bottom";
@@ -414,7 +344,6 @@ function displayReviews(reviews, stats) {
       day: 'numeric'
     });
     
-    // 添加用户名以及头像（如果有）
     let userInfo = '';
     if (review.username) {
       userInfo = `<div class="mb-2 text-primary fw-bold">${review.username}</div>`;
@@ -454,16 +383,12 @@ function updateRatingBreakdown(stats) {
   const totalReviews = parseInt(stats.total_reviews) || 0;
   if (totalReviews === 0) return;
   
-  // 创建一个累计评分的对象
   const starCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   
-  // 处理评分分布，处理可能存在的小数评分（如5.0_star或4.5_star）
   if (stats.rating_distribution) {
     Object.keys(stats.rating_distribution).forEach(key => {
-      // 从key中提取评分值
       const rating = parseFloat(key.split('_')[0]);
       if (!isNaN(rating)) {
-        // 将评分映射到整数星级
         const starLevel = Math.round(rating);
         if (starLevel >= 1 && starLevel <= 5) {
           starCounts[starLevel] += parseInt(stats.rating_distribution[key]) || 0;
@@ -472,7 +397,6 @@ function updateRatingBreakdown(stats) {
     });
   }
   
-  // 更新UI
   const starMapping = { 5: 'five', 4: 'four', 3: 'three', 2: 'two', 1: 'one' };
   
   for (let i = 5; i >= 1; i--) {
@@ -500,96 +424,117 @@ function setupReviewForm(productId) {
   // Check login status
   api.auth.checkLoginStatus()
     .then(response => {
-      if (response.success && response.isLoggedIn) {
-        // User is logged in, pre-fill form
+      let isLoggedIn = false;
+      let userData = null;
+      
+      if (response.success) {
+        if (response.isLoggedIn === true) {
+          isLoggedIn = true;
+          userData = response.user || {};
+        } 
+        else if (response.data && response.data.isLoggedIn === true) {
+          isLoggedIn = true;
+          userData = response.data.user || {};
+        }
+        else if (response.message === 'User is logged in') {
+          isLoggedIn = true;
+          userData = response.user || response.data?.user || {};
+        }
+      }
+      
+      if (isLoggedIn && userData) {
         const nameInput = document.getElementById("review-name");
         const emailInput = document.getElementById("review-email");
         
         if (nameInput) {
-          nameInput.value = response.user.username;
+          nameInput.value = userData.username || "";
           nameInput.disabled = true;
         }
         
         if (emailInput) {
-          emailInput.value = response.user.email;
+          emailInput.value = userData.email || "";
           emailInput.disabled = true;
         }
+        
+        setupRatingStars();
+        
+        reviewForm.addEventListener("submit", function(event) {
+          event.preventDefault();
+          
+          const ratingInput = document.getElementById("rating-value");
+          const reviewTextInput = document.getElementById("review-text");
+          
+          if (!ratingInput || !reviewTextInput) {
+            window.showToast("Form elements not found", "error");
+            return;
+          }
+          
+          const rating = parseInt(ratingInput.value);
+          const reviewText = reviewTextInput.value.trim();
+          
+          if (rating < 1 || rating > 5) {
+            window.showToast("Please select a rating", "error");
+            return;
+          }
+          
+          if (reviewText.length < 3) {
+            window.showToast("Review text must be at least 3 characters", "error");
+            return;
+          }
+          
+          const apiUrl = getApiUrl('product_reviews.php');
+
+          fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              product_id: productId,
+              rating: rating,
+              review_text: reviewText
+            })
+          })
+          .then(response => {
+            return response.text().then(text => {
+              if (!text || text.trim() === '') {
+                throw new Error("Server returned empty response");
+              }
+              
+              try {
+                return JSON.parse(text);
+              } catch(e) {
+                throw new Error("Invalid JSON response: " + text);
+              }
+            });
+          })
+          .then(data => {
+            if (data.success) {
+              window.showToast("Review has been submitted", "success");
+              document.getElementById("review-form").reset();
+              loadProductReviews(productId, true);
+            } else {
+              window.showToast(data.message || "Failed to submit review", "error");
+            }
+          })
+          .catch((error) => {
+            window.showToast("Failed to submit review: " + error.message, "error");
+          });
+        });
       } else {
-        // Show login prompt
         reviewForm.innerHTML = `
           <div class="alert alert-info">
-            <p>You need to <a href="../user/login.html">log in</a> to write a review.</p>
+            <p>You need to <a href="../auth/login.html">log in</a> to write a review.</p>
           </div>
         `;
       }
     })
     .catch(error => {
-      console.error("Error checking login status:", error);
+      reviewForm.innerHTML = `
+        <div class="alert alert-info">
+          <p>You need to <a href="../auth/login.html">log in</a> to write a review.</p>
+        </div>
+      `;
     });
-  
-  // Setup rating stars
-  setupRatingStars();
-  
-  // Review form submission
-  reviewForm.addEventListener("submit", function(event) {
-    event.preventDefault();
-    
-    const ratingInput = document.getElementById("rating-value");
-    const reviewTextInput = document.getElementById("review-text");
-    
-    if (!ratingInput || !reviewTextInput) {
-      showToast("Error", "Form elements not found", "error");
-      return;
-    }
-    
-    const rating = parseInt(ratingInput.value);
-    const reviewText = reviewTextInput.value.trim();
-    
-    // Validate form
-    if (rating < 1 || rating > 5) {
-      showToast("Error", "Please select a rating", "error");
-      return;
-    }
-    
-    if (reviewText.length < 10) {
-      showToast("Error", "Review text must be at least 10 characters", "error");
-      return;
-    }
-    
-    // Submit review
-    fetch(getApiUrl('product_reviews.php?action=add'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        product_id: productId,
-        rating: rating,
-        review_text: reviewText
-      })
-    })
-      .then(response => response.json())
-      .then(response => {
-        if (response.success) {
-          showToast("Success", "Your review has been submitted!", "success");
-          
-          // Reset form
-          ratingInput.value = 0;
-          reviewTextInput.value = "";
-          document.querySelectorAll(".rating-star").forEach(s => {
-            s.classList.remove("bi-star-fill");
-            s.classList.add("bi-star");
-          });
-          
-          // Reload reviews after submission
-          loadProductReviews(productId);
-        } else {
-          showToast("Error", response.message || "Failed to submit review", "error");
-        }
-      })
-      .catch(() => {
-        showToast("Error", "Failed to submit review. Please try again later.", "error");
-      });
-  });
 }
 
 // Setup rating stars functionality
@@ -598,7 +543,6 @@ function setupRatingStars() {
   if (ratingStars.length === 0) return;
   
   ratingStars.forEach(star => {
-    // Click handler
     star.addEventListener("click", function() {
       const rating = parseInt(this.getAttribute("data-rating"));
       const ratingValueInput = document.getElementById("rating-value");
@@ -606,7 +550,6 @@ function setupRatingStars() {
         ratingValueInput.value = rating;
       }
       
-      // Update visual state
       ratingStars.forEach(s => {
         const starRating = parseInt(s.getAttribute("data-rating"));
         s.classList.remove("bi-star-fill", "bi-star");
@@ -614,7 +557,6 @@ function setupRatingStars() {
       });
     });
     
-    // Hover effects
     star.addEventListener("mouseenter", function() {
       const hoverRating = parseInt(this.getAttribute("data-rating"));
       ratingStars.forEach(s => {
@@ -631,39 +573,6 @@ function setupRatingStars() {
       });
     });
   });
-}
-
-// Show a toast notification
-function showToast(title, message, type) {
-  const toastContainer = document.getElementById("toast-container");
-  if (!toastContainer) return;
-  
-  // Create toast element
-  const toast = document.createElement("div");
-  toast.className = `toast show`;
-  toast.setAttribute("role", "alert");
-  toast.setAttribute("aria-live", "assertive");
-  toast.setAttribute("aria-atomic", "true");
-  
-  // Set toast content
-  toast.innerHTML = `
-    <div class="toast-header ${type === 'error' ? 'bg-danger text-white' : type === 'success' ? 'bg-success text-white' : ''}">
-      <strong class="me-auto">${title}</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-    <div class="toast-body">
-      ${message}
-    </div>
-  `;
-  
-  // Add toast to container
-  toastContainer.appendChild(toast);
-  
-  // Auto-remove after 5 seconds
-  setTimeout(() => toast.remove(), 5000);
-  
-  // Close button handler
-  toast.querySelector(".btn-close").addEventListener("click", () => toast.remove());
 }
 
 // Show an error message
@@ -687,12 +596,10 @@ function showErrorMessage(message) {
 function updateBreadcrumbNavigation(product, categoryId, categoryName) {
   if (!product) return;
   
-  // Get DOM elements
   const breadcrumbCategory = document.getElementById("breadcrumb-category-link");
   const breadcrumbItem = document.getElementById("breadcrumb-item");
   const productCategory = document.getElementById("product-category");
   
-  // If no category ID, use defaults
   if (!categoryId) {
     if (breadcrumbCategory) {
       breadcrumbCategory.textContent = "All Products";
@@ -710,19 +617,16 @@ function updateBreadcrumbNavigation(product, categoryId, categoryName) {
     return;
   }
   
-  // If we have a valid category name, use it directly
   if (categoryName && categoryName !== "Unknown Category") {
     updateBreadcrumbElements(breadcrumbCategory, breadcrumbItem, productCategory, 
                              categoryName, categoryId, product.name);
     return;
   }
   
-  // If we only have category ID, fetch the category details
   api.categories.getCategory(categoryId)
     .then(data => {
       let fetchedCategoryName = "Unknown Category";
       if (data?.success) {
-        // Check data.data field first (standard API format)
         fetchedCategoryName = data.data?.name || data.category?.name || "Unknown Category";
       }
       
@@ -730,7 +634,6 @@ function updateBreadcrumbNavigation(product, categoryId, categoryName) {
                                fetchedCategoryName, categoryId, product.name);
     })
     .catch(() => {
-      // Fallback on error
       updateBreadcrumbElements(breadcrumbCategory, breadcrumbItem, productCategory, 
                                "Products", null, product.name);
     });

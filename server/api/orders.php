@@ -142,7 +142,6 @@ function createOrder() {
 }
 
 // Get orders for a specific user
-
 function getOrdersByUser($userId) {
     try {
         $pdo = getConnection();
@@ -152,24 +151,31 @@ function getOrdersByUser($userId) {
             return;
         }
         
-        // Get orders for the user
+        // Get orders for the user with explicit fetch mode
         $stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC");
         $stmt->execute([$userId]);
-        $orders = $stmt->fetchAll();
+        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Get items for each order
+        if (empty($orders)) {
+            // Return empty array if no orders found
+            jsonResponse(true, "No orders found", [], 200);
+            return;
+        }
+        
+        // Get items for each order with explicit fetch mode
         foreach ($orders as &$order) {
             $itemsStmt = $pdo->prepare("SELECT oi.*, p.name, p.image 
                                        FROM order_items oi 
-                                       JOIN products p ON oi.product_id = p.id 
+                                       LEFT JOIN products p ON oi.product_id = p.id 
                                        WHERE oi.order_id = ?");
             $itemsStmt->execute([$order['id']]);
-            $order['items'] = $itemsStmt->fetchAll();
+            $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
+            $order['items'] = $items ?: []; // Ensure 'items' is always an array
         }
         
         jsonResponse(true, "Orders loaded", $orders, 200);
     } catch (PDOException $e) {
-        error_log("Database Error: " . $e->getMessage());
-        errorResponse('Failed to load orders', 500);
+        error_log("Database Error in getOrdersByUser: " . $e->getMessage());
+        jsonResponse(false, "Failed to load orders: " . $e->getMessage(), null, 500);
     }
 } 

@@ -29,12 +29,18 @@ $method = $_SERVER['REQUEST_METHOD'];
 // Get product ID from query string if available
 $productId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : null;
 $reviewId = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$action = isset($_GET['action']) ? $_GET['action'] : null;
 
 // Handle request based on HTTP method
 try {
     switch ($method) {
         case 'GET':
-            handleGetRequest($productId, $reviewId);
+            if ($action === 'count') {
+                // Handle count action - get total review count
+                getTotalReviewCount();
+            } else {
+                handleGetRequest($productId, $reviewId);
+            }
             break;
             
         case 'POST':
@@ -59,6 +65,34 @@ try {
 } catch (Exception $e) {
     error_log("Reviews API Error: " . $e->getMessage());
     jsonResponse(false, "Server error occurred: " . $e->getMessage(), null, 500);
+}
+
+/**
+ * Get total count of reviews
+ * 
+ * @return void
+ */
+function getTotalReviewCount() {
+    try {
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in review count");
+            jsonResponse(false, "Database connection failed", null, 500);
+            return;
+        }
+        
+        $stmt = $pdo->query("SELECT COUNT(*) as count FROM product_reviews");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result) {
+            jsonResponse(true, "Total review count", $result['count'], 200);
+        } else {
+            jsonResponse(true, "Total review count", 0, 200);
+        }
+    } catch (PDOException $e) {
+        error_log("Database Error in getTotalReviewCount: " . $e->getMessage());
+        jsonResponse(false, "Failed to get review count", null, 500);
+    }
 }
 
 /**
@@ -91,6 +125,47 @@ function handleGetRequest($productId, $reviewId) {
         } catch (PDOException $e) {
             error_log("Database Error: " . $e->getMessage());
             errorResponse('Failed to load review: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    // Get all reviews for admin (no product ID specified, but need admin access)
+    if ($productId === null) {
+        try {
+            // 检查是否是管理员
+            session_start();
+            if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
+                errorResponse('Admin access required', 403);
+                return;
+            }
+            
+            error_log("Admin is requesting all reviews");
+            $pdo = getConnection();
+            if (!$pdo) {
+                error_log("Database connection failed in reviews retrieval");
+                jsonResponse(false, "Database connection failed", null, 500);
+                return;
+            }
+            
+            // 获取所有评论，并连接用户和产品信息
+            $stmt = $pdo->prepare("SELECT r.*, 
+                                  u.username, u.avatar,
+                                  p.name as product_name,
+                                  p.image_url as product_image
+                                  FROM product_reviews r 
+                                  LEFT JOIN users u ON r.user_id = u.id 
+                                  LEFT JOIN products p ON r.product_id = p.id 
+                                  ORDER BY r.created_at DESC");
+            $stmt->execute();
+            $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            error_log("Found " . count($reviews) . " total reviews");
+            
+            jsonResponse(true, "All reviews loaded", $reviews, 200);
+            return;
+        } catch (PDOException $e) {
+            error_log("Database Error in getting all reviews: " . $e->getMessage());
+            errorResponse('Failed to load reviews: ' . $e->getMessage(), 500);
+            return;
         }
     }
     
@@ -146,9 +221,6 @@ function handleGetRequest($productId, $reviewId) {
             ], 200);
         }
     }
-    
-    // No product ID provided
-    errorResponse('Product ID is required', 400);
 }
 
 /**

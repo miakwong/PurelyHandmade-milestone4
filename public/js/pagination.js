@@ -238,4 +238,8 @@ function createProductCard(product) {
       </button>
     </div>
   `;
-} 
+}
+
+window.setProductsPerPage = setProductsPerPage;
+window.displayPaginatedProducts = displayPaginatedProducts;
+window.updatePagination = updatePagination; 
