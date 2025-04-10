@@ -1,12 +1,6 @@
 <?php
 // Orders API
 
-// Initialize error handling
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', '../logs/php_errors.log');
-error_reporting(E_ALL);
-
 // Include common files
 require_once __DIR__ . '/../includes/db_credentials.php';
 require_once __DIR__ . '/../includes/db.php';
@@ -61,9 +55,7 @@ try {
     jsonResponse(false, "Server error occurred. Please try again later.", null, 500);
 }
 
-/**
- * Create a new order from cart items
- */
+//Create a new order from cart items
 function createOrder() {
     // Require login for creating orders
     requireLogin();
@@ -149,11 +141,8 @@ function createOrder() {
     }
 }
 
-/**
- * Get orders for a specific user
- * 
- * @param int $userId User ID
- */
+// Get orders for a specific user
+
 function getOrdersByUser($userId) {
     try {
         $pdo = getConnection();

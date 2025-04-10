@@ -389,7 +389,7 @@ function renderCart() {
             <div class="empty-cart-message text-center py-5">
                 <i class="bi bi-cart text-muted" style="font-size: 48px;"></i>
                 <p class="mt-3">Your cart is empty</p>
-                <button class="btn btn-primary mt-2" onclick="closeCart()">Continue Shopping</button>
+                <button class="btn btn-primary mt-2" onclick="closeCart(); window.location.href='/~miakuang/PurelyHandmade/public/index.html';">Continue Shopping</button>
             </div>
         `;
         
@@ -573,20 +573,28 @@ function checkout() {
         total_amount: total
     };
     
+    console.log('Order data prepared:', orderData);
+    
     // Check if user is logged in
     fetch('/~miakuang/PurelyHandmade/server/api/auth.php?action=status', {
         credentials: 'include'
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success && data.isLoggedIn) {
+        if (data.success && data.data && data.data.isLoggedIn) {
             // User is logged in, process order
             processOrder(orderData);
         } else {
-            // User is not logged in, prompt to login
-            showToast('Please login before creating an order', 'error');
-            // Redirect to login page
-            // window.location.href = '/~miakuang/PurelyHandmade/public/views/auth/login.html';
+            // User is not logged in, prompt to login and store cart
+            showToast('Please login to complete your order', 'error');
+            
+            // Store cart items to restore after login
+            localStorage.setItem('pendingCart', JSON.stringify(window.cart));
+            
+            // Redirect to login page after a short delay
+            setTimeout(() => {
+                window.location.href = '/~miakuang/PurelyHandmade/public/views/auth/login.html';
+            }, 2000);
         }
     })
     .catch(error => {
@@ -597,7 +605,14 @@ function checkout() {
 
 // Process order creation
 function processOrder(orderData) {
-    showToast('Processing order...', 'info');
+    showToast('Creating your order...', 'info');
+    
+    // Log detailed request info for debugging
+    console.log('Sending order to server:', {
+        url: '/~miakuang/PurelyHandmade/server/api/orders.php?action=create',
+        method: 'POST',
+        data: orderData
+    });
     
     // Submit order to server
     fetch('/~miakuang/PurelyHandmade/server/api/orders.php?action=create', {
@@ -608,11 +623,20 @@ function processOrder(orderData) {
         body: JSON.stringify(orderData),
         credentials: 'include'
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Order API response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Order API response:', data);
+        
         if (data.success) {
             // Order created successfully
-            showToast('Order created successfully!', 'success');
+            const orderNumber = data.data?.order_number || 'unknown';
+            const orderId = data.data?.order_id || 'unknown';
+            
+            // Show success message with order number
+            showToast(`Order #${orderNumber} created successfully!`, 'success');
             
             // Clear cart
             clearCart();
@@ -620,15 +644,23 @@ function processOrder(orderData) {
             // Close cart sidebar
             closeCart();
             
-            // Optionally redirect to order confirmation page
-            // window.location.href = `/~miakuang/PurelyHandmade/public/views/checkout/confirmation.html?order=${data.order_number}`;
+            // Notify user their order was placed
+            if (typeof window.showToast === 'function') {
+                window.showToast(`Your order has been placed successfully! Order #${orderNumber}`, 'success');
+            }
+            
+            // Optional: Redirect to order confirmation or orders page
+            setTimeout(() => {
+                window.location.href = `/~miakuang/PurelyHandmade/public/views/user/orders.html?order=${orderId}`;
+            }, 3000);
         } else {
-            showToast(`Order creation failed: ${data.message}`, 'error');
+            // Order creation failed
+            showToast(`Order creation failed: ${data.message || 'Unknown error'}`, 'error');
         }
     })
     .catch(error => {
         console.error('Error creating order:', error);
-        showToast('Order processing error', 'error');
+        showToast('Order processing error. Please try again.', 'error');
     });
 }
 

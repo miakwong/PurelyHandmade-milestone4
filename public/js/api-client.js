@@ -98,25 +98,46 @@ const handleResponse = async (response) => {
 const auth = {
     register: async (userData) => await post('auth.php?action=register', userData),
     login: async (username, password) => await post('auth.php?action=login', { username, password }),
-    logout: async () => await get('auth.php?action=logout'),
+    logout: async () => {
+        try {
+            // 使用POST方法调用登出API
+            console.log('Calling logout API...');
+            const response = await fetch(apiUrl('auth.php?action=logout'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            // 确保清除会话cookie
+            document.cookie = 'PHPSESSID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            
+            return await handleResponse(response);
+        } catch (error) {
+            console.error('Logout API error:', error);
+            // 即使API调用失败，也尝试清除本地会话状态
+            document.cookie = 'PHPSESSID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            throw error;
+        }
+    },
     checkLoginStatus: async () => {
         try {
+            console.log('Checking login status...');
             const response = await fetch(apiUrl('auth.php?action=status'), {
                 method: 'GET',
-                credentials: 'include'
-            });
-            if (!response.ok) {
-                if (response.status === 401) {
-                    return { success: false, message: 'User is not logged in' };
+                credentials: 'include',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store',
+                    'Content-Type': 'application/json'
                 }
-                const errorText = await response.text();
-                console.warn(`Auth status check failed: ${response.status}`, errorText);
-                return { success: false, message: `Auth check failed: ${response.status}` };
-            }
-            return await response.json();
+            });
+            
+            return await handleResponse(response);
         } catch (error) {
-            console.error('Error in auth status check:', error);
-            return { success: false, message: 'Error checking auth status' };
+            console.error('Login status check error:', error);
+            return { success: false, message: 'Failed to check login status', error: error.message };
         }
     }
 };
@@ -231,7 +252,18 @@ const categories = {
 const users = {
     getUsers: async () => await get('users.php'),
     getUser: async (id) => await get(`users.php?id=${id}`),
-    updateUser: async (id, userData, userAvatar = null) => {
+    updateUser: async (userData, userAvatar = null) => {
+        if (userAvatar) {
+            const formData = new FormData();
+            for (const key in userData) {
+                formData.append(key, userData[key]);
+            }
+            formData.append('avatar', userAvatar);
+            return await post(`users.php?action=update_profile`, null, formData);
+        }
+        return await post(`users.php?action=update_profile`, userData);
+    },
+    updateUserById: async (id, userData, userAvatar = null) => {
         if (userAvatar) {
             const formData = new FormData();
             for (const key in userData) {
@@ -254,17 +286,27 @@ const orders = {
 
 // Reviews API
 const reviews = {
-    getProductReviews: async (productId) => await get(`reviews.php?product_id=${productId}`),
-    addReview: async (productId, rating, reviewText) => await post('reviews.php?action=add', { 
+    getProductReviews: async (productId) => await get(`product_reviews.php?product_id=${productId}`),
+    addReview: async (productId, rating, reviewText) => await post('product_reviews.php?action=add', { 
         product_id: productId, 
         rating, 
         review_text: reviewText 
     }),
-    updateReview: async (reviewId, rating, reviewText) => await put(`reviews.php?id=${reviewId}`, {
+    updateReview: async (reviewId, rating, reviewText) => await put(`product_reviews.php?id=${reviewId}`, {
         rating,
         review_text: reviewText
     }),
-    deleteReview: async (reviewId) => await del(`reviews.php?id=${reviewId}`)
+    deleteReview: async (reviewId) => await del(`product_reviews.php?id=${reviewId}`)
+};
+
+// Addresses API
+const addresses = {
+    getUserAddresses: async () => await get('addresses.php?action=user_addresses'),
+    getAddress: async (id) => await get(`addresses.php?id=${id}`),
+    addAddress: async (addressData) => await post('addresses.php?action=add', addressData),
+    updateAddress: async (id, addressData) => await put(`addresses.php?id=${id}`, addressData),
+    deleteAddress: async (id) => await del(`addresses.php?id=${id}`),
+    setDefaultAddress: async (id) => await post('addresses.php?action=set_default', { address_id: id })
 };
 
 // Export APIs
@@ -274,7 +316,8 @@ const api = {
     categories,
     users,
     orders,
-    reviews
+    reviews,
+    addresses
 };
 
 // Make API global
