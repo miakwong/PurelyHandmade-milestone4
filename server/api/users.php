@@ -93,6 +93,9 @@ switch ($_SERVER['REQUEST_METHOD']) {
                 jsonResponse(false, 'You are not authorized to update this user', null, 403);
             }
             uploadProfileImage($userId);
+        } else if ($action === 'change_password') {
+            checkAuth(); // 需要用户已登录
+            changePassword();
         } else {
             jsonResponse(false, 'Invalid action', null, 400);
         }
@@ -108,22 +111,19 @@ function getUsers() {
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
     $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
     
-    // Base query
-    $sql = "SELECT id, username, email, first_name, last_name, image_path, is_admin, is_active, created_at 
+    // Base query - 使用正确的列名
+    $sql = "SELECT id, username, email, name, avatar, birthday, gender, role, created_at 
             FROM users 
             WHERE 1=1";
     $params = [];
-    $types = "";
     
     // Add search filter
     if ($search) {
-        $sql .= " AND (username LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?)";
+        $sql .= " AND (username LIKE ? OR email LIKE ? OR name LIKE ?)";
         $searchParam = "%" . $search . "%";
         $params[] = $searchParam;
         $params[] = $searchParam;
         $params[] = $searchParam;
-        $params[] = $searchParam;
-        $types .= "ssss";
     }
     
     // Add sorting
@@ -133,30 +133,38 @@ function getUsers() {
     $sql .= " LIMIT ? OFFSET ?";
     $params[] = $limit;
     $params[] = $offset;
-    $types .= "ii";
     
     // Execute query
-    $conn = getConnection();
-    $stmt = $conn->prepare($sql);
+    $pdo = getConnection();
+    $stmt = $pdo->prepare($sql);
     
-    if (!empty($params)) {
-        $stmt->bind_param($types, ...$params);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt->execute($params);
     
     $users = [];
-    while ($row = $result->fetch_assoc()) {
-        // Add image URL if exists
-        if ($row['image_path']) {
-            $row['image_url'] = UPLOADS_URL . '/images/' . $row['image_path'];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        // 添加first_name和last_name字段
+        if (isset($row['name'])) {
+            $nameParts = explode(' ', $row['name'], 2);
+            $row['first_name'] = $nameParts[0];
+            $row['last_name'] = isset($nameParts[1]) ? $nameParts[1] : '';
+        } else {
+            $row['first_name'] = '';
+            $row['last_name'] = '';
+        }
+        
+        // 处理头像URL
+        if (!empty($row['avatar'])) {
+            $row['image_url'] = $row['avatar'];
         } else {
             $row['image_url'] = ASSETS_URL . '/img/default-avatar.png';
         }
         
+        // 处理is_admin兼容性
+        $row['is_admin'] = (strtolower($row['role']) === 'admin');
+        $row['is_active'] = true; // 假设所有用户都是活跃的
+        
         // Remove sensitive fields
-        unset($row['password_hash']);
+        unset($row['password']);
         
         $users[] = $row;
     }
@@ -164,27 +172,18 @@ function getUsers() {
     // Count total users for pagination
     $countSql = "SELECT COUNT(*) as total FROM users WHERE 1=1";
     $countParams = [];
-    $countTypes = "";
     
     if ($search) {
-        $countSql .= " AND (username LIKE ? OR email LIKE ? OR first_name LIKE ? OR last_name LIKE ?)";
+        $countSql .= " AND (username LIKE ? OR email LIKE ? OR name LIKE ?)";
         $searchParam = "%" . $search . "%";
         $countParams[] = $searchParam;
         $countParams[] = $searchParam;
         $countParams[] = $searchParam;
-        $countParams[] = $searchParam;
-        $countTypes .= "ssss";
     }
     
-    $countStmt = $conn->prepare($countSql);
-    
-    if (!empty($countParams)) {
-        $countStmt->bind_param($countTypes, ...$countParams);
-    }
-    
-    $countStmt->execute();
-    $countResult = $countStmt->get_result();
-    $totalCount = $countResult->fetch_assoc()['total'];
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute($countParams);
+    $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     jsonResponse(true, 'Users retrieved successfully', [
         'users' => $users,
@@ -196,29 +195,56 @@ function getUsers() {
     ]);
 }
 
-//get user by ID
+// Get user by ID
 function getUser($userId) {
     // Check if user is retrieving their own profile or is admin
     if ($userId != $_SESSION['user_id'] && !isAdmin()) {
         jsonResponse(false, 'You are not authorized to view this user', null, 403);
     }
     
-    $conn = getConnection();
-    $sql = "SELECT id, username, email, first_name, last_name, image_path, is_admin, is_active, created_at 
+    $pdo = getConnection();
+    // 修改SQL查询，使用正确的列名
+    $sql = "SELECT id, username, email, name, avatar, birthday, gender, role, created_at 
             FROM users 
             WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$userId]);
     
-    if ($user = $result->fetch_assoc()) {
-        // Add image URL if exists
-        if ($user['image_path']) {
-            $user['image_url'] = UPLOADS_URL . '/images/' . $user['image_path'];
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($user) {
+        // 确保name字段存在，即使为NULL也转换为空字符串
+        $user['name'] = isset($user['name']) ? $user['name'] : '';
+        
+        // 如果name存在，拆分为first_name和last_name
+        if (!empty($user['name'])) {
+            $nameParts = explode(' ', $user['name'], 2);
+            $user['first_name'] = $nameParts[0];
+            $user['last_name'] = isset($nameParts[1]) ? $nameParts[1] : '';
+        } else {
+            // 如果name不存在或为空，设置为空字符串
+            $user['first_name'] = '';
+            $user['last_name'] = '';
+            
+            // 如果name为空但有username，使用username作为name
+            if (!empty($user['username'])) {
+                $user['name'] = $user['username'];
+                $user['first_name'] = $user['username'];
+            }
+        }
+        
+        // 处理头像URL
+        if (!empty($user['avatar'])) {
+            $user['image_url'] = $user['avatar'];
         } else {
             $user['image_url'] = ASSETS_URL . '/img/default-avatar.png';
         }
+        
+        // 处理is_admin兼容性
+        $user['is_admin'] = (strtolower($user['role']) === 'admin');
+        
+        // 记录返回的用户数据用于调试
+        error_log('User data being returned: ' . json_encode($user));
         
         jsonResponse(true, 'User retrieved successfully', $user);
     } else {
@@ -236,21 +262,22 @@ function updateUser($userId) {
         jsonResponse(false, 'No data provided', null, 400);
     }
     
-    // Check if user exists
-    $conn = getConnection();
-    $checkSql = "SELECT id FROM users WHERE id = ?";
-    $checkStmt = $conn->prepare($checkSql);
-    $checkStmt->bind_param("i", $userId);
-    $checkStmt->execute();
+    // 记录请求数据用于调试
+    error_log('Update user request data: ' . json_encode($data));
     
-    if ($checkStmt->get_result()->num_rows === 0) {
+    // Check if user exists
+    $pdo = getConnection();
+    $checkSql = "SELECT id FROM users WHERE id = ?";
+    $checkStmt = $pdo->prepare($checkSql);
+    $checkStmt->execute([$userId]);
+    
+    if ($checkStmt->rowCount() === 0) {
         jsonResponse(false, 'User not found', null, 404);
     }
     
     // Build update query
     $updateFields = [];
     $params = [];
-    $types = "";
     
     // Only allow admin to update username and email
     if (isAdmin()) {
@@ -259,17 +286,15 @@ function updateUser($userId) {
             
             // Check if username is already taken
             $checkUsernameSql = "SELECT id FROM users WHERE username = ? AND id != ?";
-            $checkUsernameStmt = $conn->prepare($checkUsernameSql);
-            $checkUsernameStmt->bind_param("si", $username, $userId);
-            $checkUsernameStmt->execute();
+            $checkUsernameStmt = $pdo->prepare($checkUsernameSql);
+            $checkUsernameStmt->execute([$username, $userId]);
             
-            if ($checkUsernameStmt->get_result()->num_rows > 0) {
+            if ($checkUsernameStmt->rowCount() > 0) {
                 jsonResponse(false, 'Username already taken', null, 409);
             }
             
             $updateFields[] = "username = ?";
             $params[] = $username;
-            $types .= "s";
         }
         
         if (isset($data['email'])) {
@@ -282,35 +307,77 @@ function updateUser($userId) {
             
             // Check if email is already taken
             $checkEmailSql = "SELECT id FROM users WHERE email = ? AND id != ?";
-            $checkEmailStmt = $conn->prepare($checkEmailSql);
-            $checkEmailStmt->bind_param("si", $email, $userId);
-            $checkEmailStmt->execute();
+            $checkEmailStmt = $pdo->prepare($checkEmailSql);
+            $checkEmailStmt->execute([$email, $userId]);
             
-            if ($checkEmailStmt->get_result()->num_rows > 0) {
+            if ($checkEmailStmt->rowCount() > 0) {
                 jsonResponse(false, 'Email already taken', null, 409);
             }
             
             $updateFields[] = "email = ?";
             $params[] = $email;
-            $types .= "s";
+        }
+        
+        // Admin can update role
+        if (isset($data['role'])) {
+            $role = sanitize($data['role']);
+            if ($role === 'admin' || $role === 'user') {
+                $updateFields[] = "role = ?";
+                $params[] = $role;
+            }
         }
     }
     
-    // Allow users to update their profile information
-    if (isset($data['first_name'])) {
-        $updateFields[] = "first_name = ?";
-        $params[] = sanitize($data['first_name']);
-        $types .= "s";
+    // Process and update name field
+    if (isset($data['name'])) {
+        $name = sanitize($data['name']);
+        if (!empty($name)) {
+            $updateFields[] = "name = ?";
+            $params[] = $name;
+        }
+    } else if ((isset($data['first_name']) || isset($data['last_name']))) {
+        // Combine first_name and last_name into name
+        $firstName = isset($data['first_name']) ? sanitize($data['first_name']) : '';
+        $lastName = isset($data['last_name']) ? sanitize($data['last_name']) : '';
+        $name = trim($firstName . ' ' . $lastName);
+        
+        if (!empty($name)) {
+            $updateFields[] = "name = ?";
+            $params[] = $name;
+        }
     }
     
-    if (isset($data['last_name'])) {
-        $updateFields[] = "last_name = ?";
-        $params[] = sanitize($data['last_name']);
-        $types .= "s";
+    // Process avatar field - can be base64 or URL
+    if (isset($data['avatar'])) {
+        $avatarUrl = processAvatar($data['avatar']);
+        
+        if ($avatarUrl) {
+            $updateFields[] = "avatar = ?";
+            $params[] = $avatarUrl;
+        }
+    }
+    
+    // Update birthday if provided
+    if (isset($data['birthday'])) {
+        $birthday = sanitize($data['birthday']);
+        // Validate date format (YYYY-MM-DD)
+        if (empty($birthday) || preg_match('/^\d{4}-\d{2}-\d{2}$/', $birthday)) {
+            $updateFields[] = "birthday = ?";
+            $params[] = $birthday ? $birthday : null;
+        }
+    }
+    
+    // Update gender if provided
+    if (isset($data['gender'])) {
+        $gender = sanitize($data['gender']);
+        if (in_array($gender, ['male', 'female', 'other', ''])) {
+            $updateFields[] = "gender = ?";
+            $params[] = $gender ?: null;
+        }
     }
     
     // Update password if provided
-    if (isset($data['password'])) {
+    if (isset($data['password']) && !empty($data['password'])) {
         $password = $data['password'];
         
         // Validate password length
@@ -318,10 +385,9 @@ function updateUser($userId) {
             jsonResponse(false, 'Password must be at least 6 characters', null, 400);
         }
         
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT, ['cost' => PASSWORD_COST]);
-        $updateFields[] = "password_hash = ?";
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        $updateFields[] = "password = ?";
         $params[] = $passwordHash;
-        $types .= "s";
     }
     
     if (empty($updateFields)) {
@@ -330,15 +396,49 @@ function updateUser($userId) {
     
     // Add user ID to params
     $params[] = $userId;
-    $types .= "i";
     
     // Execute update
     $sql = "UPDATE users SET " . implode(", ", $updateFields) . " WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
+    error_log("SQL update query: " . $sql);
+    error_log("SQL parameters: " . json_encode($params));
     
-    if ($stmt->execute()) {
-        jsonResponse(true, 'User updated successfully');
+    $stmt = $pdo->prepare($sql);
+    
+    if ($stmt->execute($params)) {
+        // 获取更新后的用户数据并返回
+        $getUserSql = "SELECT id, username, email, name, avatar, birthday, gender, role, created_at FROM users WHERE id = ?";
+        $getUserStmt = $pdo->prepare($getUserSql);
+        $getUserStmt->execute([$userId]);
+        $updatedUser = $getUserStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($updatedUser) {
+            // 处理返回数据，确保name字段存在
+            $updatedUser['name'] = isset($updatedUser['name']) ? $updatedUser['name'] : '';
+            
+            // 拆分name为first_name和last_name
+            if (!empty($updatedUser['name'])) {
+                $nameParts = explode(' ', $updatedUser['name'], 2);
+                $updatedUser['first_name'] = $nameParts[0];
+                $updatedUser['last_name'] = isset($nameParts[1]) ? $nameParts[1] : '';
+            } else {
+                $updatedUser['first_name'] = '';
+                $updatedUser['last_name'] = '';
+            }
+            
+            // 处理头像URL
+            if (!empty($updatedUser['avatar'])) {
+                $updatedUser['image_url'] = $updatedUser['avatar'];
+            } else {
+                $updatedUser['image_url'] = ASSETS_URL . '/img/default-avatar.png';
+            }
+            
+            // 处理is_admin兼容性
+            $updatedUser['is_admin'] = (strtolower($updatedUser['role']) === 'admin');
+            
+            jsonResponse(true, 'User updated successfully', $updatedUser);
+        } else {
+            jsonResponse(true, 'User updated successfully');
+        }
     } else {
         jsonResponse(false, 'Failed to update user', null, 500);
     }
@@ -351,12 +451,11 @@ function deleteUser($userId) {
         jsonResponse(false, 'You cannot delete your own admin account', null, 400);
     }
     
-    $conn = getConnection();
+    $pdo = getConnection();
     $sql = "DELETE FROM users WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $userId);
+    $stmt = $pdo->prepare($sql);
     
-    if ($stmt->execute() && $stmt->affected_rows > 0) {
+    if ($stmt->execute([$userId]) && $stmt->rowCount() > 0) {
         jsonResponse(true, 'User deleted successfully');
     } else {
         jsonResponse(false, 'User not found or could not be deleted', null, 404);
@@ -370,28 +469,26 @@ function toggleUserStatus($userId) {
         jsonResponse(false, 'You cannot disable your own admin account', null, 400);
     }
     
-    $conn = getConnection();
+    $pdo = getConnection();
     
     // Get current status
     $sql = "SELECT is_active FROM users WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$userId]);
     
-    if ($result->num_rows === 0) {
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$user) {
         jsonResponse(false, 'User not found', null, 404);
     }
     
-    $user = $result->fetch_assoc();
     $newStatus = $user['is_active'] ? 0 : 1;
     
     // Update status
     $updateSql = "UPDATE users SET is_active = ? WHERE id = ?";
-    $updateStmt = $conn->prepare($updateSql);
-    $updateStmt->bind_param("ii", $newStatus, $userId);
+    $updateStmt = $pdo->prepare($updateSql);
     
-    if ($updateStmt->execute()) {
+    if ($updateStmt->execute([$newStatus, $userId])) {
         jsonResponse(true, 'User status updated successfully', [
             'is_active' => (bool)$newStatus
         ]);
@@ -402,25 +499,23 @@ function toggleUserStatus($userId) {
 
 // Toggle user admin status admin only
 function toggleAdminStatus($userId, $isAdmin) {
-    $conn = getConnection();
+    $pdo = getConnection();
     
     // Check if user exists
     $sql = "SELECT id FROM users WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$userId]);
     
-    if ($stmt->get_result()->num_rows === 0) {
+    if ($stmt->rowCount() === 0) {
         jsonResponse(false, 'User not found', null, 404);
     }
     
     // Update admin status
     $updateSql = "UPDATE users SET is_admin = ? WHERE id = ?";
-    $updateStmt = $conn->prepare($updateSql);
+    $updateStmt = $pdo->prepare($updateSql);
     $adminStatus = $isAdmin ? 1 : 0;
-    $updateStmt->bind_param("ii", $adminStatus, $userId);
     
-    if ($updateStmt->execute()) {
+    if ($updateStmt->execute([$adminStatus, $userId])) {
         jsonResponse(true, 'User admin status updated successfully', [
             'is_admin' => (bool)$adminStatus
         ]);
@@ -442,16 +537,18 @@ function uploadProfileImage($userId) {
     $filename = uploadFile($_FILES['image'], IMAGES_PATH, $allowedTypes, 2 * 1024 * 1024); // 2MB limit
     
     if ($filename) {
-        // Update user with image path
-        $conn = getConnection();
-        $sql = "UPDATE users SET image_path = ? WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("si", $filename, $userId);
+        // 构建完整的URL
+        $imageUrl = UPLOADS_URL . '/images/' . $filename;
         
-        if ($stmt->execute()) {
+        // 将图片URL保存到avatar字段
+        $pdo = getConnection();
+        $sql = "UPDATE users SET avatar = ? WHERE id = ?";
+        $stmt = $pdo->prepare($sql);
+        
+        if ($stmt->execute([$imageUrl, $userId])) {
             jsonResponse(true, 'Profile image uploaded successfully', [
-                'image_path' => $filename,
-                'image_url' => UPLOADS_URL . '/images/' . $filename
+                'avatar' => $imageUrl,
+                'image_url' => $imageUrl
             ]);
         } else {
             jsonResponse(false, 'Failed to update user image', null, 500);
@@ -459,6 +556,60 @@ function uploadProfileImage($userId) {
     } else {
         jsonResponse(false, 'Failed to upload image', null, 500);
     }
+}
+
+// 下面添加处理Avatar相关的函数
+function processAvatar($base64Image) {
+    if (empty($base64Image)) {
+        return null;
+    }
+    
+    // 检查是否是完整的base64编码图片或已经是URL
+    if (strpos($base64Image, 'http') === 0) {
+        // 已经是URL，直接返回
+        return $base64Image;
+    }
+    
+    // 从base64编码中分离出数据部分
+    if (strpos($base64Image, ';base64,') !== false) {
+        list($type, $data) = explode(';base64,', $base64Image);
+        $data = base64_decode($data);
+        
+        // 从MIME类型中获取扩展名
+        $extension = '';
+        switch ($type) {
+            case 'data:image/jpeg':
+                $extension = 'jpg';
+                break;
+            case 'data:image/png':
+                $extension = 'png';
+                break;
+            case 'data:image/gif':
+                $extension = 'gif';
+                break;
+            case 'data:image/webp':
+                $extension = 'webp';
+                break;
+            default:
+                return null; // 不支持的图片类型
+        }
+        
+        // 创建唯一的文件名
+        $filename = uniqid() . '.' . $extension;
+        $filepath = IMAGES_PATH . '/' . $filename;
+        
+        // 确保目录存在
+        if (!is_dir(IMAGES_PATH)) {
+            mkdir(IMAGES_PATH, 0755, true);
+        }
+        
+        // 保存文件
+        if (file_put_contents($filepath, $data)) {
+            return UPLOADS_URL . '/images/' . $filename;
+        }
+    }
+    
+    return null;
 }
 
 // Check if username is available
@@ -576,5 +727,72 @@ function checkEmail() {
     } catch (Exception $e) {
         error_log("Email check error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
         jsonResponse(false, 'Internal server error: ' . $e->getMessage(), null, 500);
+    }
+}
+
+// 添加修改密码的功能
+function changePassword() {
+    // 获取JSON数据
+    $data = json_decode(file_get_contents('php://input'), true);
+    
+    // 验证输入
+    if (empty($data)) {
+        jsonResponse(false, 'No data provided', null, 400);
+    }
+    
+    // 检查必要的字段
+    if (!isset($data['current_password']) || !isset($data['new_password'])) {
+        jsonResponse(false, 'Current password and new password are required', null, 400);
+    }
+    
+    $currentPassword = $data['current_password'];
+    $newPassword = $data['new_password'];
+    
+    // 验证新密码长度
+    if (strlen($newPassword) < 8) {
+        jsonResponse(false, 'New password must be at least 8 characters', null, 400);
+    }
+    
+    // 获取用户ID (使用当前登录用户)
+    $userId = $_SESSION['user_id'];
+    if (!$userId) {
+        jsonResponse(false, 'User not authenticated', null, 401);
+    }
+    
+    try {
+        // 连接数据库
+        $pdo = getConnection();
+        
+        // 获取当前用户密码
+        $sql = "SELECT password FROM users WHERE id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$userId]);
+        
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$user) {
+            jsonResponse(false, 'User not found', null, 404);
+        }
+        
+        // 验证当前密码
+        if (!password_verify($currentPassword, $user['password'])) {
+            jsonResponse(false, 'Current password is incorrect', null, 400);
+        }
+        
+        // 生成新密码哈希
+        $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        
+        // 更新密码
+        $updateSql = "UPDATE users SET password = ? WHERE id = ?";
+        $updateStmt = $pdo->prepare($updateSql);
+        $updateStmt->execute([$newPasswordHash, $userId]);
+        
+        if ($updateStmt->rowCount() > 0) {
+            jsonResponse(true, 'Password changed successfully');
+        } else {
+            jsonResponse(false, 'Failed to update password', null, 500);
+        }
+    } catch (Exception $e) {
+        error_log('Error changing password: ' . $e->getMessage());
+        jsonResponse(false, 'An error occurred while changing password', null, 500);
     }
 } 

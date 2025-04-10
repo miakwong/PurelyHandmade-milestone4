@@ -105,20 +105,23 @@ function initializeEventListeners() {
 // Load navbar and footer
 function loadLayoutComponents() {
   // Correctly handle paths for production vs development
-  let navbarUrl, footerUrl;
+  let navbarUrl, footerUrl, cartSidebarUrl;
   
   // In production (on cosc360 server)
   if (config.production) {
     navbarUrl = `${config.baseUrl}/public/layout/navbar.html`;
     footerUrl = `${config.baseUrl}/public/layout/footer.html`;
+    cartSidebarUrl = `${config.baseUrl}/public/layout/cart-sidebar.html`;
   } else {
     // In development
     navbarUrl = 'layout/navbar.html';
     footerUrl = 'layout/footer.html';
+    cartSidebarUrl = 'layout/cart-sidebar.html';
   }
   
   console.log('Loading navbar from:', navbarUrl);
   console.log('Loading footer from:', footerUrl);
+  console.log('Loading cart sidebar from:', cartSidebarUrl);
     
   // Load navbar
   fetch(navbarUrl)
@@ -153,6 +156,42 @@ function loadLayoutComponents() {
             '<div class="alert alert-danger">Failed to load navigation bar. Please refresh the page or check console for details.</div>';
         });
     });
+
+  // Load cart sidebar
+  const cartSidebarPlaceholder = document.getElementById('cart-sidebar-placeholder');
+  if (cartSidebarPlaceholder) {
+    fetch(cartSidebarUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Failed to load cart sidebar (${response.status})`);
+        }
+        return response.text();
+      })
+      .then(html => {
+        cartSidebarPlaceholder.innerHTML = html;
+        console.log('Cart sidebar loaded successfully');
+      })
+      .catch(error => {
+        console.error('Error loading cart sidebar:', error);
+        // Try alternative path as fallback
+        const fallbackUrl = config.production ? 
+          `${config.baseUrl}/layout/cart-sidebar.html` : 
+          `../layout/cart-sidebar.html`;
+        
+        console.log('Trying fallback cart sidebar path:', fallbackUrl);
+        
+        fetch(fallbackUrl)
+          .then(response => response.text())
+          .then(html => {
+            cartSidebarPlaceholder.innerHTML = html;
+            console.log('Cart sidebar loaded from fallback path');
+          })
+          .catch(err => {
+            console.error('Fallback cart sidebar load failed:', err);
+            // Do not show error for cart sidebar as it's not critical for page display
+          });
+      });
+  }
 
   // Load footer
   fetch(footerUrl)

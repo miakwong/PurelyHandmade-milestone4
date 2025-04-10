@@ -38,31 +38,27 @@ try {
             break;
             
         case 'POST':
-            // Require authentication for creating reviews
             requireLogin();
             handlePostRequest();
             break;
             
         case 'PUT':
-            // Require authentication for updating reviews
             requireLogin();
             handlePutRequest($reviewId);
             break;
             
         case 'DELETE':
-            // Require authentication for deleting reviews
             requireLogin();
             handleDeleteRequest($reviewId);
             break;
             
         default:
-            // Method not allowed
             errorResponse('Method not allowed', 405);
             break;
     }
 } catch (Exception $e) {
     error_log("Reviews API Error: " . $e->getMessage());
-    jsonResponse(false, "Server error occurred. Please try again later.", null, 500);
+    jsonResponse(false, "Server error occurred: " . $e->getMessage(), null, 500);
 }
 
 /**
@@ -94,13 +90,14 @@ function handleGetRequest($productId, $reviewId) {
             jsonResponse(true, "Review loaded", $review, 200);
         } catch (PDOException $e) {
             error_log("Database Error: " . $e->getMessage());
-            errorResponse('Failed to load review', 500);
+            errorResponse('Failed to load review: ' . $e->getMessage(), 500);
         }
     }
     
     // Get all reviews for a product
     if ($productId !== null) {
         try {
+            error_log("Getting reviews for product ID: " . $productId);
             $pdo = getConnection();
             if (!$pdo) {
                 error_log("Database connection failed in reviews retrieval");
@@ -108,13 +105,30 @@ function handleGetRequest($productId, $reviewId) {
                 return;
             }
             
+            // Check if the product exists first
+            $checkStmt = $pdo->prepare("SELECT id FROM products WHERE id = ?");
+            $checkStmt->execute([$productId]);
+            $product = $checkStmt->fetch();
+            
+            if (!$product) {
+                error_log("Product not found with ID: " . $productId);
+                jsonResponse(true, "Product not found, no reviews available", [
+                    'reviews' => [],
+                    'stats' => getEmptyStats()
+                ], 200);
+                return;
+            }
+            
+            // Get reviews
             $stmt = $pdo->prepare("SELECT r.*, u.username, u.avatar 
                                   FROM product_reviews r 
                                   LEFT JOIN users u ON r.user_id = u.id 
                                   WHERE r.product_id = ? 
                                   ORDER BY r.created_at DESC");
             $stmt->execute([$productId]);
-            $reviews = $stmt->fetchAll();
+            $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            error_log("Found " . count($reviews) . " reviews for product");
             
             // Also get review stats
             $stats = calculateReviewStats($productId);
@@ -124,8 +138,12 @@ function handleGetRequest($productId, $reviewId) {
                 'stats' => $stats
             ], 200);
         } catch (PDOException $e) {
-            error_log("Database Error: " . $e->getMessage());
-            errorResponse('Failed to load reviews', 500);
+            error_log("Database Error in reviews retrieval: " . $e->getMessage());
+            // Return empty data instead of error for better user experience
+            jsonResponse(true, "Unable to load reviews, please try again later", [
+                'reviews' => [],
+                'stats' => getEmptyStats()
+            ], 200);
         }
     }
     
@@ -190,7 +208,7 @@ function handlePostRequest() {
                               LEFT JOIN users u ON r.user_id = u.id 
                               WHERE r.id = ?");
         $stmt->execute([$newReviewId]);
-        $newReview = $stmt->fetch();
+        $newReview = $stmt->fetch(PDO::FETCH_ASSOC);
         
         // Update product rating
         updateProductRating((int)$data['product_id']);
@@ -198,7 +216,7 @@ function handlePostRequest() {
         // Return the new review
         jsonResponse(true, "Review submitted successfully", $newReview, 201);
     } catch (PDOException $e) {
-        error_log("Database Error: " . $e->getMessage());
+        error_log("Database Error in handlePostRequest: " . $e->getMessage());
         errorResponse('Failed to save review', 500);
     }
 }
@@ -214,35 +232,45 @@ function calculateReviewStats($productId) {
         $pdo = getConnection();
         if (!$pdo) {
             error_log("Database connection failed in review stats calculation");
-            return [
-                'average' => 0,
-                'count' => 0,
-                'distribution' => []
-            ];
+            return getEmptyStats();
         }
         
         // Get average rating
-        $stmt = $pdo->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as count FROM product_reviews WHERE product_id = ?");
+        $stmt = $pdo->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as total_reviews FROM product_reviews WHERE product_id = ?");
         $stmt->execute([$productId]);
-        $result = $stmt->fetch();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$result) {
+            return getEmptyStats();
+        }
         
         // Get rating distribution
         $stmt = $pdo->prepare("SELECT rating, COUNT(*) as count FROM product_reviews WHERE product_id = ? GROUP BY rating ORDER BY rating DESC");
         $stmt->execute([$productId]);
-        $distribution = $stmt->fetchAll();
+        $distributionRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Format distribution data
+        $distribution = [
+            '5_star' => 0,
+            '4_star' => 0,
+            '3_star' => 0,
+            '2_star' => 0,
+            '1_star' => 0
+        ];
+        
+        foreach ($distributionRows as $row) {
+            $key = $row['rating'] . '_star';
+            $distribution[$key] = (int)$row['count'];
+        }
         
         return [
-            'average' => round($result['avg_rating'] ?? 0, 1),
-            'count' => (int)$result['count'],
-            'distribution' => $distribution
+            'avg_rating' => round($result['avg_rating'] ?? 0, 1),
+            'total_reviews' => (int)($result['total_reviews'] ?? 0),
+            'rating_distribution' => $distribution
         ];
     } catch (PDOException $e) {
-        error_log("Database Error: " . $e->getMessage());
-        return [
-            'average' => 0,
-            'count' => 0,
-            'distribution' => []
-        ];
+        error_log("Database Error in calculateReviewStats: " . $e->getMessage());
+        return getEmptyStats();
     }
 }
 
@@ -266,12 +294,12 @@ function updateProductRating($productId) {
         // Update product
         $stmt = $pdo->prepare("UPDATE products SET rating = ?, reviewCount = ? WHERE id = ?");
         return $stmt->execute([
-            $stats['average'],
-            $stats['count'],
+            $stats['avg_rating'],
+            $stats['total_reviews'],
             $productId
         ]);
     } catch (PDOException $e) {
-        error_log("Database Error: " . $e->getMessage());
+        error_log("Database Error in updateProductRating: " . $e->getMessage());
         return false;
     }
 }
@@ -341,7 +369,7 @@ function handlePutRequest($reviewId) {
                               LEFT JOIN users u ON r.user_id = u.id 
                               WHERE r.id = ?");
         $stmt->execute([$reviewId]);
-        $updatedReview = $stmt->fetch();
+        $updatedReview = $stmt->fetch(PDO::FETCH_ASSOC);
         
         // Update product rating
         updateProductRating($review['product_id']);
@@ -349,7 +377,7 @@ function handlePutRequest($reviewId) {
         // Return the updated review
         jsonResponse(true, "Review updated successfully", $updatedReview, 200);
     } catch (PDOException $e) {
-        error_log("Database Error: " . $e->getMessage());
+        error_log("Database Error in handlePutRequest: " . $e->getMessage());
         errorResponse('Failed to update review', 500);
     }
 }
@@ -412,7 +440,22 @@ function handleDeleteRequest($reviewId) {
         // Return success response
         jsonResponse(true, "Review deleted successfully", null, 200);
     } catch (PDOException $e) {
-        error_log("Database Error: " . $e->getMessage());
+        error_log("Database Error in handleDeleteRequest: " . $e->getMessage());
         errorResponse('Failed to delete review', 500);
     }
+}
+
+// Get empty stats structure for consistency
+function getEmptyStats() {
+    return [
+        'avg_rating' => 0,
+        'total_reviews' => 0,
+        'rating_distribution' => [
+            '5_star' => 0,
+            '4_star' => 0,
+            '3_star' => 0,
+            '2_star' => 0,
+            '1_star' => 0
+        ]
+    ];
 }

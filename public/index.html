@@ -14,6 +14,7 @@
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/cart-sidebar.css">
 
   <style>
     /* CSS */
@@ -171,7 +172,7 @@
     .toast-container {
       position: fixed;
       bottom: 20px;
-      right: 20px;
+      left: 20px;
       z-index: 9999;
     }
   </style>
@@ -330,6 +331,9 @@
     </div>
   </div>
 
+  <!-- Cart Sidebar Placeholder -->
+  <div id="cart-sidebar-placeholder"></div>
+
   <!-- Toast container -->
   <div class="toast-container" id="toast-container"></div>
 
@@ -343,6 +347,9 @@
   <!-- Configuration and API -->
   <script src="js/config.js"></script>
   <script src="js/api-client.js"></script>
+
+  <!-- Auth and Navbar -->
+  <script src="js/navbar.js"></script>
 
   <!-- Modular JS files -->
   <script src="js/ui.js"></script>

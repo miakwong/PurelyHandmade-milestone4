@@ -20,8 +20,31 @@ let filterCriteria = {
 // Load products
 function loadProducts() {
   // Use API to get products
-  fetch(`${config.apiUrl}/products.php`)
-    .then(response => response.json())
+  fetch(`${config.apiUrl}/products.php`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache'
+    },
+    // 确保不包含credentials，这样即使未登录也能获取公共数据
+    credentials: 'omit'
+  })
+    .then(response => {
+      // 检查响应是否成功
+      if (!response.ok) {
+        console.error(`API error: ${response.status}`);
+        // 尝试解析JSON响应以获取更详细的错误信息
+        return response.json()
+          .then(errorData => {
+            throw new Error(`API returned ${response.status}: ${JSON.stringify(errorData)}`);
+          })
+          .catch(e => {
+            // 如果无法解析JSON，使用状态码作为错误
+            throw new Error(`API returned ${response.status}`);
+          });
+      }
+      return response.json();
+    })
     .then(res => {
       if(res.success) {
         // Process products data
@@ -56,22 +79,62 @@ function loadProducts() {
         applyFiltersAndSort();
       } else {
         console.error('Error loading products:', res.message);
-        document.getElementById('products-container').innerHTML = 
-          '<p class="text-center w-100">An error occurred while loading products. Please try again later.</p>';
+        handleProductLoadError('API responded with error: ' + res.message);
       }
     })
     .catch(error => {
       console.error('Error loading products:', error);
-      document.getElementById('products-container').innerHTML = 
-        '<p class="text-center w-100">An error occurred while loading products. Please try again later.</p>';
+      handleProductLoadError(error.message || 'Failed to load products');
     });
+}
+
+// 处理产品加载错误的辅助函数
+function handleProductLoadError(errorMessage) {
+  console.error('Product loading error:', errorMessage);
+  
+  // 检查产品容器是否存在
+  const productsContainer = document.getElementById('products-container');
+  if (productsContainer) {
+    // 显示用户友好的错误消息
+    productsContainer.innerHTML = `
+      <div class="alert alert-warning text-center w-100 my-4">
+        <h4><i class="bi bi-exclamation-triangle me-2"></i>Unable to Load Products</h4>
+        <p>We're having trouble connecting to our product database.</p>
+        <p><small>Please try refreshing the page or check back later.</small></p>
+        <button class="btn btn-outline-primary mt-2" onclick="location.reload()">
+          Refresh Page
+        </button>
+      </div>
+    `;
+  }
+  
+  // 检查筛选器容器是否存在，如果存在则隐藏
+  const filtersContainer = document.getElementById('product-filters');
+  if (filtersContainer) {
+    filtersContainer.style.display = 'none';
+  }
 }
 
 // Load categories
 function loadCategories() {
   // Use API to get categories
-  fetch(`${config.apiUrl}/categories.php`)
-    .then(response => response.json())
+  fetch(`${config.apiUrl}/categories.php`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Cache-Control': 'no-cache'
+    },
+    // 确保不包含credentials，这样即使未登录也能获取公共数据
+    credentials: 'omit'
+  })
+    .then(response => {
+      // 检查响应是否成功
+      if (!response.ok) {
+        console.error(`Categories API error: ${response.status}`);
+        throw new Error(`API returned ${response.status}`);
+      }
+      return response.json();
+    })
     .then(res => {
       if(!res.success) {
         console.error('Error loading categories:', res.message);
@@ -348,17 +411,6 @@ function resetFilters() {
   
   // Update product display
   applyFiltersAndSort();
-  
-  // Update breadcrumb and title
-  if (activeCategoryId) {
-    activeCategoryId = null;
-    document.getElementById('product-list-title').textContent = 'All Products';
-    
-    // Remove URL parameter
-    const url = new URL(window.location);
-    url.searchParams.delete('category');
-    window.history.replaceState({}, '', url);
-  }
 }
 
 // Initialize filter accordion

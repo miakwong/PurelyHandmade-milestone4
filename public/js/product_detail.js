@@ -1,25 +1,19 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // Get product ID from URL
   const urlParams = new URLSearchParams(window.location.search);
   const productId = urlParams.get("id");
   
-  // Check if we have a valid product ID
   if (!productId) {
     showErrorMessage("Product not found. Invalid product ID.");
     return;
   }
 
-  // Load product details and reviews
   loadProductDetails(productId);
   loadProductReviews(productId);
-  
-  // Setup review form handlers
   setupReviewForm(productId);
 });
 
 // Load product details from the API
 function loadProductDetails(productId) {
-  // Show loading indicator
   const container = document.querySelector(".container");
   const loadingIndicator = document.createElement("div");
   loadingIndicator.className = "text-center my-5";
@@ -31,19 +25,14 @@ function loadProductDetails(productId) {
     <p class="mt-2">Loading product details...</p>
   `;
   
-  // Insert the loading indicator if it doesn't exist
   if (!document.getElementById("loading-indicator")) {
     container.insertBefore(loadingIndicator, container.firstChild);
   }
   
-  // Fetch product data from API
   api.products.getProduct(productId)
     .then(data => {
-      // Remove loading indicator
       const indicator = document.getElementById("loading-indicator");
-      if (indicator) {
-        indicator.remove();
-      }
+      if (indicator) indicator.remove();
       
       if (data.success && data.data) {
         displayProductDetails(data.data);
@@ -52,261 +41,235 @@ function loadProductDetails(productId) {
       }
     })
     .catch(error => {
-      console.error("Error loading product:", error);
-      showErrorMessage("Failed to load product details. Please try again later. Error: " + error.message);
+      showErrorMessage("Failed to load product details. Please try again later.");
     });
 }
 
 // Display product details on page
 function displayProductDetails(product) {
-  console.log("Product data received:", product); // 调试信息
+  // Simplified category detection - only check the most common patterns
+  let categoryId = product.category_id || product.categoryId;
+  let categoryName = product.categoryName || "Unknown Category";
   
-  // Set product name and details
-  document.getElementById("product-name").textContent = product.name;
-  document.getElementById("product-description").textContent = product.description;
+  // Update product object with detected category info
+  product.category_id = categoryId;
+  product.categoryName = categoryName;
+  
+  // Cache DOM elements to avoid repeated lookups
+  const elements = {
+    name: document.getElementById("product-name"),
+    description: document.getElementById("product-description"),
+    price: document.getElementById("product-price"),
+    saleBadge: document.getElementById("sale-badge"),
+    stockStatus: document.getElementById("stock-status"),
+    stockInfo: document.getElementById('stock-info'),
+    rating: document.getElementById("product-rating"),
+    reviewCount: document.getElementById("review-count"),
+    mainImage: document.getElementById("main-product-image"),
+    thumbnailContainer: document.getElementById("thumbnail-container"),
+    addToCartBtn: document.getElementById("add-to-cart-btn"),
+    quantityInput: document.getElementById("product-quantity"),
+    incrementBtn: document.getElementById("quantity-increment"),
+    decrementBtn: document.getElementById("quantity-decrement"),
+    buyNowBtn: document.getElementById("buy-now-btn"),
+    detailsContent: document.getElementById("details-content")
+  };
+  
+  // Set basic product info
+  if (elements.name) elements.name.textContent = product.name || "Product Name Not Available";
+  if (elements.description) elements.description.textContent = product.description || "No description available";
+  
+  // Set tab content for product details
+  if (elements.detailsContent) {
+    elements.detailsContent.innerHTML = `
+      <p>${product.description || "No description available"}</p>
+    `;
+  }
   
   // Handle price display
-  const priceElement = document.getElementById("product-price");
-  if (priceElement) {
-    // Parse price as float and check validity
+  if (elements.price) {
     const regularPrice = parseFloat(product.price);
     const formattedRegularPrice = !isNaN(regularPrice) ? `$${regularPrice.toFixed(2)}` : '$0.00';
     
-    // Check if product is on sale and has valid sale price
-    if (product.onSale && product.salePrice && parseFloat(product.salePrice) < regularPrice) {
-        const salePrice = parseFloat(product.salePrice);
-        const formattedSalePrice = !isNaN(salePrice) ? `$${salePrice.toFixed(2)}` : '$0.00';
-        
-        priceElement.innerHTML = `
-            <span class="original-price text-muted"><s>${formattedRegularPrice}</s></span>
-            <span class="sale-price text-danger">${formattedSalePrice}</span>
-            <span class="badge bg-danger ms-2">Sale</span>
-        `;
+    // Check for sale status
+    const isSale = product.onSale === true || product.is_featured === 1 || product.is_featured === '1';
+    const hasSalePrice = product.salePrice && parseFloat(product.salePrice) < regularPrice;
+    
+    if (isSale) {
+      // Calculate sale price
+      const salePrice = hasSalePrice 
+        ? parseFloat(product.salePrice) 
+        : parseFloat((regularPrice * 0.8).toFixed(2));
+      
+      const formattedSalePrice = !isNaN(salePrice) ? `$${salePrice.toFixed(2)}` : '$0.00';
+      
+      // Update price display
+      elements.price.innerHTML = `
+          <span class="original-price text-muted"><s>${formattedRegularPrice}</s></span>
+          <span class="sale-price text-danger">${formattedSalePrice}</span>
+          <span class="badge bg-danger ms-2">Sale</span>
+      `;
+      
+      // Show sale badge
+      if (elements.saleBadge) elements.saleBadge.style.display = "inline-block";
     } else {
-        // Regular price display
-        priceElement.innerHTML = `<span>${formattedRegularPrice}</span>`;
+      // Regular price display
+      elements.price.innerHTML = `<span>${formattedRegularPrice}</span>`;
+      
+      // Hide sale badge
+      if (elements.saleBadge) elements.saleBadge.style.display = "none";
     }
   }
   
-  // Set stock status
-  const stockStatusElement = document.getElementById("stock-status");
-  if (stockStatusElement) {
-    if (product.in_stock || (product.stock_quantity && product.stock_quantity > 0)) {
-        stockStatusElement.textContent = "In Stock";
-        stockStatusElement.classList.add("text-success");
-        stockStatusElement.classList.remove("text-danger");
-    } else {
-        stockStatusElement.textContent = "Out of Stock";
-        stockStatusElement.classList.add("text-danger");
-        stockStatusElement.classList.remove("text-success");
-    }
+  // Update stock status
+  const isInStock = product.in_stock || (product.stock_quantity && product.stock_quantity > 0);
+  const stockQuantity = product.stock_quantity || 0;
+  
+  if (elements.stockStatus) {
+    elements.stockStatus.textContent = isInStock ? "In Stock" : "Out of Stock";
+    elements.stockStatus.className = isInStock ? "text-success" : "text-danger";
+  }
+  
+  // Update stock info
+  if (elements.stockInfo) {
+    elements.stockInfo.textContent = isInStock ? `${stockQuantity} in stock` : "Out of stock";
+    elements.stockInfo.className = isInStock ? "text-success" : "text-danger";
   }
   
   // Setup product rating stars
-  const ratingElem = document.getElementById("product-rating");
-  ratingElem.innerHTML = generateStarsHtml(product.rating);
+  if (elements.rating) {
+    elements.rating.innerHTML = generateStarsHtml(product.rating);
+  }
   
   // Set review count
-  document.getElementById("review-count").textContent = 
-    `(${product.reviewCount || 0} reviews)`;
+  if (elements.reviewCount) {
+    elements.reviewCount.textContent = `(${product.reviewCount || 0} reviews)`;
+  }
   
   // Handle images
-  const mainImageElement = document.getElementById("main-product-image");
-  const thumbnailContainer = document.getElementById("thumbnail-container");
-  
-  // Clear any existing thumbnails
-  if (thumbnailContainer) {
-    thumbnailContainer.innerHTML = '';
+  if (elements.thumbnailContainer) {
+    elements.thumbnailContainer.innerHTML = '';
   }
   
-  // Database image handling
-  console.log("Product images:", product.images); // 调试图片数组
+  // Use a single approach for all image handling
+  const productImages = [];
   
-  // Check if we have an images array from product_images table
+  // Try to get images from different possible sources
   if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-    console.log(`Found ${product.images.length} images in array`); // 调试图片数量
-    
-    // Set the main image to the first image in the array
-    if (mainImageElement) {
-      mainImageElement.src = product.images[0];
-      mainImageElement.alt = product.name;
-    }
-    
-    // Generate thumbnails from the images array
-    generateThumbnails(product.images, product.name);
-  } 
-  // Handle case with single image from products table
-  else if (product.image) {
-    console.log("Only found single image:", product.image); // 调试单图片情况
-    
-    if (mainImageElement) {
-      mainImageElement.src = product.image;
-      mainImageElement.alt = product.name;
-    }
-    
-    // Create a single thumbnail for the main image
-    generateThumbnails([product.image], product.name);
-  } 
-  // No images available
-  else {
-    console.log("No images found for product"); // 调试无图片情况
-    
-    // Set a default "no image" placeholder
-    if (mainImageElement) {
-      mainImageElement.src = "/public/images/no-image.jpg";
-      mainImageElement.alt = "No image available";
-    }
+    productImages.push(...product.images);
+  } else if (product.image) {
+    productImages.push(product.image);
   }
   
-  // Update stock status message
-  const stockInfoElement = document.getElementById('stock-info');
-  if (stockInfoElement) {
-    if (product.in_stock && product.stock_quantity > 0) {
-      stockInfoElement.textContent = `${product.stock_quantity} in stock`;
-      stockInfoElement.classList.add('text-success');
-      stockInfoElement.classList.remove('text-danger');
-    } else {
-      stockInfoElement.textContent = "Out of stock";
-      stockInfoElement.classList.add('text-danger');
-      stockInfoElement.classList.remove('text-success');
+  if (productImages.length > 0) {
+    // Set main image
+    if (elements.mainImage) {
+      elements.mainImage.src = productImages[0];
+      elements.mainImage.alt = product.name;
     }
+    
+    // Generate thumbnails
+    generateThumbnails(productImages, product.name);
+  } else if (elements.mainImage) {
+    // No images available
+    elements.mainImage.src = "/public/images/no-image.jpg";
+    elements.mainImage.alt = "No image available";
   }
   
   // Update breadcrumb navigation
-  if (product.category_id) {
-    api.categories.getCategory(product.category_id)
-      .then(data => {
-        if (data.success && data.category) {
-          const category = data.category;
-          
-          // update breadcrumb links
-          const breadcrumbCategory = document.getElementById("breadcrumb-category-link");
-          const breadcrumbItem = document.getElementById("breadcrumb-item");
-          
-          if (breadcrumbCategory && breadcrumbItem) {
-            breadcrumbCategory.textContent = category.name;
-            // Fix the href for category link to ensure it works correctly
-            breadcrumbCategory.href = `/~miakuang/PurelyHandmade/public/index.html?category=${category.id}`;
-            breadcrumbItem.textContent = product.name;
-          }
-          
-          // update category link in product meta
-          const productCategory = document.getElementById("product-category");
-          if (productCategory) {
-            productCategory.textContent = category.name;
-            productCategory.href = `/~miakuang/PurelyHandmade/public/index.html?category=${category.id}`;
-          }
-        } else {
-          console.error("Category data not found or invalid");
-        }
-      })
-      .catch(error => {
-        console.error("Error loading category:", error);
-      });
-  }
-  
-  // Set tab content for product details
-  document.getElementById("details-content").innerHTML = `
-    <h4>Product Details</h4>
-    <p>${product.description}</p>
-  `;
+  updateBreadcrumbNavigation(product, categoryId, categoryName);
   
   // Add to cart button handler
-  document.getElementById("add-to-cart-btn").addEventListener("click", function() {
-    const quantity = parseInt(document.getElementById("product-quantity").value) || 1;
+  if (elements.addToCartBtn) {
+    elements.addToCartBtn.addEventListener("click", function() {
+      const quantity = parseInt(elements.quantityInput?.value) || 1;
+      
+      if (typeof window.addToCart === 'function') {
+        window.addToCart(product.id, quantity);
+        showToast("Success", "Product added to cart!", "success");
+      } else {
+        showToast("Error", "Shopping cart functionality is temporarily unavailable.", "error");
+      }
+    });
+  }
+  
+  // Setup quantity selector with max value
+  const maxQuantity = stockQuantity || 10;
+  setupQuantityControls(elements.quantityInput, elements.incrementBtn, elements.decrementBtn, maxQuantity);
+  
+  // Setup button states
+  if (elements.addToCartBtn && elements.buyNowBtn) {
+    const isAvailable = isInStock;
+    elements.addToCartBtn.disabled = !isAvailable;
+    elements.buyNowBtn.disabled = !isAvailable;
     
-    // Add to cart via API
-    api.cart.addToCart(product.id, quantity)
-      .then(response => {
-        if (response.success) {
-          showToast("Success", `Added ${product.name} to your cart!`, "success");
-          updateCartCount();
-        } else {
-          showToast("Error", response.message, "error");
-        }
-      })
-      .catch(error => {
-        console.error("Error adding to cart:", error);
-        showToast("Error", "Failed to add item to cart. Please try again.", "error");
-      });
+    if (isAvailable) {
+      elements.addToCartBtn.classList.add('btn-primary');
+      elements.addToCartBtn.classList.remove('btn-secondary');
+      elements.buyNowBtn.classList.add('btn-outline-primary');
+      elements.buyNowBtn.classList.remove('btn-secondary');
+    } else {
+      elements.addToCartBtn.classList.add('btn-secondary');
+      elements.addToCartBtn.classList.remove('btn-primary');
+      elements.buyNowBtn.classList.add('btn-secondary');
+      elements.buyNowBtn.classList.remove('btn-outline-primary');
+    }
+  }
+}
+
+// Setup quantity controls - consolidated function
+function setupQuantityControls(quantityInput, incrementBtn, decrementBtn, maxQuantity) {
+  if (!quantityInput) return;
+  
+  // Set initial value
+  quantityInput.value = 1;
+  
+  // Update min/max attributes
+  quantityInput.setAttribute("min", "1");
+  quantityInput.setAttribute("max", maxQuantity.toString());
+  
+  // Handle manual input
+  quantityInput.addEventListener("change", () => {
+    let value = parseInt(quantityInput.value, 10);
+    
+    // Validate the value
+    if (isNaN(value) || value < 1) {
+      value = 1;
+    } else if (value > maxQuantity) {
+      value = maxQuantity;
+    }
+    
+    // Update the input value
+    quantityInput.value = value;
   });
   
-  // Set up quantity selector
-  const quantityInput = document.getElementById("product-quantity");
-  const incrementBtn = document.getElementById("quantity-increment");
-  const decrementBtn = document.getElementById("quantity-decrement");
-  const maxQuantity = product.stock_quantity || 10; // Default to 10 if stock not specified
-
-  if (quantityInput) {
-      // Set initial value
-      quantityInput.value = 1;
-      
-      // Update min/max attributes
-      quantityInput.setAttribute("min", "1");
-      quantityInput.setAttribute("max", maxQuantity.toString());
-      
-      // Handle manual input
-      quantityInput.addEventListener("change", () => {
-          let value = parseInt(quantityInput.value, 10);
-          
-          // Validate the value
-          if (isNaN(value) || value < 1) {
-              value = 1;
-          } else if (value > maxQuantity) {
-              value = maxQuantity;
-          }
-          
-          // Update the input value
-          quantityInput.value = value;
-      });
-  }
-
+  // Setup increment/decrement buttons
   if (incrementBtn) {
-      incrementBtn.addEventListener("click", () => {
-          if (quantityInput) {
-              let value = parseInt(quantityInput.value, 10);
-              if (isNaN(value)) {
-                  value = 0;
-              }
-              
-              if (value < maxQuantity) {
-                  quantityInput.value = value + 1;
-              }
-          }
-      });
+    incrementBtn.addEventListener("click", () => {
+      let value = parseInt(quantityInput.value, 10) || 0;
+      if (value < maxQuantity) {
+        quantityInput.value = value + 1;
+      }
+    });
   }
-
+  
   if (decrementBtn) {
-      decrementBtn.addEventListener("click", () => {
-          if (quantityInput) {
-              let value = parseInt(quantityInput.value, 10);
-              if (isNaN(value)) {
-                  value = 2; // This will result in 1 after decrement
-              }
-              
-              if (value > 1) {
-                  quantityInput.value = value - 1;
-              }
-          }
-      });
+    decrementBtn.addEventListener("click", () => {
+      let value = parseInt(quantityInput.value, 10) || 2;
+      if (value > 1) {
+        quantityInput.value = value - 1;
+      }
+    });
   }
-  
-  // Setup image gallery
-  setupImageGallery();
-  
-  // Setup quantity control
-  const { updateMaxStock } = setupQuantityControl();
-  updateMaxStock(product.stock_quantity);
-  
-  // button setup
-  const { updateButtonStates } = setupButtonStates();
-  updateButtonStates(product.stock_quantity);
 }
 
 // Generate HTML for thumbnail images
 function generateThumbnails(images, productName) {
   const thumbnailContainer = document.getElementById("thumbnail-container");
+  if (!thumbnailContainer) return;
+  
   thumbnailContainer.innerHTML = ''; // Clear existing thumbnails
+  const mainImage = document.getElementById('main-product-image');
   
   images.forEach((imgSrc, index) => {
     const thumbDiv = document.createElement("div");
@@ -319,7 +282,17 @@ function generateThumbnails(images, productName) {
     
     // Click handler to change main image
     img.addEventListener("click", function() {
-      document.getElementById("main-product-image").src = imgSrc;
+      if (mainImage) {
+        // Fade effect
+        mainImage.style.opacity = '0';
+        
+        setTimeout(() => {
+          mainImage.src = imgSrc;
+          mainImage.alt = this.alt;
+          mainImage.style.opacity = '1';
+        }, 300);
+      }
+      
       // Update active thumbnail
       document.querySelectorAll(".thumbnail-img").forEach(thumb => {
         thumb.classList.remove("active");
@@ -334,9 +307,12 @@ function generateThumbnails(images, productName) {
 
 // Load reviews for a product
 function loadProductReviews(productId) {
-  // Show loading indicator in reviews tab
-  const reviewsContainer = document.getElementById("reviews-container");
-  reviewsContainer.innerHTML = `
+  const reviewList = document.getElementById("review-list");
+  
+  if (!reviewList) return;
+  
+  // Show loading indicator
+  reviewList.innerHTML = `
     <div class="text-center py-3">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
@@ -345,13 +321,30 @@ function loadProductReviews(productId) {
     </div>
   `;
 
-  // Fetch reviews from API
-  api.reviews.getProductReviews(productId)
+  // 使用config.js中的getApiUrl函数
+  const url = getApiUrl(`product_reviews.php?product_id=${productId}`);
+  
+  fetch(url)
+    .then(response => response.json())
     .then(data => {
       if (data.success) {
-        displayReviews(data.reviews, data.stats);
+        // 灵活处理数据结构 - 有些API返回data.data.reviews，有些可能是data.reviews
+        let reviews = [];
+        let stats = { avg_rating: 0, total_reviews: 0, rating_distribution: {} };
+        
+        if (data.data) {
+          // 新的API结构: data.data.reviews 和 data.data.stats
+          reviews = data.data.reviews || [];
+          stats = data.data.stats || stats;
+        } else {
+          // 旧的API结构: data.reviews 和 data.stats
+          reviews = data.reviews || [];
+          stats = data.stats || stats;
+        }
+        
+        displayReviews(reviews, stats);
       } else {
-        reviewsContainer.innerHTML = `
+        reviewList.innerHTML = `
           <div class="alert alert-warning">
             <p>${data.message || 'Failed to load reviews'}</p>
           </div>
@@ -360,9 +353,9 @@ function loadProductReviews(productId) {
     })
     .catch(error => {
       console.error("Error loading reviews:", error);
-      reviewsContainer.innerHTML = `
+      reviewList.innerHTML = `
         <div class="alert alert-danger">
-          <p>Failed to load reviews. Please try again later. Error: ${error.message}</p>
+          <p>Failed to load reviews. Please try again later.</p>
         </div>
       `;
     });
@@ -370,23 +363,35 @@ function loadProductReviews(productId) {
 
 // Display reviews and statistics
 function displayReviews(reviews, stats) {
-  // Update review statistics
+  // 确保数据有效性
+  if (!reviews) reviews = [];
+  if (!stats) stats = { avg_rating: 0, total_reviews: 0, rating_distribution: {} };
+  
+  // 更新评论统计信息
   const avgRating = parseFloat(stats.avg_rating) || 0;
   const totalReviews = parseInt(stats.total_reviews) || 0;
   
-  document.getElementById("average-rating").textContent = avgRating.toFixed(1);
-  document.getElementById("average-stars").innerHTML = generateStarsHtml(avgRating);
-  document.getElementById("total-reviews").textContent = `Based on ${totalReviews} reviews`;
+  const elements = {
+    avgRating: document.getElementById("average-rating"),
+    avgStars: document.getElementById("average-stars"),
+    totalReviews: document.getElementById("total-reviews"),
+    reviewList: document.getElementById("review-list")
+  };
   
-  // Update rating breakdown
+  if (elements.avgRating) elements.avgRating.textContent = avgRating.toFixed(1);
+  if (elements.avgStars) elements.avgStars.innerHTML = generateStarsHtml(avgRating);
+  if (elements.totalReviews) elements.totalReviews.textContent = `Based on ${totalReviews} reviews`;
+  
+  // 更新评分分布
   updateRatingBreakdown(stats);
   
-  // Display review list
-  const reviewListContainer = document.getElementById("review-list");
-  reviewListContainer.innerHTML = ''; // Clear existing reviews
+  // 显示评论列表
+  if (!elements.reviewList) return;
+  
+  elements.reviewList.innerHTML = '';
   
   if (reviews.length === 0) {
-    reviewListContainer.innerHTML = `
+    elements.reviewList.innerHTML = `
       <div class="text-center my-4">
         <p>This product doesn't have any reviews yet. Be the first to review it!</p>
       </div>
@@ -394,10 +399,10 @@ function displayReviews(reviews, stats) {
     return;
   }
   
-  // Sort reviews by date (newest first)
+  // 按日期排序（最新优先）
   reviews.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   
-  // Display each review
+  // 显示每条评论
   reviews.forEach(review => {
     const reviewEl = document.createElement("div");
     reviewEl.className = "review-item mb-4 pb-4 border-bottom";
@@ -409,52 +414,25 @@ function displayReviews(reviews, stats) {
       day: 'numeric'
     });
     
+    // 添加用户名以及头像（如果有）
+    let userInfo = '';
+    if (review.username) {
+      userInfo = `<div class="mb-2 text-primary fw-bold">${review.username}</div>`;
+    }
+    
     reviewEl.innerHTML = `
+      ${userInfo}
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="text-warning">
           ${generateStarsHtml(review.rating)}
         </div>
         <span class="text-muted small">${formattedDate}</span>
       </div>
-      <p class="mb-0">${review.review_text}</p>
+      <p class="mb-1">${review.review_text}</p>
     `;
     
-    reviewListContainer.appendChild(reviewEl);
+    elements.reviewList.appendChild(reviewEl);
   });
-}
-
-// Update the rating breakdown display
-function updateRatingBreakdown(stats) {
-  const totalReviews = parseInt(stats.total_reviews) || 0;
-  if (totalReviews === 0) return;
-  
-  // Update star counts and progress bars
-  const starMapping = {
-    5: 'five',
-    4: 'four',
-    3: 'three',
-    2: 'two',
-    1: 'one'
-  };
-  
-  for (let i = 5; i >= 1; i--) {
-    const count = parseInt(stats.rating_distribution[`${i}_star`]) || 0;
-    const percentage = Math.round((count / totalReviews) * 100);
-    const starName = starMapping[i];
-    
-    // Update count display
-    const countElement = document.getElementById(`${starName}-star-count`);
-    if (countElement) {
-      countElement.textContent = count;
-    }
-    
-    // Update progress bar
-    const progressBar = document.getElementById(`${starName}-star-bar`);
-    if (progressBar) {
-      progressBar.style.width = `${percentage}%`;
-      progressBar.setAttribute("aria-valuenow", percentage);
-    }
-  }
 }
 
 // Generate HTML for star ratings
@@ -464,38 +442,80 @@ function generateStarsHtml(rating) {
   const halfStar = rating % 1 >= 0.5;
   const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
   
-  // Add full stars
-  for (let i = 0; i < fullStars; i++) {
-    starsHtml += '<i class="bi bi-star-fill"></i> ';
-  }
-  
-  // Add half star if needed
-  if (halfStar) {
-    starsHtml += '<i class="bi bi-star-half"></i> ';
-  }
-  
-  // Add empty stars
-  for (let i = 0; i < emptyStars; i++) {
-    starsHtml += '<i class="bi bi-star"></i> ';
-  }
+  starsHtml = '<i class="bi bi-star-fill"></i> '.repeat(fullStars);
+  if (halfStar) starsHtml += '<i class="bi bi-star-half"></i> ';
+  starsHtml += '<i class="bi bi-star"></i> '.repeat(emptyStars);
   
   return starsHtml;
 }
 
+// Update the rating breakdown display
+function updateRatingBreakdown(stats) {
+  const totalReviews = parseInt(stats.total_reviews) || 0;
+  if (totalReviews === 0) return;
+  
+  // 创建一个累计评分的对象
+  const starCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  
+  // 处理评分分布，处理可能存在的小数评分（如5.0_star或4.5_star）
+  if (stats.rating_distribution) {
+    Object.keys(stats.rating_distribution).forEach(key => {
+      // 从key中提取评分值
+      const rating = parseFloat(key.split('_')[0]);
+      if (!isNaN(rating)) {
+        // 将评分映射到整数星级
+        const starLevel = Math.round(rating);
+        if (starLevel >= 1 && starLevel <= 5) {
+          starCounts[starLevel] += parseInt(stats.rating_distribution[key]) || 0;
+        }
+      }
+    });
+  }
+  
+  // 更新UI
+  const starMapping = { 5: 'five', 4: 'four', 3: 'three', 2: 'two', 1: 'one' };
+  
+  for (let i = 5; i >= 1; i--) {
+    const count = starCounts[i];
+    const percentage = Math.round((count / totalReviews) * 100);
+    const starName = starMapping[i];
+    
+    const countElement = document.getElementById(`${starName}-star-count`);
+    const progressBar = document.getElementById(`${starName}-star-bar`);
+    
+    if (countElement) countElement.textContent = count;
+    
+    if (progressBar) {
+      progressBar.style.width = `${percentage}%`;
+      progressBar.setAttribute("aria-valuenow", percentage);
+    }
+  }
+}
+
 // Setup review form
 function setupReviewForm(productId) {
-  // Check login status to show appropriate form
+  const reviewForm = document.getElementById("review-form");
+  if (!reviewForm) return;
+
+  // Check login status
   api.auth.checkLoginStatus()
     .then(response => {
       if (response.success && response.isLoggedIn) {
-        // User is logged in, show form with their info pre-filled
-        document.getElementById("review-name").value = response.user.username;
-        document.getElementById("review-name").disabled = true;
-        document.getElementById("review-email").value = response.user.email;
-        document.getElementById("review-email").disabled = true;
+        // User is logged in, pre-fill form
+        const nameInput = document.getElementById("review-name");
+        const emailInput = document.getElementById("review-email");
+        
+        if (nameInput) {
+          nameInput.value = response.user.username;
+          nameInput.disabled = true;
+        }
+        
+        if (emailInput) {
+          emailInput.value = response.user.email;
+          emailInput.disabled = true;
+        }
       } else {
         // Show login prompt
-        const reviewForm = document.getElementById("review-form");
         reviewForm.innerHTML = `
           <div class="alert alert-info">
             <p>You need to <a href="../user/login.html">log in</a> to write a review.</p>
@@ -507,14 +527,86 @@ function setupReviewForm(productId) {
       console.error("Error checking login status:", error);
     });
   
-  // Rating star selection
+  // Setup rating stars
+  setupRatingStars();
+  
+  // Review form submission
+  reviewForm.addEventListener("submit", function(event) {
+    event.preventDefault();
+    
+    const ratingInput = document.getElementById("rating-value");
+    const reviewTextInput = document.getElementById("review-text");
+    
+    if (!ratingInput || !reviewTextInput) {
+      showToast("Error", "Form elements not found", "error");
+      return;
+    }
+    
+    const rating = parseInt(ratingInput.value);
+    const reviewText = reviewTextInput.value.trim();
+    
+    // Validate form
+    if (rating < 1 || rating > 5) {
+      showToast("Error", "Please select a rating", "error");
+      return;
+    }
+    
+    if (reviewText.length < 10) {
+      showToast("Error", "Review text must be at least 10 characters", "error");
+      return;
+    }
+    
+    // Submit review
+    fetch(getApiUrl('product_reviews.php?action=add'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        product_id: productId,
+        rating: rating,
+        review_text: reviewText
+      })
+    })
+      .then(response => response.json())
+      .then(response => {
+        if (response.success) {
+          showToast("Success", "Your review has been submitted!", "success");
+          
+          // Reset form
+          ratingInput.value = 0;
+          reviewTextInput.value = "";
+          document.querySelectorAll(".rating-star").forEach(s => {
+            s.classList.remove("bi-star-fill");
+            s.classList.add("bi-star");
+          });
+          
+          // Reload reviews after submission
+          loadProductReviews(productId);
+        } else {
+          showToast("Error", response.message || "Failed to submit review", "error");
+        }
+      })
+      .catch(() => {
+        showToast("Error", "Failed to submit review. Please try again later.", "error");
+      });
+  });
+}
+
+// Setup rating stars functionality
+function setupRatingStars() {
   const ratingStars = document.querySelectorAll(".rating-star");
+  if (ratingStars.length === 0) return;
+  
   ratingStars.forEach(star => {
+    // Click handler
     star.addEventListener("click", function() {
       const rating = parseInt(this.getAttribute("data-rating"));
-      document.getElementById("rating-value").value = rating;
+      const ratingValueInput = document.getElementById("rating-value");
+      if (ratingValueInput) {
+        ratingValueInput.value = rating;
+      }
       
-      // Update visual state of stars
+      // Update visual state
       ratingStars.forEach(s => {
         const starRating = parseInt(s.getAttribute("data-rating"));
         s.classList.remove("bi-star-fill", "bi-star");
@@ -539,57 +631,12 @@ function setupReviewForm(productId) {
       });
     });
   });
-  
-  // Review form submission
-  const reviewForm = document.getElementById("review-form");
-  reviewForm.addEventListener("submit", function(event) {
-    event.preventDefault();
-    
-    // Get form values
-    const rating = parseInt(document.getElementById("rating-value").value);
-    const reviewText = document.getElementById("review-text").value.trim();
-    
-    // Validate form
-    if (rating < 1 || rating > 5) {
-      showToast("Error", "Please select a rating", "error");
-      return;
-    }
-    
-    if (reviewText.length < 10) {
-      showToast("Error", "Review text must be at least 10 characters", "error");
-      return;
-    }
-    
-    // Submit review via API
-    api.reviews.addReview(productId, rating, reviewText)
-      .then(response => {
-        if (response.success) {
-          showToast("Success", "Your review has been submitted!", "success");
-          
-          // Clear form
-          document.getElementById("rating-value").value = 0;
-          document.getElementById("review-text").value = "";
-          ratingStars.forEach(s => {
-            s.classList.remove("bi-star-fill");
-            s.classList.add("bi-star");
-          });
-          
-          // Reload reviews to show the new one
-          loadProductReviews(productId);
-        } else {
-          showToast("Error", response.message, "error");
-        }
-      })
-      .catch(error => {
-        console.error("Error submitting review:", error);
-        showToast("Error", "Failed to submit review. Please try again later.", "error");
-      });
-  });
 }
 
 // Show a toast notification
 function showToast(title, message, type) {
   const toastContainer = document.getElementById("toast-container");
+  if (!toastContainer) return;
   
   // Create toast element
   const toast = document.createElement("div");
@@ -612,20 +659,18 @@ function showToast(title, message, type) {
   // Add toast to container
   toastContainer.appendChild(toast);
   
-  // Auto-remove toast after 5 seconds
-  setTimeout(() => {
-    toast.remove();
-  }, 5000);
+  // Auto-remove after 5 seconds
+  setTimeout(() => toast.remove(), 5000);
   
   // Close button handler
-  toast.querySelector(".btn-close").addEventListener("click", function() {
-    toast.remove();
-  });
+  toast.querySelector(".btn-close").addEventListener("click", () => toast.remove());
 }
 
 // Show an error message
 function showErrorMessage(message) {
   const container = document.querySelector(".container");
+  if (!container) return;
+  
   container.innerHTML = `
     <div class="alert alert-danger my-5">
       <h4 class="alert-heading">Error!</h4>
@@ -638,93 +683,76 @@ function showErrorMessage(message) {
   `;
 }
 
-// Setup image gallery
-function setupImageGallery() {
-  const mainImage = document.getElementById('main-product-image');
-  const thumbnails = document.querySelectorAll('.thumbnail-img');
+// Simplified breadcrumb navigation update
+function updateBreadcrumbNavigation(product, categoryId, categoryName) {
+  if (!product) return;
   
-  thumbnails.forEach(thumb => {
-    thumb.addEventListener('click', function() {
-      // fade out
-      mainImage.style.opacity = '0';
-      
-      setTimeout(() => {
-        mainImage.src = this.src;
-        mainImage.alt = this.alt;
-        
-        // fade in
-        mainImage.style.opacity = '1';
-        
-        // update active thumbnail
-        thumbnails.forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-      }, 300);
-    });
-  });
-}
-
-// Setup quantity control
-function setupQuantityControl() {
-  const decreaseBtn = document.getElementById('decrease-quantity');
-  const increaseBtn = document.getElementById('increase-quantity');
-  const quantityInput = document.getElementById('product-quantity');
-  const stockInfo = document.getElementById('stock-info');
+  // Get DOM elements
+  const breadcrumbCategory = document.getElementById("breadcrumb-category-link");
+  const breadcrumbItem = document.getElementById("breadcrumb-item");
+  const productCategory = document.getElementById("product-category");
   
-  let maxStock = 10; // default max stock
-  
-  // Update max stock
-  function updateMaxStock(stock) {
-    maxStock = stock;
-    quantityInput.max = maxStock;
-    stockInfo.textContent = `${maxStock} in stock`;
-  }
-  
-  decreaseBtn.addEventListener('click', () => {
-    let value = parseInt(quantityInput.value);
-    if (value > 1) {
-      quantityInput.value = value - 1;
+  // If no category ID, use defaults
+  if (!categoryId) {
+    if (breadcrumbCategory) {
+      breadcrumbCategory.textContent = "All Products";
+      breadcrumbCategory.href = "../../index.html";
     }
-  });
-  
-  increaseBtn.addEventListener('click', () => {
-    let value = parseInt(quantityInput.value);
-    if (value < maxStock) {
-      quantityInput.value = value + 1;
-    }
-  });
-  
-  quantityInput.addEventListener('change', () => {
-    let value = parseInt(quantityInput.value);
-    if (value < 1) quantityInput.value = 1;
-    if (value > maxStock) quantityInput.value = maxStock;
-  });
-  
-  return { updateMaxStock };
-}
-
-// Button states logic
-function setupButtonStates() {
-  const addToCartBtn = document.getElementById('add-to-cart-btn');
-  const buyNowBtn = document.getElementById('buy-now-btn');
-  
-  function updateButtonStates(stock) {
-    const isAvailable = stock > 0;
-    addToCartBtn.disabled = !isAvailable;
-    buyNowBtn.disabled = !isAvailable;
     
-    if (isAvailable) {
-      addToCartBtn.classList.remove('btn-secondary');
-      addToCartBtn.classList.add('btn-primary');
-      buyNowBtn.classList.remove('btn-secondary');
-      buyNowBtn.classList.add('btn-outline-primary');
-    } else {
-      addToCartBtn.classList.remove('btn-primary');
-      addToCartBtn.classList.add('btn-secondary');
-      buyNowBtn.classList.remove('btn-outline-primary');
-      buyNowBtn.classList.add('btn-secondary');
+    if (breadcrumbItem) {
+      breadcrumbItem.textContent = product.name || "Product";
     }
+    
+    if (productCategory) {
+      productCategory.textContent = "All Products";
+      productCategory.href = "../../index.html";
+    }
+    return;
   }
   
-  return { updateButtonStates };
+  // If we have a valid category name, use it directly
+  if (categoryName && categoryName !== "Unknown Category") {
+    updateBreadcrumbElements(breadcrumbCategory, breadcrumbItem, productCategory, 
+                             categoryName, categoryId, product.name);
+    return;
+  }
+  
+  // If we only have category ID, fetch the category details
+  api.categories.getCategory(categoryId)
+    .then(data => {
+      let fetchedCategoryName = "Unknown Category";
+      if (data?.success) {
+        // Check data.data field first (standard API format)
+        fetchedCategoryName = data.data?.name || data.category?.name || "Unknown Category";
+      }
+      
+      updateBreadcrumbElements(breadcrumbCategory, breadcrumbItem, productCategory, 
+                               fetchedCategoryName, categoryId, product.name);
+    })
+    .catch(() => {
+      // Fallback on error
+      updateBreadcrumbElements(breadcrumbCategory, breadcrumbItem, productCategory, 
+                               "Products", null, product.name);
+    });
+}
+
+// Helper function to update breadcrumb elements
+function updateBreadcrumbElements(breadcrumbCategory, breadcrumbItem, productCategory, 
+                                 categoryName, categoryId, productName) {
+  const categoryLink = categoryId ? `../../index.html?category=${categoryId}` : "../../index.html";
+  
+  if (breadcrumbCategory) { 
+    breadcrumbCategory.textContent = categoryName;
+    breadcrumbCategory.href = categoryLink;
+  }
+  
+  if (breadcrumbItem) {
+    breadcrumbItem.textContent = productName || "Product";
+  }
+  
+  if (productCategory) {
+    productCategory.textContent = categoryName;
+    productCategory.href = categoryLink;
+  }
 }
 
