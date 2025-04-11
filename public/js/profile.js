@@ -1172,62 +1172,48 @@ function updateReview() {
     return;
   }
   
-  // Create review data
-  const reviewData = {
-    rating: parseInt(rating),
-    review_text: reviewText
-  };
-  
   // Show loading state on button
   const updateBtn = document.getElementById('update-review');
   updateBtn.disabled = true;
   updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
   
-  // Call API to update review 
-  fetch(`${config.apiUrl}/product_reviews.php?id=${reviewId}&action=update`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(reviewData),
-    credentials: 'include'
-  })
-  .then(response => response.json())
-  .then(data => {
-    // Reset button
-    updateBtn.disabled = false;
-    updateBtn.innerHTML = 'Save Review';
-    
-    if (data.success) {
-      // Hide modal
-      const modal = bootstrap.Modal.getInstance(document.getElementById('editReviewModal'));
-      modal.hide();
+  // Call API to update review using api client
+  api.reviews.updateReview(reviewId, rating, reviewText)
+    .then(data => {
+      // Reset button
+      updateBtn.disabled = false;
+      updateBtn.innerHTML = 'Save Review';
       
-      // Reload reviews
-      loadUserReviews();
+      if (data.success) {
+        // Hide modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editReviewModal'));
+        modal.hide();
+        
+        // Reload reviews
+        loadUserReviews();
+        
+        // Set flag for product page to reload reviews
+        localStorage.setItem('reviews_updated', JSON.stringify({
+          productId: productId,
+          action: 'update',
+          reviewId: reviewId,
+          timestamp: new Date().getTime()
+        }));
+        
+        // Show success message
+        showToast('Review updated successfully', 'success');
+      } else {
+        throw new Error(data.message || 'Failed to update review');
+      }
+    })
+    .catch(error => {
+      // Reset button
+      updateBtn.disabled = false;
+      updateBtn.innerHTML = 'Save Review';
       
-      // Set flag for product page to reload reviews
-      localStorage.setItem('reviews_updated', JSON.stringify({
-        productId: productId,
-        action: 'update',
-        reviewId: reviewId,
-        timestamp: new Date().getTime()
-      }));
-      
-      // Show success message
-      showToast('Review updated successfully', 'success');
-    } else {
-      throw new Error(data.message || 'Failed to update review');
-    }
-  })
-  .catch(error => {
-    // Reset button
-    updateBtn.disabled = false;
-    updateBtn.innerHTML = 'Save Review';
-    
-    console.error('Error updating review:', error);
-    showError('review-error', error.message || 'Error updating review. Please try again.');
-  });
+      console.error('Error updating review:', error);
+      showError('review-error', error.message || 'Error updating review. Please try again.');
+    });
 }
 
 // Delete review
@@ -1246,56 +1232,49 @@ function deleteReview(reviewId) {
     }
   }
   
-  fetch(`${config.apiUrl}/product_reviews.php?id=${reviewId}&action=delete`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({}),
-    credentials: 'include'
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      // Get product ID before removing from array
-      const review = userReviews.find(r => r.id == reviewId);
-      const productId = review ? review.product_id : null;
-      
-      // Remove from array
-      userReviews = userReviews.filter(review => review.id != reviewId);
-      
-      // Update display
-      displayUserReviews();
-      
-      // Set flag for product page to reload reviews
-      localStorage.setItem('reviews_updated', JSON.stringify({
-        productId: productId,
-        action: 'delete',
-        reviewId: reviewId,
-        timestamp: new Date().getTime()
-      }));
-      
-      // Show success message
-      showToast('Review deleted successfully', 'success');
-      
-      // Show "no reviews" message if no reviews left
-      if (userReviews.length === 0) {
-        document.querySelector('.no-reviews').classList.remove('d-none');
+  // Get product ID before removing from array
+  const review = userReviews.find(r => r.id == reviewId);
+  const productId = review ? review.product_id : null;
+  
+  // Use API client to delete review
+  api.reviews.deleteReview(reviewId)
+    .then(data => {
+      if (data.success) {
+        // Remove from array
+        userReviews = userReviews.filter(review => review.id != reviewId);
+        
+        // Update display
+        displayUserReviews();
+        
+        // Set flag for product page to reload reviews
+        localStorage.setItem('reviews_updated', JSON.stringify({
+          productId: productId,
+          action: 'delete',
+          reviewId: reviewId,
+          timestamp: new Date().getTime()
+        }));
+        
+        // Show success message
+        showToast('Review deleted successfully', 'success');
+        
+        // Show "no reviews" message if no reviews left
+        if (userReviews.length === 0) {
+          document.querySelector('.no-reviews').classList.remove('d-none');
+        }
+      } else {
+        throw new Error(data.message || 'Failed to delete review');
       }
-    } else {
-      throw new Error(data.message || 'Failed to delete review');
-    }
-  })
-  .catch(error => {
-    console.error('Error deleting review:', error);
-    showToast('Error deleting review: ' + error.message, 'error');
-    
-    // Restore the row
-    if (reviewRow) {
-      reviewRow.classList.remove('opacity-50');
-      displayUserReviews();
-    }
-  });
+    })
+    .catch(error => {
+      console.error('Error deleting review:', error);
+      showToast('Error deleting review: ' + error.message, 'error');
+      
+      // Restore the row
+      if (reviewRow) {
+        reviewRow.classList.remove('opacity-50');
+        displayUserReviews();
+      }
+    });
 }
 
 // Admin sections (placeholders)

@@ -359,11 +359,11 @@ const reviews = {
         rating, 
         review_text: reviewText 
     }),
-    updateReview: async (reviewId, rating, reviewText) => await put(`product_reviews.php?id=${reviewId}`, {
+    updateReview: async (reviewId, rating, reviewText) => await post(`product_reviews.php?id=${reviewId}&action=update`, {
         rating,
         review_text: reviewText
     }),
-    deleteReview: async (reviewId) => await del(`product_reviews.php?id=${reviewId}`)
+    deleteReview: async (reviewId) => await post(`product_reviews.php?id=${reviewId}&action=delete`, {})
 };
 
 // Addresses API
