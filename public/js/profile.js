@@ -18,25 +18,25 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 300);
 });
 
-// 首先设置UI，不依赖API数据
+// First set up UI, not dependent on API data
 function setupUIFirst() {
   console.log('Setting up initial UI...');
   
-  // 显示加载中的用户资料
+  // Display loading user profile
   displayLoadingState();
   
-  // 设置事件监听
+  // Set up event listeners
   setupEventListeners();
   
-  // 加载模拟的地址数据（不依赖API）
+  // Load mock address data (not dependent on API)
   loadUserAddresses();
 }
 
-// 显示加载状态
+// Display loading state
 function displayLoadingState() {
   console.log('Displaying loading state...');
   
-  // 创建一个默认用户对象
+  // Create a default user object
   currentUser = {
     id: 0,
     name: 'Loading...',
@@ -44,15 +44,15 @@ function displayLoadingState() {
     role: 'user'
   };
   
-  // 显示默认数据
+  // Display default data
   displayUserData();
 }
 
-// Load user profile data - 改进版本
+// Load user profile data - improved version
 function loadUserProfile() {
   console.log('Loading user profile data - improved flow...');
   
-  // 先验证登录状态，再获取用户资料
+  // First verify login status, then get user profile
   fetch(`${config.apiUrl}/auth.php?action=status`, {
     method: 'GET',
     credentials: 'include',
@@ -65,23 +65,23 @@ function loadUserProfile() {
   .then(statusData => {
     console.log('Auth status response:', statusData);
     
-    // 检查用户是否已登录
+    // Check if user is logged in
     if (!statusData.success || !statusData.data || !statusData.data.isLoggedIn) {
       console.warn('User is not logged in according to auth.php status check');
       showLoginPrompt();
       return;
     }
     
-    // 用户已登录，获取要显示的用户ID
+    // User is logged in, get user ID to display
     const urlParams = new URLSearchParams(window.location.search);
     const urlUserId = urlParams.get('id');
     
-    // 获取当前登录用户ID
+    // Get current logged in user ID
     const currentUserId = statusData.data.user.id;
     console.log(`Current logged in user ID: ${currentUserId}`);
     
-    // 决定要获取哪个用户的资料
-    // 如果URL中有ID参数且不是当前用户，检查是否是管理员
+    // Decide which user's profile to get
+    // If URL has ID parameter and it's not the current user, check if admin
     let targetUserId = currentUserId;
     const isAdmin = statusData.data.user.isAdmin;
     
@@ -92,13 +92,13 @@ function loadUserProfile() {
     
     if (urlUserId && urlUserId !== currentUserId.toString()) {
       if (isAdmin) {
-        // 管理员可以查看任何用户
+        // Admin can view any user
         targetUserId = urlUserId;
         console.log(`Admin viewing profile for user ID: ${targetUserId}`);
       } else {
-        // 非管理员只能查看自己
+        // Non-admin can only view their own profile
         console.warn(`Non-admin attempting to view other user's profile. Redirecting to own profile.`);
-        // 可以选择重定向或者继续显示自己的资料
+        // Optionally, redirect to own profile or continue displaying own profile
         if (window.location.search !== `?id=${currentUserId}`) {
           window.location.href = `profile.html?id=${currentUserId}`;
           return;
@@ -106,13 +106,13 @@ function loadUserProfile() {
       }
     }
     
-    // 尝试使用状态检查返回的用户数据
+    // Try using the user data returned by the status check
     if (targetUserId == currentUserId) {
       console.log('Using user data from auth status check');
-      // 直接使用auth.php返回的用户数据
+      // Directly use the user data returned by auth.php
       const userData = statusData.data.user;
       
-      // 确保管理员状态被正确设置
+      // Ensure admin status is correctly set
       const isUserAdmin = userData.isAdmin === true;
       console.log('Setting user admin status:', {
         originalIsAdmin: userData.isAdmin,
@@ -133,14 +133,14 @@ function loadUserProfile() {
         created_at: userData.joinDate
       };
       
-      // 显示用户数据
+      // Display user data
       displayUserData();
       
-      // 如果是管理员，显示管理员标签页
+      // If user is admin, show admin tab and dashboard button
       if (isUserAdmin) {
         console.log('User is admin - showing admin tab and dashboard button');
         
-        // 显示管理员标签页
+        // Show admin tab page
         const adminTabContainer = document.getElementById('admin-tab-container');
         if (adminTabContainer) {
           adminTabContainer.style.display = 'block';
@@ -149,13 +149,13 @@ function loadUserProfile() {
           console.warn('Admin tab container element not found');
         }
         
-        // 显示管理员仪表板按钮
+        // Show admin dashboard button
         const adminDashboardBtnContainer = document.getElementById('admin-dashboard-btn-container');
         if (adminDashboardBtnContainer) {
           console.log('Found admin dashboard button container - setting to display:block');
           adminDashboardBtnContainer.style.display = 'block';
           
-          // 添加一些突出显示的样式
+          // Add some highlighted styles
           adminDashboardBtnContainer.classList.add('p-3', 'bg-light', 'rounded', 'mb-3');
         } else {
           console.warn('Admin dashboard button container element not found');
@@ -164,12 +164,12 @@ function loadUserProfile() {
         console.log('User is NOT admin - hiding admin elements');
       }
       
-      // 加载用户地址
+      // Load user addresses
       loadUserAddresses();
       return;
     }
     
-    // 如果需要查看其他用户的资料，调用users.php
+    // If need to view other user's profile, call users.php
     console.log(`Fetching profile for user ID: ${targetUserId}`);
     fetch(`${config.apiUrl}/users.php?action=get_user&id=${targetUserId}`, {
       method: 'GET',
@@ -190,11 +190,11 @@ function loadUserProfile() {
       console.log('User data response:', userData);
       
       if (userData.success && userData.data) {
-        // 成功获取数据
+        // Successfully retrieved data
         currentUser = userData.data;
         displayUserData();
         
-        // 加载用户地址
+        // Load user addresses
         loadUserAddresses();
       } else {
         throw new Error(userData.message || 'Failed to load user data');
@@ -211,11 +211,11 @@ function loadUserProfile() {
   });
 }
 
-// 显示登录提示
+// Show login prompt
 function showLoginPrompt() {
   console.log('Displaying login prompt');
   
-  // 查找profile-container元素
+  // Find profile-container element
   const container = document.getElementById('profile-container');
   if (container) {
     container.innerHTML = `
@@ -228,16 +228,16 @@ function showLoginPrompt() {
       </div>
     `;
   } else {
-    // 如果找不到容器，使用Toast
+    // If container not found, use Toast
     showToast('Please log in to view this profile', 'warning');
-    // 2秒后重定向到登录页
+    // Redirect to login page after 2 seconds
     setTimeout(() => {
       window.location.href = `${config.baseUrl}/public/views/auth/login.html`;
     }, 2000);
   }
 }
 
-// 使用默认用户数据
+// Use default user data
 function useDefaultUserData() {
   console.log('Using default user data for display');
   
@@ -251,26 +251,26 @@ function useDefaultUserData() {
   };
   
   displayUserData();
-  loadUserAddresses(); // 显示模拟地址数据
+  loadUserAddresses(); // Display mock address data
 }
 
 // Display user data in profile
 function displayUserData() {
   console.log('Displaying user data:', currentUser);
   
-  // 拆分名字 - 只从name字段拆分
+  // Split name - only split from name field
   let firstName = '';
   let lastName = '';
   let fullName = '';
   
-  // 调试日志
+  // Debug log
   console.log('Name field before processing:', currentUser.name);
   
-  // 只从name字段拆分名字，不使用备用选项
+  // Split name from name field, without using backup options
   if (currentUser.name && currentUser.name.trim() !== '') {
     fullName = currentUser.name.trim();
     
-    // 拆分name为first_name和last_name
+    // Split name into first_name and last_name
     const nameParts = fullName.split(' ');
     if (nameParts.length > 0) {
       firstName = nameParts[0];
@@ -279,7 +279,7 @@ function displayUserData() {
       }
     }
     
-    // 将拆分结果回写到用户对象
+    // Write split results back to user object
     currentUser.first_name = firstName;
     currentUser.last_name = lastName;
     
@@ -288,7 +288,7 @@ function displayUserData() {
     console.warn('No name field available for splitting');
   }
   
-  // 更新基本信息区域
+  // Update basic information area
   const userFullName = document.getElementById('user-full-name');
   if (userFullName) {
     userFullName.textContent = fullName || '';
@@ -305,7 +305,7 @@ function displayUserData() {
     joinDate.textContent = date.toLocaleDateString();
   }
   
-  // 更新详情区域 - 确保名字字段正确显示
+  // Update details area - ensure name field is correctly displayed
   const firstNameElement = document.getElementById('first-name');
   if (firstNameElement) {
     firstNameElement.textContent = firstName || 'Not set';
@@ -338,36 +338,36 @@ function displayUserData() {
     genderDisplay.textContent = currentUser.gender || 'Not set';
   }
   
-  // 更新头像
+  // Update avatar
   const profileImg = document.getElementById('profile-img');
   if (profileImg) {
-    // 确定头像URL优先级: avatar > image_url > 默认图片
+    // Determine avatar URL priority: avatar > image_url > default image
     if (currentUser.avatar) {
-      // 检查是否为base64字符串
+      // Check if it's a base64 string
       if (currentUser.avatar.startsWith('data:image')) {
-        // 已经是合法的base64数据URL，直接使用
+        // Already a valid base64 data URL, directly use
         profileImg.src = currentUser.avatar;
       } else if (currentUser.avatar.match(/^[a-zA-Z0-9+/=]+$/)) {
-        // 看起来是纯base64字符串，但没有前缀，添加前缀
+        // Looks like a pure base64 string, but no prefix, add prefix
         profileImg.src = 'data:image/jpeg;base64,' + currentUser.avatar;
       } else if (currentUser.avatar.startsWith('http')) {
-        // 是URL，直接使用
+        // It's a URL, directly use
         profileImg.src = currentUser.avatar;
       } else {
-        // 其他情况尝试作为URL使用
+        // Other cases try to use as URL
         profileImg.src = currentUser.avatar;
       }
       console.log('Avatar source set to:', profileImg.src.substring(0, 50) + (profileImg.src.length > 50 ? '...' : ''));
     } else if (currentUser.image_url) {
       profileImg.src = currentUser.image_url;
     }
-    // 如果没有设置头像，保留默认图片
+    // If no avatar set, keep default image
   }
   
-  // 检查用户是否为管理员，显示/隐藏管理员仪表板按钮
+  // Check if user is admin, show/hide admin dashboard button
   const adminDashboardBtnContainer = document.getElementById('admin-dashboard-btn-container');
   if (adminDashboardBtnContainer) {
-    // 检查用户角色是否为管理员
+    // Check if user role is admin
     const isAdmin = currentUser.role === 'admin' || currentUser.is_admin === true;
     console.log('Admin status check in displayUserData:', {
       role: currentUser.role,
@@ -377,20 +377,20 @@ function displayUserData() {
     });
     adminDashboardBtnContainer.style.display = isAdmin ? 'block' : 'none';
     
-    // 强制设置为显示状态，用于调试
+    // Force to be visible for debugging
     if(isAdmin) {
       console.log('Setting admin dashboard button to be visible - FORCE DISPLAY');
       adminDashboardBtnContainer.style.display = 'block';
       
-      // 为确保按钮可见，还将其移到页面更明显的位置
+      // To ensure button is visible, also move it to a more visible position
       const parentElement = adminDashboardBtnContainer.parentElement;
       if (parentElement) {
         parentElement.insertBefore(adminDashboardBtnContainer, parentElement.firstChild);
         
-        // 添加一些突出显示的样式
+        // Add some highlighted styles
         adminDashboardBtnContainer.classList.add('p-3', 'bg-light', 'rounded', 'mb-3');
         
-        // 使用timeout确保样式应用后的状态
+        // Use timeout to ensure style application status
         setTimeout(() => {
           console.log('Admin button visibility:', adminDashboardBtnContainer.offsetParent !== null);
           console.log('Admin button computed style:', window.getComputedStyle(adminDashboardBtnContainer).display);
@@ -399,7 +399,7 @@ function displayUserData() {
     }
   }
   
-  // 更新编辑表单字段
+  // Update edit form fields
   const firstNameInput = document.getElementById('firstName');
   if (firstNameInput) {
     firstNameInput.value = firstName;
@@ -415,14 +415,14 @@ function displayUserData() {
     emailInput.value = currentUser.email || '';
   }
   
-  // 生日字段
+  // Birthday field
   const birthdayInput = document.getElementById('birthday');
   if (birthdayInput && currentUser.birthday) {
     try {
-      // 确保格式为YYYY-MM-DD
+      // Ensure format is YYYY-MM-DD
       let birthdayValue = currentUser.birthday;
       
-      // 如果不是YYYY-MM-DD格式，尝试转换
+      // If not YYYY-MM-DD format, try to convert
       if (!birthdayValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
         const date = new Date(birthdayValue);
         if (!isNaN(date.getTime())) {
@@ -439,7 +439,7 @@ function displayUserData() {
     }
   }
   
-  // 性别单选按钮
+  // Gender radio buttons
   if (currentUser.gender) {
     const genderRadio = document.querySelector(`input[name="gender"][value="${currentUser.gender}"]`);
     if (genderRadio) {
@@ -452,7 +452,7 @@ function displayUserData() {
 function loadUserAddresses() {
   console.log('Using mock address data for display');
   
-  // 使用静态数据展示卡片设计
+  // Use static data to display card design
   userAddresses = [
     {
       id: 1,
@@ -536,7 +536,7 @@ function displayUserAddresses() {
 
 // Setup event listeners
 function setupEventListeners() {
-  // Avatar upload - 确保元素存在且事件处理正确
+  // Avatar upload - ensure element exists and event handling is correct
   setupAvatarUpload();
   
   // Save profile button
@@ -564,7 +564,7 @@ function setupEventListeners() {
   }
 }
 
-// 设置头像上传按钮和事件
+// Set up avatar upload button and event
 function setupAvatarUpload() {
   const avatarUpload = document.getElementById('avatar-upload');
   if (!avatarUpload) {
@@ -572,10 +572,10 @@ function setupAvatarUpload() {
     return;
   }
   
-  // 添加事件监听器
+  // Add event listener
   avatarUpload.addEventListener('change', handleAvatarUpload);
   
-  // 设置头像点击触发上传
+  // Set avatar click to trigger upload
   const avatarOverlay = document.querySelector('.avatar-overlay');
   if (avatarOverlay) {
     avatarOverlay.addEventListener('click', function() {
@@ -586,7 +586,7 @@ function setupAvatarUpload() {
     console.warn('Avatar overlay element not found');
   }
   
-  // 设置直接点击头像也能触发上传
+  // Set direct click on avatar to trigger upload
   const profileImg = document.getElementById('profile-img');
   if (profileImg && !avatarOverlay) {
     profileImg.style.cursor = 'pointer';
@@ -604,13 +604,13 @@ function handleAvatarUpload(event) {
   
   console.log('Avatar file selected:', file.name);
   
-  // 验证文件类型
+  // Validate file type
   if (!file.type.match('image.*')) {
     showToast('Please select an image file', 'error');
     return;
   }
   
-  // 文件大小限制 (2MB)
+  // File size limit (2MB)
   if (file.size > 2 * 1024 * 1024) {
     showToast('Image size should be less than 2MB', 'error');
     return;
@@ -624,23 +624,23 @@ function handleAvatarUpload(event) {
       const base64Image = e.target.result;
       profileImg.src = base64Image;
       
-      // 保存base64图片到服务器
+      // Save base64 image to server
       updateAvatarOnServer(base64Image);
     };
     reader.readAsDataURL(file);
   }
 }
 
-// 发送base64图片到服务器
+// Send base64 image to server
 function updateAvatarOnServer(base64Image) {
   console.log('Updating avatar on server with base64 data');
   
-  // 准备数据
+  // Prepare data
   const userData = {
     avatar: base64Image
   };
   
-  // 调用API更新头像
+  // Call API to update avatar
   const userId = currentUser.id;
   fetch(`${config.apiUrl}/users.php?id=${userId}`, {
     method: 'PUT', 
@@ -661,7 +661,7 @@ function updateAvatarOnServer(base64Image) {
     if (response.success) {
       showToast('Profile photo updated successfully', 'success');
       
-      // 更新用户数据
+      // Update user data
       if (response.data) {
         currentUser = response.data;
       } else {
@@ -698,11 +698,11 @@ function updateUserProfile() {
     return;
   }
   
-  // 构建name字段 - 始终由first_name和last_name组合而成
+  // Construct name field - always combined from first_name and last_name
   const name = lastName ? `${firstName} ${lastName}` : firstName;
   console.log('Constructed name field:', name);
   
-  // Create user data object, 明确只发送name字段
+  // Create user data object, explicitly only send name field
   const userData = {
     name: name,
     email: email,
@@ -738,20 +738,20 @@ function updateUserProfile() {
       
       // Update current user data with the response data or our sent data
       if (response.data) {
-        // 服务器返回了更新后的用户数据
+        // Server returned updated user data
         currentUser = response.data;
       } else {
-        // 服务器没有返回数据，使用我们发送的数据更新
+        // Server didn't return data, use the data we sent to update
         Object.assign(currentUser, userData);
       }
       
       // Update display
       displayUserData();
       
-      // Close modal
-      const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
-      if (modal) {
-        modal.hide();
+      // Hide modal if present
+      const profileModal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+      if (profileModal) {
+        profileModal.hide();
       }
       
       // Show success message
@@ -759,7 +759,8 @@ function updateUserProfile() {
     })
     .catch(error => {
       console.error('Error updating profile:', error);
-      showError('profile-error', error.message || 'Error updating profile. Please try again.');
+      // Show server returned error message or generic error
+      showError('profile-error', error.message || 'Failed to update profile. Please try again.');
     });
 }
 
@@ -833,7 +834,7 @@ function changePassword(event) {
     .catch(error => {
       console.error('Error changing password:', error);
       
-      // 显示服务器返回的错误消息或通用错误
+      // Show server returned error message or generic error
       const errorMessage = error.message || 'Error changing password. Please try again.';
       showError('password-error', errorMessage);
     });

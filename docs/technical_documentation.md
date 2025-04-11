@@ -9,7 +9,7 @@
 6. [Authentication](#6-authentication)
 7. [Development Guidelines](#7-development-guidelines)
 8. [Deployment Configuration](#8-deployment-configuration)
-9. [10. 精简实施计划](#10-精简实施计划)
+9. [Streamlined Implementation Plan](#10-streamlined-implementation-plan)
 
 ## 1. Project Structure
 
@@ -729,112 +729,112 @@ function getImageUrl(filename) {
 }
 ```
 
-## 10. 精简实施计划
+## 10. Streamlined Implementation Plan
 
-为了在有限时间内完成项目，我们需要精简实施计划，专注于核心功能。
+To complete the project within a limited timeframe, we need a streamlined implementation plan that focuses on core functionality.
 
-### 10.1 核心功能优先级
+### 10.1 Core Functionality Priorities
 
-以下是按优先级排列的功能列表：
+Below is a prioritized list of features:
 
-#### 高优先级（必须完成）
-1. **产品浏览**：列表页面、详情页面
-2. **分类过滤**：根据分类筛选产品
-3. **简单搜索**：基于产品名称的搜索功能
-4. **购物车基本功能**：添加、删除、更新数量
+#### High Priority (Must Complete)
+1. **Product Browsing**: List page, detail page
+2. **Category Filtering**: Filter products by category
+3. **Simple Search**: Search functionality based on product name
+4. **Basic Shopping Cart Functions**: Add, delete, update quantity
 
-#### 中优先级（如果时间允许）
-1. **用户登录/注册**：基本账户管理
-2. **价格过滤**：根据价格范围筛选产品
-3. **排序功能**：根据价格、名称排序
+#### Medium Priority (If Time Permits)
+1. **User Login/Registration**: Basic account management
+2. **Price Filtering**: Filter products by price range
+3. **Sorting Function**: Sort by price, name
 
-#### 低优先级（可以放弃）
-1. **产品评论**：可以使用静态示例评论代替
-2. **用户资料**：简化为基本信息
-3. **下单流程**：仅展示界面，不实现完整逻辑
-4. **高级筛选**：评分筛选等
+#### Low Priority (Can Be Dropped)
+1. **Product Comments**: Static example comments can be used instead
+2. **User Profile**: Simplified to basic information
+3. **Checkout Process**: Show interface only, not full logic
+4. **Advanced Filtering**: Rating filtering, etc.
 
-### 10.2 技术简化方案
+### 10.2 Technical Simplification
 
-#### 数据存储简化
-1. **使用JSON文件存储**：不使用MySQL数据库，改为简单的JSON文件存储
-2. **简化数据结构**：减少数据表和字段数量
-3. **购物车存储**：购物车数据完全使用浏览器的localStorage存储，无需后端数据库支持
-4. **无购物车表**：系统不保留购物车表，用户下单后直接创建订单记录
+#### Data Storage Simplification
+1. **Use JSON Files**: No MySQL database, use simple JSON files instead
+2. **Simplify Data Structure**: Reduce data table and field count
+3. **Shopping Cart Storage**: Shopping cart data completely use browser's localStorage, no backend database support needed
+4. **No Shopping Cart Table**: System does not keep shopping cart table, user orders directly create order records
 
-#### API简化
-1. **合并API端点**：减少API端点数量，简化路由
-2. **简化认证流程**：使用基本的session认证
-3. **减少API参数**：只保留必要的过滤参数
+#### API Simplification
+1. **Merge API Endpoints**: Reduce API endpoint count, simplify routing
+2. **Simplify Authentication**: Use basic session authentication
+3. **Reduce API Parameters**: Only keep necessary filtering parameters
 
-#### 前端简化
-1. **减少交互动画**：专注于基本功能
-2. **简化UI组件**：使用简单的Bootstrap组件
-3. **减少页面数量**：合并功能相似的页面
+#### Frontend Simplification
+1. **Reduce Interaction Animation**: Focus on basic functionality
+2. **Simplify UI Components**: Use simple Bootstrap components
+3. **Reduce Page Count**: Merge similar functionality pages
 
-### 10.3 具体实施步骤
+### 10.3 Specific Implementation Steps
 
-1. **阶段1：基础结构**（2小时）
-   - 完善目录结构
-   - 配置基本环境
-   - 准备静态数据文件
+1. **Stage 1: Basic Structure** (2 hours)
+   - Complete directory structure
+   - Configure basic environment
+   - Prepare static data files
 
-2. **阶段2：产品功能**（5小时）
-   - 实现产品列表页面
-   - 实现产品详情页面
-   - 实现基本分类筛选
-   - 实现产品搜索
+2. **Stage 2: Product Functionality** (5 hours)
+   - Implement product list page
+   - Implement product detail page
+   - Implement basic category filtering
+   - Implement product search
 
-3. **阶段3：购物车功能**（3小时）
-   - 实现侧滑购物车面板
-   - 实现购物车基本操作（添加、删除、更新数量）
-   - 实现购物车持久化（localStorage）
-   - 添加直接下单功能，跳过结账流程
+3. **Stage 3: Shopping Cart Functionality** (3 hours)
+   - Implement side shopping cart panel
+   - Implement basic shopping cart operations (add, delete, update quantity)
+   - Implement shopping cart persistence (localStorage)
+   - Add direct order functionality, skip checkout process
 
-4. **阶段4：用户功能**（3小时）
-   - 实现简单登录/注册
-   - 实现session管理
+4. **Stage 4: User Functionality** (3 hours)
+   - Implement simple login/registration
+   - Implement session management
 
-5. **阶段5：测试及修复**（2小时）
-   - 功能测试
-   - 修复关键问题
-   - 清理代码
+5. **Stage 5: Testing and Fixing** (2 hours)
+   - Function testing
+   - Fix critical issues
+   - Clean code
 
-### 10.4 技术债务记录
+### 10.4 Technical Debt Record
 
-以下功能将作为技术债务记录，在未来版本中实现：
+The following features will be recorded as technical debt for future implementation:
 
-1. 完整的用户评论系统
-2. 高级筛选功能
-3. 完整的订单管理系统
-4. 用户资料完善
-5. 管理员后台
+1. Complete user comment system
+2. Advanced filtering functionality
+3. Complete order management system
+4. User profile improvement
+5. Admin backend
 
-### 10.5 简化后的数据结构
+### 10.5 Simplified Data Structure
 
-#### 产品（Products）
+#### Product (Products)
 - id
 - name
 - description
 - price
-- salePrice (可选)
+- salePrice (Optional)
 - categoryId
 - image
 - stock
 
-#### 分类（Categories）
+#### Category (Categories)
 - id
 - name
 - description
 
-#### 用户（Users）
+#### User (Users)
 - id
 - username
 - email
 - password
 - isAdmin
 
-#### 订单（Orders）
+#### Order (Orders)
 - id
 - user_id
 - order_number
@@ -842,30 +842,30 @@ function getImageUrl(filename) {
 - status
 - created_at
 
-#### 订单项（Order_Items）
+#### Order Item (Order_Items)
 - id
 - order_id
 - product_id
 - quantity
 - price
 
-### 10.6 简化后的API
+### 10.6 Simplified API
 
-#### 产品API
-- `GET /api/products.php` - 获取所有产品（支持基本过滤）
-- `GET /api/products.php?id={id}` - 获取单个产品
+#### Product API
+- `GET /api/products.php` - Get all products (Support basic filtering)
+- `GET /api/products.php?id={id}` - Get single product
 
-#### 分类API
-- `GET /api/categories.php` - 获取所有分类
+#### Category API
+- `GET /api/categories.php` - Get all categories
 
-#### 认证API
-- `POST /api/auth.php?action=login` - 用户登录
-- `POST /api/auth.php?action=register` - 用户注册
-- `GET /api/auth.php?action=status` - 检查登录状态
-- `POST /api/auth.php?action=logout` - 用户登出
+#### Authentication API
+- `POST /api/auth.php?action=login` - User login
+- `POST /api/auth.php?action=register` - User registration
+- `GET /api/auth.php?action=status` - Check login status
+- `POST /api/auth.php?action=logout` - User logout
 
-#### 订单API
-- `POST /api/orders.php?action=create` - 创建新订单
-- `GET /api/orders.php?user_id={id}` - 获取用户订单历史
+#### Order API
+- `POST /api/orders.php?action=create` - Create new order
+- `GET /api/orders.php?user_id={id}` - Get user order history
 
-这种精简方案将帮助我们在有限时间内完成项目的核心功能，保证基本用户体验，同时为未来版本留出扩展空间。
+This streamlined plan will help us complete the project's core functionality within a limited timeframe, ensure basic user experience, and leave room for future expansion.

@@ -81,32 +81,32 @@ function checkAuthStatus() {
       .then(response => {
         console.log('Navbar auth check response:', response);
         
-        // 更简化和明确的登录状态检查
+        // Simplified and clear login status check
         let isLoggedIn = false;
         let userData = {};
         
-        // 检查响应是否成功
+        // Check if response is successful
         if (!response || !response.success) {
           console.log('Auth check returned unsuccessful response');
           updateNavbarForLoggedOutUser();
           return;
         }
         
-        // 从响应中提取登录状态
+        // Extract login status from response
         if (response.data) {
-          // 首先明确检查isLoggedIn标志
+          // First explicitly check isLoggedIn flag
           if (response.data.isLoggedIn === true) {
             isLoggedIn = true;
             userData = response.data.user || response.data;
           } 
-          // 如果response.data中有用户ID，则认为已登录
+          // If response.data has user ID, consider as logged in
           else if (response.data.id || response.data.user_id) {
             isLoggedIn = true;
             userData = response.data;
           }
         }
         
-        // 检查顶层的字段
+        // Check top-level fields
         if (!isLoggedIn) {
           if (response.isLoggedIn === true) {
             isLoggedIn = true;
@@ -116,12 +116,12 @@ function checkAuthStatus() {
             userData = response.user;
           } else if (response.message === 'User is logged in') {
             isLoggedIn = true;
-            // 尝试从response中找出用户数据
+            // Try to find user data from response
             userData = response.user || response.data || {};
           }
         }
         
-        // 明确的未登录消息优先级最高
+        // Explicit not logged in message has highest priority
         if (response.message === 'Not logged in' || 
             (response.data && response.data.isLoggedIn === false)) {
           console.log('Received explicit not logged in message');
@@ -135,7 +135,7 @@ function checkAuthStatus() {
           console.log('User is logged in with data:', userData);
           updateNavbarForLoggedInUser(userData);
           
-          // 缓存用户数据供其他页面使用
+          // Cache user data for other pages
           try {
             localStorage.setItem('userData', JSON.stringify(userData));
           } catch (e) {
@@ -145,7 +145,7 @@ function checkAuthStatus() {
           console.log('User is not logged in or no user data available');
           updateNavbarForLoggedOutUser();
           
-          // 清除缓存的用户数据
+          // Clear cached user data
           try {
             localStorage.removeItem('userData');
           } catch (e) {
@@ -181,7 +181,7 @@ function debugAuthStatus() {
       
       // Check login status using the same logic as checkAuthStatus
       if (response.success) {
-        // 使用与checkAuthStatus相同的逻辑
+        // Use the same logic as checkAuthStatus
         let isLoggedIn = false;
         
         if (response.isLoggedIn === true) {
@@ -296,7 +296,7 @@ function updateNavbarForLoggedOutUser() {
   const userDropdown = document.getElementById('userDropdown');
   const dropdownMenu = document.querySelector('.dropdown-menu[aria-labelledby="userDropdown"]');
   
-  // 添加调试日志
+  // Add debug logs
   console.log('Updating navbar for logged out user');
   console.log('userDropdown element:', userDropdown);
   console.log('dropdownMenu element:', dropdownMenu);
@@ -320,10 +320,10 @@ function updateNavbarForLoggedOutUser() {
     
     console.log('Dropdown menu updated successfully for logged out user');
   } else {
-    // 如果找不到特定的下拉菜单，尝试使用更通用的选择器
+    // If specific dropdown menu can't be found, try using more generic selector
     console.warn('Failed to find menu elements with specific selectors, trying fallback selectors');
     
-    // 尝试其他选择器
+    // Try other selectors
     const fallbackDropdown = document.querySelector('.dropdown-toggle');
     const fallbackMenu = document.querySelector('.dropdown-menu');
     
@@ -367,13 +367,13 @@ function handleLogout(event) {
   api.auth.logout()
     .then(response => {
       if (response.success) {
-        // 清除所有本地用户状态
+        // Clear all local user state
         localStorage.removeItem('user');
         sessionStorage.removeItem('user');
         localStorage.removeItem('auth_token');
         sessionStorage.removeItem('auth_token');
         
-        // 清除所有认证相关的cookie
+        // Clear all authentication related cookies
         document.cookie = 'PHPSESSID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         document.cookie = 'user_id=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
         document.cookie = 'username=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
@@ -382,7 +382,7 @@ function handleLogout(event) {
         // Clear cart after logout
         clearCart();
         
-        // 立即更新导航栏到登出状态
+        // Immediately update navbar to logged out state
         updateNavbarForLoggedOutUser();
         
         console.log('Successfully logged out');
@@ -392,14 +392,14 @@ function handleLogout(event) {
           showToast('Logged out successfully', 'success');
         }
         
-        // 确保UI已更新后再重定向
+        // Ensure UI is updated before redirecting
         setTimeout(() => {
-          // 如果不在首页，则重定向到首页
+          // If not on homepage, redirect to homepage
           if (!window.location.href.includes('/index.html')) {
             console.log('Redirecting to homepage...');
             window.location.href = `${config.baseUrl}/public/index.html`;
           } else {
-            // 如果已经在首页，刷新页面以确保所有状态都重置
+            // If already on homepage, refresh page to ensure all states are reset
             console.log('Refreshing page to reset state...');
             window.location.reload();
           }
@@ -413,7 +413,7 @@ function handleLogout(event) {
     })
     .catch(error => {
       console.error('Logout error:', error);
-      // 即使API调用失败，也尝试清除本地状态
+      // Even if API call fails, try to clear local state
       localStorage.removeItem('user');
       sessionStorage.removeItem('user');
       document.cookie = 'PHPSESSID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
@@ -424,7 +424,7 @@ function handleLogout(event) {
         showToast('Error during logout, but local session cleared: ' + error.message, 'warning');
       }
       
-      // 尝试重定向到首页
+      // Try to redirect to homepage
       setTimeout(() => {
         window.location.href = `${config.baseUrl}/public/index.html`;
       }, 1500);

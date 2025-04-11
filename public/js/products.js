@@ -26,20 +26,20 @@ function loadProducts() {
       'Accept': 'application/json',
       'Cache-Control': 'no-cache'
     },
-    // 确保不包含credentials，这样即使未登录也能获取公共数据
+    // Ensure no credentials are included, so public data can be accessed even when not logged in
     credentials: 'omit'
   })
     .then(response => {
-      // 检查响应是否成功
+      // Check if response is successful
       if (!response.ok) {
         console.error(`API error: ${response.status}`);
-        // 尝试解析JSON响应以获取更详细的错误信息
+        // Try to parse JSON response to get more detailed error information
         return response.json()
           .then(errorData => {
             throw new Error(`API returned ${response.status}: ${JSON.stringify(errorData)}`);
           })
           .catch(e => {
-            // 如果无法解析JSON，使用状态码作为错误
+            // If unable to parse JSON, use status code as error
             throw new Error(`API returned ${response.status}`);
           });
       }
@@ -76,7 +76,7 @@ function loadProducts() {
           return product;
         });
         
-        // 初始化产品每页显示数量的事件监听
+        // Initialize event listener for products per page display
         initializeProductsPerPage();
         
         applyFiltersAndSort();
@@ -91,14 +91,14 @@ function loadProducts() {
     });
 }
 
-// 处理产品加载错误的辅助函数
+// Helper function to handle product loading errors
 function handleProductLoadError(errorMessage) {
   console.error('Product loading error:', errorMessage);
   
-  // 检查产品容器是否存在
+  // Check if products container exists
   const productsContainer = document.getElementById('products-container');
   if (productsContainer) {
-    // 显示用户友好的错误消息
+    // Show user-friendly error message
     productsContainer.innerHTML = `
       <div class="alert alert-warning text-center w-100 my-4">
         <h4><i class="bi bi-exclamation-triangle me-2"></i>Unable to Load Products</h4>
@@ -111,7 +111,7 @@ function handleProductLoadError(errorMessage) {
     `;
   }
   
-  // 检查筛选器容器是否存在，如果存在则隐藏
+  // Check if filters container exists and hide it if found
   const filtersContainer = document.getElementById('product-filters');
   if (filtersContainer) {
     filtersContainer.style.display = 'none';
@@ -127,11 +127,11 @@ function loadCategories() {
       'Accept': 'application/json',
       'Cache-Control': 'no-cache'
     },
-    // 确保不包含credentials，这样即使未登录也能获取公共数据
+    // Ensure no credentials are included, so public data can be accessed even when not logged in
     credentials: 'omit'
   })
     .then(response => {
-      // 检查响应是否成功
+      // Check if response is successful
       if (!response.ok) {
         console.error(`Categories API error: ${response.status}`);
         throw new Error(`API returned ${response.status}`);
@@ -498,17 +498,17 @@ function initializeFilterAccordion() {
   }
 }
 
-// 初始化每页产品数量选择器
+// Initialize products per page selector
 function initializeProductsPerPage() {
   const productsPerPageSelect = document.getElementById('products-per-page');
   if (productsPerPageSelect) {
-    // 设置初始值
+    // Set initial value
     const selectedValue = parseInt(productsPerPageSelect.value);
     if (window.setProductsPerPage && !isNaN(selectedValue)) {
       window.setProductsPerPage(selectedValue);
     }
     
-    // 添加事件监听
+    // Add event listener
     productsPerPageSelect.addEventListener('change', function() {
       const value = parseInt(this.value);
       if (window.setProductsPerPage && !isNaN(value)) {

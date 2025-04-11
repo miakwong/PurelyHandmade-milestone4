@@ -261,10 +261,10 @@ function displayReviews(reviews) {
     const product = productsList.find(p => p.id == review.product_id);
     const productName = product ? product.name : (review.product_name || 'Unknown Product');
     
-    // 安全获取产品图片URL - 确保它是有效的URL并且是字符串类型
+    // Safely get product image URL - ensure it's a valid URL and string type
     let productImage = '';
     if (product && product.images && product.images.length > 0 && typeof product.images[0] === 'string') {
-      // 验证URL格式
+      // Validate URL format
       try {
         new URL(product.images[0]);
         productImage = product.images[0];
@@ -272,7 +272,7 @@ function displayReviews(reviews) {
         console.warn('Invalid product image URL:', product.images[0]);
       }
     } else if (review.product_image && typeof review.product_image === 'string') {
-      // 如果通过API直接返回了产品图片URL
+      // If product image URL was returned directly through API
       try {
         new URL(review.product_image);
         productImage = review.product_image;
@@ -281,11 +281,11 @@ function displayReviews(reviews) {
       }
     }
     
-    // 安全获取用户头像URL
+    // Safely get user avatar URL
     let avatarHtml = '<i class="bi bi-person-circle me-2 fs-5"></i>';
     if (review.avatar && typeof review.avatar === 'string') {
       try {
-        // 尝试将头像URL解析为有效URL
+        // Try to parse avatar URL as valid URL
         new URL(review.avatar);
         avatarHtml = `<img src="${review.avatar}" alt="${review.username}" class="user-thumbnail me-2" onerror="this.onerror=null; this.src='../../images/user-placeholder.png'; this.style.display='none'; this.parentNode.innerHTML='<i class=\\'bi bi-person-circle me-2 fs-5\\'></i>';">`;
       } catch (e) {
@@ -409,9 +409,9 @@ function viewReview(reviewId) {
   
   // Set product image
   const productImage = document.getElementById('view-product-img');
-  productImage.style.display = 'none'; // 默认隐藏，如果有有效图片再显示
+  productImage.style.display = 'none'; // Hide by default, show only if valid image exists
   
-  // 获取产品图片，优先使用products列表中的图片，如果没有则使用API返回的product_image
+  // Get product image, prioritize from products list, fallback to API-returned product_image
   let imageUrl = '';
   if (product && product.images && product.images.length > 0 && typeof product.images[0] === 'string') {
     imageUrl = product.images[0];
@@ -438,7 +438,7 @@ function viewReview(reviewId) {
   
   // Set user image
   const userImage = document.getElementById('view-user-img');
-  userImage.style.display = 'none'; // 默认隐藏
+  userImage.style.display = 'none'; // Hide by default
   
   if (review.avatar && typeof review.avatar === 'string') {
     try {
@@ -499,9 +499,9 @@ function editReview(reviewId) {
   
   // Set product image
   const productImage = document.getElementById('edit-product-img');
-  productImage.style.display = 'none'; // 默认隐藏
+  productImage.style.display = 'none'; // Hide by default
   
-  // 获取产品图片，优先使用products列表中的图片，如果没有则使用API返回的product_image
+  // Get product image, prioritize from products list, fallback to API-returned product_image
   let imageUrl = '';
   if (product && product.images && product.images.length > 0 && typeof product.images[0] === 'string') {
     imageUrl = product.images[0];
@@ -527,7 +527,7 @@ function editReview(reviewId) {
   
   // Set user image
   const userImage = document.getElementById('edit-user-img');
-  userImage.style.display = 'none'; // 默认隐藏
+  userImage.style.display = 'none'; // Hide by default
   
   if (review.avatar && typeof review.avatar === 'string') {
     try {
