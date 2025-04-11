@@ -411,7 +411,7 @@ function viewReview(reviewId) {
   const productImage = document.getElementById('view-product-img');
   productImage.style.display = 'none'; // 默认隐藏，如果有有效图片再显示
   
-  // 获取产品图片，优先使用products列表中的图片，如果没有则使用API返回的product_image
+  // get product image
   let imageUrl = '';
   if (product && product.images && product.images.length > 0 && typeof product.images[0] === 'string') {
     imageUrl = product.images[0];

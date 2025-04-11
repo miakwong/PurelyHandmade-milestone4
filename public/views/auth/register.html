@@ -208,7 +208,7 @@
     }
 
     try {
-      // 添加详细的调试日志
+      // add debug log
       console.log('Form data collected:', formData);
 
       // Prepare user data for registration
@@ -227,7 +227,7 @@
 
       console.log('Sending registration data:', userData);
 
-      // 检查函数是否存在
+      // check if getApiUrl is defined
       if (typeof getApiUrl !== 'function') {
         console.error('getApiUrl function is not defined');
         getApiUrl = function (endpoint) {

@@ -32,9 +32,9 @@ function showToast(message, type = 'success') {
   toast.style.position = 'relative';
   
   if (type === 'success') {
-    toast.style.borderLeft = '4px solid #198754';
+    toast.style.borderLeft = '4px solid #75b798';
   } else if (type === 'error') {
-    toast.style.borderLeft = '4px solid #dc3545';
+    toast.style.borderLeft = '4px solid #e29da5';
   }
   
   // Add content
