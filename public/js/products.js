@@ -76,6 +76,9 @@ function loadProducts() {
           return product;
         });
         
+        // 初始化产品每页显示数量的事件监听
+        initializeProductsPerPage();
+        
         applyFiltersAndSort();
       } else {
         console.error('Error loading products:', res.message);
@@ -482,9 +485,35 @@ function initializeFilterAccordion() {
     saleCheckbox.addEventListener('change', applyFiltersAndSort);
   }
   
+  // Sort select
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', applyFiltersAndSort);
+  }
+  
   // Reset filter button
   const resetButton = document.getElementById('reset-filters');
   if (resetButton) {
     resetButton.addEventListener('click', resetFilters);
+  }
+}
+
+// 初始化每页产品数量选择器
+function initializeProductsPerPage() {
+  const productsPerPageSelect = document.getElementById('products-per-page');
+  if (productsPerPageSelect) {
+    // 设置初始值
+    const selectedValue = parseInt(productsPerPageSelect.value);
+    if (window.setProductsPerPage && !isNaN(selectedValue)) {
+      window.setProductsPerPage(selectedValue);
+    }
+    
+    // 添加事件监听
+    productsPerPageSelect.addEventListener('change', function() {
+      const value = parseInt(this.value);
+      if (window.setProductsPerPage && !isNaN(value)) {
+        window.setProductsPerPage(value);
+      }
+    });
   }
 } 

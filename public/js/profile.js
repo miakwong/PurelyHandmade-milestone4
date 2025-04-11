@@ -85,6 +85,11 @@ function loadUserProfile() {
     let targetUserId = currentUserId;
     const isAdmin = statusData.data.user.isAdmin;
     
+    console.log('Admin status from auth.php:', {
+      isAdmin: isAdmin,
+      userData: statusData.data.user
+    });
+    
     if (urlUserId && urlUserId !== currentUserId.toString()) {
       if (isAdmin) {
         // 管理员可以查看任何用户
@@ -106,6 +111,15 @@ function loadUserProfile() {
       console.log('Using user data from auth status check');
       // 直接使用auth.php返回的用户数据
       const userData = statusData.data.user;
+      
+      // 确保管理员状态被正确设置
+      const isUserAdmin = userData.isAdmin === true;
+      console.log('Setting user admin status:', {
+        originalIsAdmin: userData.isAdmin,
+        convertedIsAdmin: isUserAdmin,
+        user: userData
+      });
+      
       currentUser = {
         id: userData.id,
         username: userData.username,
@@ -114,8 +128,8 @@ function loadUserProfile() {
         avatar: userData.avatar,
         birthday: userData.birthday,
         gender: userData.gender,
-        role: userData.isAdmin ? 'admin' : 'user',
-        is_admin: userData.isAdmin,
+        role: isUserAdmin ? 'admin' : 'user',
+        is_admin: isUserAdmin,
         created_at: userData.joinDate
       };
       
@@ -123,12 +137,31 @@ function loadUserProfile() {
       displayUserData();
       
       // 如果是管理员，显示管理员标签页
-      if (userData.isAdmin) {
+      if (isUserAdmin) {
+        console.log('User is admin - showing admin tab and dashboard button');
+        
+        // 显示管理员标签页
         const adminTabContainer = document.getElementById('admin-tab-container');
         if (adminTabContainer) {
           adminTabContainer.style.display = 'block';
           loadAdminSections();
+        } else {
+          console.warn('Admin tab container element not found');
         }
+        
+        // 显示管理员仪表板按钮
+        const adminDashboardBtnContainer = document.getElementById('admin-dashboard-btn-container');
+        if (adminDashboardBtnContainer) {
+          console.log('Found admin dashboard button container - setting to display:block');
+          adminDashboardBtnContainer.style.display = 'block';
+          
+          // 添加一些突出显示的样式
+          adminDashboardBtnContainer.classList.add('p-3', 'bg-light', 'rounded', 'mb-3');
+        } else {
+          console.warn('Admin dashboard button container element not found');
+        }
+      } else {
+        console.log('User is NOT admin - hiding admin elements');
       }
       
       // 加载用户地址
@@ -329,6 +362,41 @@ function displayUserData() {
       profileImg.src = currentUser.image_url;
     }
     // 如果没有设置头像，保留默认图片
+  }
+  
+  // 检查用户是否为管理员，显示/隐藏管理员仪表板按钮
+  const adminDashboardBtnContainer = document.getElementById('admin-dashboard-btn-container');
+  if (adminDashboardBtnContainer) {
+    // 检查用户角色是否为管理员
+    const isAdmin = currentUser.role === 'admin' || currentUser.is_admin === true;
+    console.log('Admin status check in displayUserData:', {
+      role: currentUser.role,
+      is_admin: currentUser.is_admin,
+      isAdmin: isAdmin,
+      userData: currentUser
+    });
+    adminDashboardBtnContainer.style.display = isAdmin ? 'block' : 'none';
+    
+    // 强制设置为显示状态，用于调试
+    if(isAdmin) {
+      console.log('Setting admin dashboard button to be visible - FORCE DISPLAY');
+      adminDashboardBtnContainer.style.display = 'block';
+      
+      // 为确保按钮可见，还将其移到页面更明显的位置
+      const parentElement = adminDashboardBtnContainer.parentElement;
+      if (parentElement) {
+        parentElement.insertBefore(adminDashboardBtnContainer, parentElement.firstChild);
+        
+        // 添加一些突出显示的样式
+        adminDashboardBtnContainer.classList.add('p-3', 'bg-light', 'rounded', 'mb-3');
+        
+        // 使用timeout确保样式应用后的状态
+        setTimeout(() => {
+          console.log('Admin button visibility:', adminDashboardBtnContainer.offsetParent !== null);
+          console.log('Admin button computed style:', window.getComputedStyle(adminDashboardBtnContainer).display);
+        }, 1000);
+      }
+    }
   }
   
   // 更新编辑表单字段

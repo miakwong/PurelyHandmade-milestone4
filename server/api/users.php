@@ -1,10 +1,14 @@
 <?php
 // Users API
-// Initialize error handling
-ini_set('display_errors', 1);
+// Initialize error handling - move error logging setup to the very top of the file
+ini_set('display_errors', 0); // Change to 0 to prevent errors from being sent to output
 ini_set('log_errors', 1);
 ini_set('error_log', '../logs/php_errors.log');
 error_reporting(E_ALL);
+
+// Ensure no whitespace or BOM marks at the start of the file
+// Start output buffering to catch any unexpected output
+ob_start();
 
 require_once '../includes/config.php';
 require_once '../includes/db.php';
@@ -38,7 +42,15 @@ switch ($_SERVER['REQUEST_METHOD']) {
         } else {
             // Admin access required for listing all users
             checkAuth();
-            checkAdmin();
+            error_log("User ID: " . $_SESSION['user_id'] . " attempting to access users list");
+            error_log("Is admin flag in session: " . ($_SESSION['is_admin'] ? 'true' : 'false'));
+            
+            if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
+                error_log("Access denied: User is not an admin");
+                jsonResponse(false, 'Admin privileges required', null, 403);
+                exit;
+            }
+            
             getUsers();
         }
         break;
@@ -107,92 +119,120 @@ switch ($_SERVER['REQUEST_METHOD']) {
 
 // Get all users admin only
 function getUsers() {
-    $search = isset($_GET['search']) ? sanitize($_GET['search']) : null;
-    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
-    $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-    
-    // Base query - 使用正确的列名
-    $sql = "SELECT id, username, email, name, avatar, birthday, gender, role, created_at 
-            FROM users 
-            WHERE 1=1";
-    $params = [];
-    
-    // Add search filter
-    if ($search) {
-        $sql .= " AND (username LIKE ? OR email LIKE ? OR name LIKE ?)";
-        $searchParam = "%" . $search . "%";
-        $params[] = $searchParam;
-        $params[] = $searchParam;
-        $params[] = $searchParam;
-    }
-    
-    // Add sorting
-    $sql .= " ORDER BY created_at DESC";
-    
-    // Add limit and offset
-    $sql .= " LIMIT ? OFFSET ?";
-    $params[] = $limit;
-    $params[] = $offset;
-    
-    // Execute query
-    $pdo = getConnection();
-    $stmt = $pdo->prepare($sql);
-    
-    $stmt->execute($params);
-    
-    $users = [];
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        // 添加first_name和last_name字段
-        if (isset($row['name'])) {
-            $nameParts = explode(' ', $row['name'], 2);
-            $row['first_name'] = $nameParts[0];
-            $row['last_name'] = isset($nameParts[1]) ? $nameParts[1] : '';
-        } else {
-            $row['first_name'] = '';
-            $row['last_name'] = '';
+    try {
+        $search = isset($_GET['search']) ? sanitize($_GET['search']) : null;
+        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
+        
+        // Base query - 使用正确的列名
+        $sql = "SELECT id, username, email, name, avatar, birthday, gender, role, created_at 
+                FROM users 
+                WHERE 1=1";
+        $params = [];
+        
+        // Add search filter
+        if ($search) {
+            $sql .= " AND (username LIKE ? OR email LIKE ? OR name LIKE ?)";
+            $searchParam = "%" . $search . "%";
+            $params[] = $searchParam;
+            $params[] = $searchParam;
+            $params[] = $searchParam;
         }
         
-        // 处理头像URL
-        if (!empty($row['avatar'])) {
-            $row['image_url'] = $row['avatar'];
-        } else {
-            $row['image_url'] = ASSETS_URL . '/img/default-avatar.png';
+        // Add sorting
+        $sql .= " ORDER BY created_at DESC";
+        
+        // Add limit and offset - using integers, not string placeholders
+        $sql .= " LIMIT " . $limit . " OFFSET " . $offset;
+        
+        // Execute query
+        $pdo = getConnection();
+        if (!$pdo) {
+            throw new Exception("Database connection failed");
         }
         
-        // 处理is_admin兼容性
-        $row['is_admin'] = (strtolower($row['role']) === 'admin');
-        $row['is_active'] = true; // 假设所有用户都是活跃的
+        $stmt = $pdo->prepare($sql);
+        if (!$stmt) {
+            throw new Exception("Failed to prepare statement: " . print_r($pdo->errorInfo(), true));
+        }
         
-        // Remove sensitive fields
-        unset($row['password']);
+        // Debug log the SQL query and params
+        error_log("Users SQL Query: " . $sql);
+        error_log("Users SQL Params: " . print_r($params, true));
         
-        $users[] = $row;
+        if (!$stmt->execute($params)) {
+            throw new Exception("Failed to execute query: " . print_r($stmt->errorInfo(), true));
+        }
+        
+        $users = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            // 添加first_name和last_name字段
+            if (isset($row['name'])) {
+                $nameParts = explode(' ', $row['name'], 2);
+                $row['first_name'] = $nameParts[0];
+                $row['last_name'] = isset($nameParts[1]) ? $nameParts[1] : '';
+            } else {
+                $row['first_name'] = '';
+                $row['last_name'] = '';
+            }
+            
+            // 处理头像URL
+            if (!empty($row['avatar'])) {
+                $row['image_url'] = $row['avatar'];
+            } else {
+                $row['image_url'] = ASSETS_URL . '/img/default-avatar.png';
+            }
+            
+            // 处理is_admin兼容性
+            $row['is_admin'] = (strtolower($row['role']) === 'admin');
+            $row['is_active'] = true; // 假设所有用户都是活跃的
+            
+            // Remove sensitive fields
+            unset($row['password']);
+            
+            $users[] = $row;
+        }
+        
+        // Count total users for pagination
+        $countSql = "SELECT COUNT(*) as total FROM users WHERE 1=1";
+        $countParams = [];
+        
+        if ($search) {
+            $countSql .= " AND (username LIKE ? OR email LIKE ? OR name LIKE ?)";
+            $searchParam = "%" . $search . "%";
+            $countParams[] = $searchParam;
+            $countParams[] = $searchParam;
+            $countParams[] = $searchParam;
+        }
+        
+        $countStmt = $pdo->prepare($countSql);
+        if (!$countStmt->execute($countParams)) {
+            throw new Exception("Failed to execute count query: " . print_r($countStmt->errorInfo(), true));
+        }
+        
+        $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+        
+        // Clear any output buffer before sending JSON
+        if (ob_get_length()) {
+            ob_clean();
+        }
+        
+        jsonResponse(true, 'Users retrieved successfully', [
+            'users' => $users,
+            'pagination' => [
+                'total' => (int)$totalCount,
+                'limit' => $limit,
+                'offset' => $offset
+            ]
+        ]);
+    } catch (Exception $e) {
+        error_log("Error in getUsers function: " . $e->getMessage());
+        // Clear any output buffer before sending JSON error
+        if (ob_get_length()) {
+            ob_clean();
+        }
+        jsonResponse(false, 'Error retrieving users: ' . $e->getMessage(), null, 500);
     }
-    
-    // Count total users for pagination
-    $countSql = "SELECT COUNT(*) as total FROM users WHERE 1=1";
-    $countParams = [];
-    
-    if ($search) {
-        $countSql .= " AND (username LIKE ? OR email LIKE ? OR name LIKE ?)";
-        $searchParam = "%" . $search . "%";
-        $countParams[] = $searchParam;
-        $countParams[] = $searchParam;
-        $countParams[] = $searchParam;
-    }
-    
-    $countStmt = $pdo->prepare($countSql);
-    $countStmt->execute($countParams);
-    $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
-    
-    jsonResponse(true, 'Users retrieved successfully', [
-        'users' => $users,
-        'pagination' => [
-            'total' => (int)$totalCount,
-            'limit' => $limit,
-            'offset' => $offset
-        ]
-    ]);
 }
 
 // Get user by ID

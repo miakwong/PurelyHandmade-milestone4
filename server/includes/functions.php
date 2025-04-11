@@ -14,13 +14,26 @@ require_once __DIR__ . '/db.php';
 
 // jsonResponse function
 function jsonResponse($success, $message, $data = null, $status = 200) {
+    // Clear any output buffer to ensure clean JSON
+    if (ob_get_length()) {
+        ob_clean();
+    }
+    
     http_response_code((int)$status);
     header('Content-Type: application/json');
-    echo json_encode([
+    
+    // Set proper character encoding
+    header('Content-Type: application/json; charset=utf-8');
+    
+    // Ensure we have a clean output
+    $response = [
         'success' => $success,
         'message' => $message,
         'data' => $data
-    ]);
+    ];
+    
+    // Use JSON_INVALID_UTF8_SUBSTITUTE to handle any invalid UTF-8 characters
+    echo json_encode($response, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
     exit;
 }
 
