@@ -325,8 +325,24 @@ function saveUserChanges() {
     userData.password = password;
   }
   
-  // Update user
-  api.users.updateUserById(userId, userData)
+  console.log('Updating user with ID:', userId);
+  console.log('User data being sent:', userData);
+  
+  // First check login status to ensure we have valid session
+  api.auth.checkLoginStatus()
+    .then(status => {
+      console.log('Current login status:', status);
+      if (!status.success || !status.data.isLoggedIn) {
+        throw new Error('You must be logged in to update users');
+      }
+      
+      console.log('User is logged in, admin status:', status.data.user.isAdmin);
+      // Add the user ID to the request data to ensure server knows which user to update
+      userData.user_id = userId;
+      
+      // Proceed with update if logged in
+      return api.users.updateUserById(userId, userData);
+    })
     .then(res => {
       if (res.success) {
         // Hide modal
@@ -345,7 +361,27 @@ function saveUserChanges() {
     })
     .catch(error => {
       console.error('Error updating user:', error);
-      alert('Error updating user: ' + (error.message || 'Unknown error'));
+      
+      // Special handling for 403 Forbidden errors
+      if (error.message && error.message.includes('403 Forbidden')) {
+        // Try to refresh login status and show detailed error
+        api.auth.checkLoginStatus()
+          .then(status => {
+            console.log('Refreshed login status:', status);
+            let errorMsg = 'Permission denied: You do not have admin privileges to update this user. Please refresh the page and try again.';
+            if (status.success && status.data.isLoggedIn) {
+              errorMsg += ' You are logged in as: ' + status.data.user.username + 
+                          ' (Admin: ' + (status.data.user.isAdmin ? 'Yes' : 'No') + ')';
+            }
+            alert(errorMsg);
+          })
+          .catch(err => {
+            console.error('Failed to refresh login status:', err);
+            alert('Permission denied and failed to check current login status. Please refresh the page and try again.');
+          });
+      } else {
+        alert('Error updating user: ' + (error.message || 'Unknown error'));
+      }
     });
 }
 

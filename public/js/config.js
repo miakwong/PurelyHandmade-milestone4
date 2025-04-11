@@ -9,7 +9,22 @@ const config = {
   },
   
   get apiUrl() {
-    return this.production ? 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/api' : '/server/api';
+    if (this.production) {
+      return 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/api';
+    } else {
+      // Construct correct path based on current location
+      const pathSegments = window.location.pathname.split('/');
+      const projectIndex = pathSegments.findIndex(segment => segment === 'PurelyHandmade');
+      
+      if (projectIndex !== -1) {
+        // We found "PurelyHandmade" in path, so construct relative URL
+        const basePath = '/' + pathSegments.slice(0, projectIndex + 1).join('/');
+        return `${basePath}/server/api`;
+      } else {
+        // Fallback to original path
+        return '/~miakuang/PurelyHandmade/server/api';
+      }
+    }
   },
   
   get uploadsUrl() {

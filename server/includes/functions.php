@@ -49,7 +49,51 @@ function isLoggedIn() {
 
 // admin status check function
 function isAdmin() {
-    return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
+    error_log("isAdmin check - session user_id: " . ($_SESSION['user_id'] ?? 'not set'));
+    error_log("isAdmin check - session is_admin: " . (isset($_SESSION['is_admin']) ? (is_bool($_SESSION['is_admin']) ? ($_SESSION['is_admin'] ? 'true' : 'false') : $_SESSION['is_admin']) : 'not set'));
+    
+    // First check for explicit admin flag
+    if (isset($_SESSION['is_admin']) && ($_SESSION['is_admin'] === true || $_SESSION['is_admin'] === 1 || $_SESSION['is_admin'] === '1' || $_SESSION['is_admin'] == true)) {
+        error_log("isAdmin returning true from session flag (value: " . (is_bool($_SESSION['is_admin']) ? 'bool:' . ($_SESSION['is_admin'] ? 'true' : 'false') : $_SESSION['is_admin']) . ")");
+        return true;
+    }
+    
+    // Check role field in session if it exists
+    if (isset($_SESSION['role']) && strtolower($_SESSION['role']) === 'admin') {
+        error_log("isAdmin returning true from session role");
+        $_SESSION['is_admin'] = true; // Update session for future checks
+        return true;
+    }
+    
+    // If we have a user ID, check the database as a fallback
+    if (isset($_SESSION['user_id'])) {
+        try {
+            $pdo = getConnection();
+            if ($pdo) {
+                $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+                if ($stmt->execute([$_SESSION['user_id']])) {
+                    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                    error_log("isAdmin database check - user role: " . ($user ? $user['role'] : 'user not found'));
+                    if ($user && strtolower($user['role']) === 'admin') {
+                        // Update session with correct admin status
+                        $_SESSION['is_admin'] = true;
+                        $_SESSION['role'] = 'admin';
+                        error_log("isAdmin updating session is_admin to true and returning true");
+                        return true;
+                    }
+                } else {
+                    error_log("isAdmin database query failed: " . print_r($stmt->errorInfo(), true));
+                }
+            } else {
+                error_log("isAdmin database connection failed");
+            }
+        } catch (Exception $e) {
+            error_log("Error checking admin status: " . $e->getMessage());
+        }
+    }
+    
+    error_log("isAdmin returning false");
+    return false;
 }
 
 // require for login function
@@ -194,7 +238,19 @@ function checkAuth() {
 
 //check admin function
 function checkAdmin() {
-    if (!isAdmin()) {
-        jsonResponse(['error' => 'Admin privileges required'], 403);
+    error_log("checkAdmin called - session ID: " . session_id());
+    error_log("SESSION data: " . print_r($_SESSION, true));
+    
+    $isAdminResult = isAdmin();
+    error_log("isAdmin() result: " . ($isAdminResult ? 'true' : 'false'));
+    
+    if (!$isAdminResult) {
+        error_log("Access denied by checkAdmin: User is not an admin");
+        // Provide more diagnostic information in response
+        $userInfo = "User ID: " . ($_SESSION['user_id'] ?? 'not set');
+        $sessionFlags = "is_admin: " . (isset($_SESSION['is_admin']) ? (is_bool($_SESSION['is_admin']) ? ($_SESSION['is_admin'] ? 'true' : 'false') : $_SESSION['is_admin']) : 'not set');
+        $sessionFlags .= ", role: " . ($_SESSION['role'] ?? 'not set');
+        
+        jsonResponse(false, 'Admin privileges required. ' . $userInfo . '. ' . $sessionFlags, null, 403);
     }
 } 

@@ -248,7 +248,7 @@ function updateDropdownMenu(userDropdown, dropdownMenu, user) {
     // Construct URLs using config baseUrl and user ID
     const profileUrl = `${baseUrl}/public/views/auth/profile.html?id=${userId}`;
     const ordersUrl = `${baseUrl}/public/views/user/orders.html`;
-    const adminUrl = `${baseUrl}/public/views/admin/dashboard.html`;
+    const adminUrl = `${baseUrl}/public/views/admin/admin_dashboard.html`;
 
     // Update dropdown menu items
     dropdownMenu.innerHTML = `

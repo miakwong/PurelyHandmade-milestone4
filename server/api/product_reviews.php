@@ -2,7 +2,7 @@
 // Reviews API
 
 // Initialize error handling
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', '../logs/php_errors.log');
 error_reporting(E_ALL);
@@ -29,6 +29,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 // Get product ID from query string if available
 $productId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : null;
 $reviewId = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
 $action = isset($_GET['action']) ? $_GET['action'] : null;
 
 // Handle request based on HTTP method
@@ -38,6 +39,9 @@ try {
             if ($action === 'count') {
                 // Handle count action - get total review count
                 getTotalReviewCount();
+            } else if ($action === 'get_user_reviews') {
+                // Get reviews by user ID
+                getUserReviews($userId);
             } else {
                 handleGetRequest($productId, $reviewId);
             }
@@ -45,15 +49,28 @@ try {
             
         case 'POST':
             requireLogin();
-            handlePostRequest();
+            if ($action === 'update' && $reviewId !== null) {
+                // Handle update request (replacement for PUT)
+                handleUpdateRequest($reviewId);
+            } else if ($action === 'delete' && $reviewId !== null) {
+                // Handle delete request (replacement for DELETE)
+                handleDeleteRequest($reviewId);
+            } else {
+                // Handle create new review
+                handlePostRequest();
+            }
             break;
             
         case 'PUT':
+            // Deprecated - Use POST with action=update instead
+            error_log("PUT method received - Using this method is deprecated. Use POST with action=update instead.");
             requireLogin();
-            handlePutRequest($reviewId);
+            handleUpdateRequest($reviewId);
             break;
             
         case 'DELETE':
+            // Deprecated - Use POST with action=delete instead
+            error_log("DELETE method received - Using this method is deprecated. Use POST with action=delete instead.");
             requireLogin();
             handleDeleteRequest($reviewId);
             break;
@@ -67,11 +84,7 @@ try {
     jsonResponse(false, "Server error occurred: " . $e->getMessage(), null, 500);
 }
 
-/**
- * Get total count of reviews
- * 
- * @return void
- */
+//Get total count of reviews
 function getTotalReviewCount() {
     try {
         $pdo = getConnection();
@@ -95,13 +108,7 @@ function getTotalReviewCount() {
     }
 }
 
-/**
- * Handle GET request
- * 
- * @param int|null $productId Product ID
- * @param int|null $reviewId Review ID
- * @return void
- */
+//Handle GET request
 function handleGetRequest($productId, $reviewId) {
     // Get a single review by ID
     if ($reviewId !== null) {
@@ -128,7 +135,7 @@ function handleGetRequest($productId, $reviewId) {
         }
     }
     
-    // Get all reviews for admin (no product ID specified, but need admin access)
+    // Get all reviews for admin (need admin access)
     if ($productId === null) {
         try {
             // Check if user is admin
@@ -223,11 +230,7 @@ function handleGetRequest($productId, $reviewId) {
     }
 }
 
-/**
- * Handle POST request
- * 
- * @return void
- */
+// Handle POST request
 function handlePostRequest() {
     // Get JSON input data
     $data = getJsonInput();
@@ -382,7 +385,7 @@ function updateProductRating($productId) {
  * @param int $reviewId Review ID
  * @return void
  */
-function handlePutRequest($reviewId) {
+function handleUpdateRequest($reviewId) {
     // Check if review ID is provided
     if ($reviewId === null) {
         errorResponse('Review ID is required', 400);
@@ -449,7 +452,7 @@ function handlePutRequest($reviewId) {
         // Return the updated review
         jsonResponse(true, "Review updated successfully", $updatedReview, 200);
     } catch (PDOException $e) {
-        error_log("Database Error in handlePutRequest: " . $e->getMessage());
+        error_log("Database Error in handleUpdateRequest: " . $e->getMessage());
         errorResponse('Failed to update review', 500);
     }
 }
@@ -530,4 +533,43 @@ function getEmptyStats() {
             '1_star' => 0
         ]
     ];
+}
+
+/**
+ * Get reviews by user ID
+ * 
+ * @param int|null $userId User ID
+ * @return void
+ */
+function getUserReviews($userId) {
+    if ($userId === null) {
+        errorResponse('User ID is required', 400);
+        return;
+    }
+    
+    try {
+        error_log("Getting reviews for user ID: " . $userId);
+        $pdo = getConnection();
+        if (!$pdo) {
+            error_log("Database connection failed in user reviews retrieval");
+            jsonResponse(false, "Database connection failed", null, 500);
+            return;
+        }
+        
+        // Get reviews with product information
+        $stmt = $pdo->prepare("SELECT r.*, p.name as product_name, p.image as product_image 
+                              FROM product_reviews r 
+                              LEFT JOIN products p ON r.product_id = p.id 
+                              WHERE r.user_id = ? 
+                              ORDER BY r.created_at DESC");
+        $stmt->execute([$userId]);
+        $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        error_log("Found " . count($reviews) . " reviews for user");
+        
+        jsonResponse(true, "User reviews loaded", $reviews, 200);
+    } catch (PDOException $e) {
+        error_log("Database Error in user reviews retrieval: " . $e->getMessage());
+        jsonResponse(false, "Failed to load reviews: " . $e->getMessage(), null, 500);
+    }
 }

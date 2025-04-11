@@ -6,7 +6,17 @@ const apiUrl = (endpoint) => {
     if (window.config && window.config.apiUrl) {
         baseUrl = window.config.apiUrl;
     } else {
-        baseUrl = API_URL;
+        // Fallback if config is not loaded yet
+        const pathSegments = window.location.pathname.split('/');
+        const projectIndex = pathSegments.findIndex(segment => segment === 'PurelyHandmade');
+        
+        if (projectIndex !== -1) {
+            // We found "PurelyHandmade" in path, so construct relative URL
+            const basePath = '/' + pathSegments.slice(0, projectIndex + 1).join('/');
+            baseUrl = `${basePath}/server/api`;
+        } else {
+            baseUrl = API_URL;
+        }
     }
     
     // Remove trailing slash from base URL if present
@@ -38,6 +48,9 @@ const get = async (endpoint, params = {}) => {
 // POST request
 const post = async (endpoint, data = null, formData = null) => {
     try {
+        console.log(`Making POST request to ${apiUrl(endpoint)}`);
+        if (data) console.log('POST data:', data);
+        
         const options = {
             method: 'POST',
             credentials: 'include'
@@ -48,7 +61,9 @@ const post = async (endpoint, data = null, formData = null) => {
             options.headers = { 'Content-Type': 'application/json' };
             options.body = JSON.stringify(data);
         }
+        
         const response = await fetch(apiUrl(endpoint), options);
+        console.log(`POST response status: ${response.status} ${response.statusText}`);
         return handleResponse(response);
     } catch (error) {
         console.error("API POST error:", error);
@@ -59,12 +74,17 @@ const post = async (endpoint, data = null, formData = null) => {
 // PUT request
 const put = async (endpoint, data) => {
     try {
+        console.log(`Making PUT request to ${apiUrl(endpoint)} with data:`, data);
         const response = await fetch(apiUrl(endpoint), {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache' 
+            },
             credentials: 'include',
             body: JSON.stringify(data)
         });
+        console.log(`PUT response status: ${response.status} ${response.statusText}`);
         return handleResponse(response);
     } catch (error) {
         console.error("API PUT error:", error);
@@ -152,7 +172,11 @@ const auth = {
     checkLoginStatus: async () => {
         try {
             console.log('Checking login status...');
-            const response = await fetch(apiUrl('auth.php?action=status'), {
+            // Use a more reliable URL construction
+            const statusUrl = apiUrl('auth.php?action=status');
+            console.log('Login status URL:', statusUrl);
+            
+            const response = await fetch(statusUrl, {
                 method: 'GET',
                 credentials: 'include',
                 headers: {
@@ -164,7 +188,13 @@ const auth = {
             return await handleResponse(response);
         } catch (error) {
             console.error('Login status check error:', error);
-            return { success: false, message: 'Failed to check login status', error: error.message };
+            // Return a more informative error response
+            return { 
+                success: false, 
+                message: 'Failed to check login status', 
+                error: error.message,
+                isLoggedIn: false
+            };
         }
     }
 };
