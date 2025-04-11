@@ -123,36 +123,6 @@ function loadUserProfile() {
       // display the user data
       displayUserData();
       
-      // Load user reviews
-      loadUserReviews();
-      
-      if (isUserAdmin) {
-        console.log('User is admin - showing admin tab and dashboard button');
-        
-        // display the admin tab and dashboard button
-        const adminTabContainer = document.getElementById('admin-tab-container');
-        if (adminTabContainer) {
-          adminTabContainer.style.display = 'block';
-          loadAdminSections();
-        } else {
-          console.warn('Admin tab container element not found');
-        }
-        
-        // display the admin dashboard button
-        const adminDashboardBtnContainer = document.getElementById('admin-dashboard-btn-container');
-        if (adminDashboardBtnContainer) {
-          console.log('Found admin dashboard button container - setting to display:block');
-          adminDashboardBtnContainer.style.display = 'block';
-          
-          // add some highlighted styles
-          adminDashboardBtnContainer.classList.add('p-3', 'bg-light', 'rounded', 'mb-3');
-        } else {
-          console.warn('Admin dashboard button container element not found');
-        }
-      } else {
-        console.log('User is NOT admin - hiding admin elements');
-      }
-      
       return;
     }
     
@@ -1161,6 +1131,14 @@ function updateReview() {
   const rating = document.getElementById('review-rating').value;
   const reviewText = document.getElementById('review-text').value;
   
+  // 添加日志记录
+  console.log('Updating review:', {
+    reviewId,
+    productId,
+    rating,
+    reviewText
+  });
+  
   // Validation
   if (!rating) {
     showError('review-error', 'Please select a rating');
@@ -1178,8 +1156,12 @@ function updateReview() {
   updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
   
   // Call API to update review using api client
+  console.log('Calling API to update review...');
   api.reviews.updateReview(reviewId, rating, reviewText)
     .then(data => {
+      // 记录API响应
+      console.log('Review update API response:', data);
+      
       // Reset button
       updateBtn.disabled = false;
       updateBtn.innerHTML = 'Save Review';
@@ -1207,11 +1189,13 @@ function updateReview() {
       }
     })
     .catch(error => {
+      // 记录错误信息
+      console.error('Error updating review:', error);
+      
       // Reset button
       updateBtn.disabled = false;
       updateBtn.innerHTML = 'Save Review';
       
-      console.error('Error updating review:', error);
       showError('review-error', error.message || 'Error updating review. Please try again.');
     });
 }
