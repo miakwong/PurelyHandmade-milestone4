@@ -122,7 +122,9 @@ try {
         order_number VARCHAR(50) NOT NULL UNIQUE,
         total_amount DECIMAL(10, 2) NOT NULL,
         status VARCHAR(20) DEFAULT 'pending',
+        admin_notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     echo "Table created: orders\n";
