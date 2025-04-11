@@ -2,10 +2,20 @@ const API_URL = '/~miakuang/PurelyHandmade/server/api/';
 
 // Get full API URL
 const apiUrl = (endpoint) => {
+    let baseUrl = '';
     if (window.config && window.config.apiUrl) {
-        return window.config.apiUrl + '/' + endpoint;
+        baseUrl = window.config.apiUrl;
+    } else {
+        baseUrl = API_URL;
     }
-    return API_URL + endpoint;
+    
+    // Remove trailing slash from base URL if present
+    baseUrl = baseUrl.replace(/\/+$/, '');
+    
+    // Remove leading slash from endpoint if present
+    const cleanEndpoint = endpoint.replace(/^\/+/, '');
+    
+    return baseUrl + '/' + cleanEndpoint;
 };
 
 // GET request
@@ -79,17 +89,34 @@ const del = async (endpoint) => {
 // Handle API response
 const handleResponse = async (response) => {
     if (!response.ok) {
+        console.error(`API error: ${response.status} ${response.statusText}`);
         let errorData;
         try {
-            errorData = await response.json();
+            const text = await response.text();
+            console.log('Error response text:', text);
+            
+            try {
+                errorData = JSON.parse(text);
+            } catch (parseError) {
+                throw new Error(`API error: ${response.status} ${response.statusText} - Invalid JSON response`);
+            }
         } catch (e) {
             throw new Error(`API error: ${response.status} ${response.statusText}`);
         }
         throw new Error(errorData.message || `API error: ${response.status} ${response.statusText}`);
     }
+    
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
-        return await response.json();
+        try {
+            return await response.json();
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            // Try to read the raw text to see if there's other content
+            const text = await response.text();
+            console.error('Raw response causing JSON parse error:', text);
+            throw new Error('Invalid JSON response from server');
+        }
     }
     return await response.text();
 };
@@ -250,7 +277,7 @@ const categories = {
 
 // Users API
 const users = {
-    getUsers: async () => await get('users.php'),
+    getUsers: async (params = {}) => await get('users.php', params),
     getUser: async (id) => await get(`users.php?id=${id}`),
     updateUser: async (userData, userAvatar = null) => {
         if (userAvatar) {
@@ -275,18 +302,28 @@ const users = {
             return await post(`users.php?id=${id}`, null, formData);
         }
         return await put(`users.php?id=${id}`, userData);
-    }
+    },
+    deleteUser: async (id) => await post(`users.php?action=delete&id=${id}`)
 };
 
 // Orders API
 const orders = {
     createOrder: async (orderData) => await post('orders.php?action=create', orderData),
-    getUserOrders: async (userId) => await get(`orders.php?user_id=${userId}`)
+    getUserOrders: async (userId) => await get(`orders.php?user_id=${userId}`),
+    getAllOrders: async (params = {}) => await get('orders.php', params),
+    getOrderCount: async () => await get('orders.php?action=count'),
+    updateOrderStatus: async (orderId, status, adminNotes = '') => {
+        return await post(`orders.php?id=${orderId}&action=update`, {
+            status,
+            admin_notes: adminNotes
+        });
+    }
 };
 
 // Reviews API
 const reviews = {
     getProductReviews: async (productId) => await get(`product_reviews.php?product_id=${productId}`),
+    getAllReviews: async () => await get('product_reviews.php'),
     addReview: async (productId, rating, reviewText) => await post('product_reviews.php?action=add', { 
         product_id: productId, 
         rating, 
@@ -317,7 +354,8 @@ const api = {
     users,
     orders,
     reviews,
-    addresses
+    addresses,
+    apiUrl
 };
 
 // Make API global

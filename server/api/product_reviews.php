@@ -150,7 +150,7 @@ function handleGetRequest($productId, $reviewId) {
             $stmt = $pdo->prepare("SELECT r.*, 
                                   u.username, u.avatar,
                                   p.name as product_name,
-                                  p.image_url as product_image
+                                  p.image as product_image
                                   FROM product_reviews r 
                                   LEFT JOIN users u ON r.user_id = u.id 
                                   LEFT JOIN products p ON r.product_id = p.id 
