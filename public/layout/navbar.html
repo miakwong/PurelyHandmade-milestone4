@@ -1,0 +1,59 @@
+<head>
+  <!-- Google Material Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="/~miakuang/PurelyHandmade/css/navbar.css" id="navbar-css">
+</head>
+<!-- Top Navigation Bar -->
+<nav class="navbar navbar-light bg-light p-3">
+  <div class="container d-flex justify-content-between">
+    <a class="navbar-brand d-flex align-items-center" href="/~miakuang/PurelyHandmade/public/index.html">
+      <img src="/~miakuang/PurelyHandmade/server/uploads/images/logo.jpg" alt="Logo" width="50" id="navbar-logo">
+      <span class="ms-2 fs-4">Purely Homemade</span>
+    </a>
+
+    <!-- Search Bar -->
+    <form class="d-flex" action="/~miakuang/PurelyHandmade/public/index.html" method="GET">
+      <input class="form-control me-2" type="search" name="search" placeholder="Search products...">
+      <button class="btn btn-outline-primary" type="submit">🔍</button>
+    </form>
+
+    <!-- Login & Cart -->
+    <div class="d-flex align-items-center">
+      <!-- User Dropdown Menu -->
+      <div class="dropdown me-3">
+        <a href="#" class="btn btn-outline-secondary dropdown-toggle" id="userDropdown">
+          <i class="material-icons-outlined">account_circle</i>
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="userDropdown">
+          <li><a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/auth/login.html"
+              id="login-link">Login</a></li>
+          <li><a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/auth/register.html"
+              id="register-link">Register</a></li>
+        </ul>
+      </div>
+      <!-- Cart Icon - changed to button that toggles slide cart -->
+      <button class="btn btn-outline-primary" id="toggle-cart-btn">
+        <i class="material-icons-outlined">shopping_bag</i>
+        <span class="badge bg-danger rounded-pill" id="cart-count" style="display: none;">0</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Navigation Menu -->
+<div class="container-wrapper">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav w-100 d-flex justify-content-around">
+          <!-- Navigation items removed, using only the brand link in the top navbar -->
+        </ul>
+      </div>
+    </div>
+  </nav>
+</div>

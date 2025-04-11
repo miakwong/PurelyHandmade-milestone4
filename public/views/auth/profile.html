@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile - Purely Homemade</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link href="../../css/styles.css" rel="stylesheet">
+  <link href="../../css/cart-sidebar.css" rel="stylesheet">
+  <link href="../../css/profile.css" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Navbar Placeholder -->
+  <div id="navbar-placeholder"></div>
+
+  <!-- Cart Sidebar Placeholder -->
+  <div id="cart-sidebar-placeholder"></div>
+
+  <div class="container my-5">
+    <h1 class="mb-4">My Profile</h1>
+
+    <!-- Profile Overview Section -->
+    <div class="profile-section">
+      <div class="row">
+        <div class="col-md-3 text-center">
+          <div class="avatar-wrapper">
+            <img src="/~miakuang/PurelyHandmade/server/uploads/images/logo.jpg" alt="Profile Photo" id="profile-img"
+              class="profile-avatar">
+            <div class="avatar-overlay">
+              <i class="bi bi-camera"></i>
+            </div>
+            <input type="file" id="avatar-upload" accept="image/png, image/jpeg" hidden>
+          </div>
+          <h3 id="user-full-name" class="mt-3"></h3>
+          <p id="user-email" class="text-muted"></p>
+          <p class="mb-0"><small class="text-muted">Member since <span id="join-date"></span></small></p>
+
+          <!-- Admin Dashboard Button - Only visible for admins -->
+          <div id="admin-dashboard-btn-container" class="mt-3" style="display: none;">
+            <a href="../../views/admin/admin_dashboard.html" class="btn btn-primary btn-lg w-100">
+              <i class="bi bi-speedometer2 me-1"></i> Admin Dashboard
+            </a>
+          </div>
+        </div>
+        <div class="col-md-9">
+          <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal-info"
+                type="button" role="tab" aria-controls="personal-info" aria-selected="true">Personal Info</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button"
+                role="tab" aria-controls="reviews" aria-selected="false">Reviews</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button"
+                role="tab" aria-controls="security" aria-selected="false">Security</button>
+            </li>
+            <li class="nav-item" role="presentation" id="admin-tab-container" style="display: none;">
+              <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button"
+                role="tab" aria-controls="admin" aria-selected="false">Admin Features</button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="profileTabsContent">
+            <!-- Personal Info Tab -->
+            <div class="tab-pane fade show active" id="personal-info" role="tabpanel" aria-labelledby="personal-tab">
+              <div class="profile-header">
+                <h4></h4>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                  <i class="bi bi-pencil me-1"></i> Edit
+                </button>
+              </div>
+
+              <div class="profile-details">
+                <div class="detail-item">
+                  <div class="detail-label">First Name</div>
+                  <div class="detail-value" id="first-name"></div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Last Name</div>
+                  <div class="detail-value" id="last-name"></div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Email</div>
+                  <div class="detail-value" id="email-display"></div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Birthday</div>
+                  <div class="detail-value" id="birthday-display"></div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Gender</div>
+                  <div class="detail-value" id="gender-display"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Addresses Tab -->
+            <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+              <div class="profile-header">
+                <h4>My Reviews</h4>
+              </div>
+
+              <div id="reviews-container">
+                <!-- Reviews will be loaded here -->
+                <div class="no-reviews d-none">
+                  <i class="bi bi-chat-square-text display-4"></i>
+                  <p class="mt-3">You haven't written any reviews yet.</p>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Rating</th>
+                        <th>Review</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="reviewsTableBody">
+                      <!-- Review rows will be added here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+              <div class="profile-header">
+                <h4></h4>
+              </div>
+
+              <div class="mb-4">
+                <h5>Change Password</h5>
+                <form id="change-password-form">
+                  <div class="mb-3">
+                    <label for="current-password" class="form-label">Current Password</label>
+                    <input type="password" class="form-control" id="current-password" required>
+                  </div>
+                  <div class="mb-3">
+                    <label for="new-password" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="new-password" required>
+                  </div>
+                  <div class="mb-3">
+                    <label for="confirm-password" class="form-label">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirm-password" required>
+                  </div>
+                  <div id="password-error" class="alert alert-danger d-none"></div>
+                  <button type="submit" class="btn btn-primary">Update Password</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Admin Tab -->
+            <div class="tab-pane fade" id="admin" role="tabpanel" aria-labelledby="admin-tab">
+              <div class="profile-header">
+                <h4>Admin Features</h4>
+              </div>
+
+              <!-- Product Management Section -->
+              <div class="admin-section mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h4>Product Management</h4>
+                  <button class="btn btn-primary" onclick="resetProductForm()" data-bs-toggle="modal"
+                    data-bs-target="#productModal">
+                    <i class="bi bi-plus-circle me-1"></i> Add Product
+                  </button>
+                </div>
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="productTableBody">
+                      <!-- Product rows will be dynamically added here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- User Management Section -->
+              <div class="admin-section">
+                <h4>User Management</h4>
+                <div class="table-responsive">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                      <!-- User rows will be dynamically added here -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editProfileModalLabel">Edit Personal Information</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="profile-form">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="firstName" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="firstName" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="lastName" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="lastName" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email Address</label>
+              <input type="email" class="form-control" id="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="birthday" class="form-label">Birthday</label>
+              <input type="date" class="form-control" id="birthday" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Gender</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="gender" id="genderMale" value="male">
+                  <label class="form-check-label" for="genderMale">Male</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="female">
+                  <label class="form-check-label" for="genderFemale">Female</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="gender" id="genderOther" value="other">
+                  <label class="form-check-label" for="genderOther">Other</label>
+                </div>
+              </div>
+            </div>
+            <div id="profile-error" class="alert alert-danger d-none"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="save-profile">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Modal -->
+  <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="productModalLabel">Add New Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="productForm">
+            <input type="hidden" id="productId">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="mb-3">
+                  <label for="productName" class="form-label">Product Name</label>
+                  <input type="text" class="form-control" id="productName" required>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="productCategory" class="form-label">Category</label>
+                    <select class="form-select" id="productCategory" required>
+                      <option value="">Select Category</option>
+                      <!-- Categories will be loaded dynamically -->
+                    </select>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="productStock" class="form-label">Stock Quantity</label>
+                    <input type="number" class="form-control" id="productStock" min="0" required>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="productPrice" class="form-label">Price ($)</label>
+                    <input type="number" class="form-control" id="productPrice" min="0" step="0.01" required>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="productListingDate" class="form-label">Listing Date</label>
+                    <input type="datetime-local" class="form-control" id="productListingDate">
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="productDescription" class="form-label">Description</label>
+                  <textarea class="form-control" id="productDescription" rows="3" required></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="productDetails" class="form-label">Details</label>
+                  <textarea class="form-control" id="productDetails" rows="3"></textarea>
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="productOnSale">
+                      <label class="form-check-label" for="productOnSale">On Sale</label>
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="productSalePrice" class="form-label">Sale Price ($)</label>
+                    <input type="number" class="form-control" id="productSalePrice" min="0" step="0.01">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label class="form-label">Product Images</label>
+                  <div id="productImagesContainer">
+                    <!-- Image previews will be added here -->
+                  </div>
+                  <div class="d-grid mt-2">
+                    <button type="button" class="btn btn-outline-primary"
+                      onclick="document.getElementById('productImages').click()">
+                      <i class="bi bi-upload me-1"></i> Upload Images
+                    </button>
+                  </div>
+                  <input type="file" id="productImages" accept="image/*" multiple style="display: none">
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveProductBtn" onclick="saveProduct()">Save
+            Product</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Comments Modal -->
+  <div class="modal fade" id="productCommentsModal" tabindex="-1" aria-labelledby="productCommentsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="productCommentsModalLabel">Product Comments</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="productCommentsContainer">
+            <!-- Comments will be loaded here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Placeholder -->
+  <div id="footer-placeholder" class="mt-5"></div>
+
+  <!-- Edit Review Modal -->
+  <div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editReviewModalLabel">Edit Review</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="review-form">
+            <input type="hidden" id="review-id">
+            <input type="hidden" id="product-id">
+
+            <div class="mb-3">
+              <label class="form-label">Product</label>
+              <div id="product-name" class="form-control-plaintext"></div>
+            </div>
+
+            <div class="mb-3">
+              <label for="review-rating" class="form-label">Rating</label>
+              <div class="rating-input">
+                <div class="star-rating">
+                  <i class="bi bi-star" data-rating="1"></i>
+                  <i class="bi bi-star" data-rating="2"></i>
+                  <i class="bi bi-star" data-rating="3"></i>
+                  <i class="bi bi-star" data-rating="4"></i>
+                  <i class="bi bi-star" data-rating="5"></i>
+                </div>
+                <input type="hidden" id="review-rating" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="review-text" class="form-label">Review</label>
+              <textarea class="form-control" id="review-text" rows="4" required></textarea>
+            </div>
+
+            <div id="review-error" class="alert alert-danger d-none"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="update-review">Save Review</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Configuration and API -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api-client.js"></script>
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/navbar.js"></script>
+  <script src="../../js/cart.js"></script>
+  <script src="../../js/profile.js"></script>
+
+  <script>
+    // Load navbar and footer
+    loadLayoutComponents();
+
+    // Ensure navbar is initialized correctly after it's loaded
+    document.addEventListener('DOMContentLoaded', function () {
+      // Setup MutationObserver to watch for navbar loading
+      const navbarPlaceholder = document.getElementById('navbar-placeholder');
+      if (navbarPlaceholder) {
+        const observer = new MutationObserver(function (mutations) {
+          for (const mutation of mutations) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+              console.log('Navbar loaded in profile page, initializing');
+              if (typeof window.initializeNavbar === 'function') {
+                window.initializeNavbar();
+
+                // Explicitly check auth status after navbar is loaded
+                if (typeof window.checkAuthStatus === 'function') {
+                  setTimeout(function () {
+                    console.log('Explicitly checking auth status');
+                    window.checkAuthStatus();
+                  }, 100);
+                }
+              }
+              observer.disconnect();
+              break;
+            }
+          }
+        });
+
+        // Start observing the navbar placeholder
+        observer.observe(navbarPlaceholder, { childList: true, subtree: true });
+      }
+
+      // Start loading user profile data
+      if (typeof window.loadUserProfile === 'function') {
+        window.loadUserProfile();
+      }
+    });
+  </script>
+
+</body>
+
+</html>

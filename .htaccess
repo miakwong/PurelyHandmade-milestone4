@@ -1,0 +1,51 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /~miakuang/PurelyHandmade/
+
+    # Direct access to root should go to public/index.html
+    RewriteRule ^$ /~miakuang/PurelyHandmade/public/index.html [L,R=301]
+    
+    # Handle API requests
+    RewriteRule ^api/(.*)$ /~miakuang/PurelyHandmade/server/api/$1 [L]
+    
+    # Special rule for reviews.php to redirect to product_reviews.php
+    RewriteRule ^server/api/reviews.php$ /~miakuang/PurelyHandmade/server/api/product_reviews.php [L]
+
+    # Handle static files from server/uploads (make sure we are catching uploads first)
+    RewriteRule ^uploads/(.*)$ /~miakuang/PurelyHandmade/server/uploads/$1 [L]
+
+    # If the requested file exists in public/ serve it directly
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ /~miakuang/PurelyHandmade/public/$1 [L]
+    
+    # Default to index.html for any other requests
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ /~miakuang/PurelyHandmade/public/index.html [L]
+</IfModule>
+
+# Add CORS headers if needed
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Set default index files - Make sure public/index.html is first
+DirectoryIndex /~miakuang/PurelyHandmade/public/index.html /index.html /index.php
+
+# PHP settings
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
+
+# Error handling
+ErrorDocument 404 /~miakuang/PurelyHandmade/public/views/errors/404.html
+ErrorDocument 500 /~miakuang/PurelyHandmade/public/views/errors/500.html

@@ -1,21 +1,27 @@
-# macOS system files
-.DS_Store
-
-# IntelliJ IDEA
-*.iml
+# IDE configuration
 .idea/
-workspace.xml
-modules.xml
-vcs.xml
-
-# VSCode
 .vscode/
 
-# Node modules (if applicable)
-node_modules/
+#OS files
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# Python
-__pycache__/
-
-# Logs
+# Temporary files
+tmp/
+temp/
+*.tmp
 *.log
+
+# Uploaded files
+server/uploads/images/*
+!server/uploads/images/.gitkeep
+
+# Sensitive configuration files
+server/config/db_config.php
+
+# Dependencies and build directories
+node_modules/
+vendor/
+dist/
+build/

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Management - Purely Handmade</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="../../css/styles.css">
+  
+  <style>
+    .order-badge {
+      width: 100px;
+    }
+    
+    .order-details-row {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    .order-items {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .order-item-row {
+      border-bottom: 1px solid #eee;
+      padding: 8px 0;
+    }
+    
+    .order-item-row:last-child {
+      border-bottom: none;
+    }
+    
+    .order-item-thumbnail {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div id="navbar-placeholder"></div>
+  
+  <div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1>Order Management</h1>
+      <div>
+        <a href="admin_dashboard.html" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+    </div>
+    
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <div class="input-group">
+              <input type="text" id="order-search" class="form-control" placeholder="Search by order #, customer...">
+              <button class="btn btn-outline-primary" type="button" id="search-button">
+                <i class="bi bi-search"></i> Search
+              </button>
+            </div>
+          </div>
+          <div class="col-md-3 mb-3 mb-md-0">
+            <select class="form-select" id="status-filter">
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" id="sort-by">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="amount_desc">Amount (High to Low)</option>
+              <option value="amount_asc">Amount (Low to High)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Orders Table -->
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table">
+              <!-- Orders will be loaded here -->
+              <tr>
+                <td colspan="6" class="text-center">Loading orders...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Orders pagination" class="mt-4">
+          <ul class="pagination justify-content-center" id="pagination">
+            <!-- Pagination will be populated dynamically -->
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Order Details Modal -->
+  <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="orderDetailsModalLabel">Order Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <p><strong>Order #:</strong> <span id="detail-order-number"></span></p>
+              <p><strong>Date:</strong> <span id="detail-date"></span></p>
+              <p><strong>Customer:</strong> <span id="detail-customer"></span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Status:</strong> <span id="detail-status" class="badge bg-primary"></span></p>
+              <p><strong>Total Amount:</strong> $<span id="detail-amount"></span></p>
+              <p><strong>Payment Method:</strong> <span id="detail-payment"></span></p>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <h6>Shipping Address</h6>
+              <address id="detail-shipping"></address>
+            </div>
+            <div class="col-md-6">
+              <h6>Billing Address</h6>
+              <address id="detail-billing"></address>
+            </div>
+          </div>
+          
+          <h6>Order Items</h6>
+          <div class="order-items">
+            <div id="detail-items">
+              <!-- Order items will be loaded here -->
+            </div>
+          </div>
+          
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <h6>Customer Notes</h6>
+              <p id="detail-notes">No notes provided</p>
+            </div>
+            <div class="col-md-6">
+              <h6>Admin Notes</h6>
+              <textarea id="admin-notes" class="form-control" rows="3" placeholder="Add notes visible only to admins"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="me-auto">
+            <select id="update-status" class="form-select">
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="update-order-btn">Update Order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer -->
+  <div id="footer-placeholder"></div>
+  
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- jQuery (if needed) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  
+  <!-- Config and API scripts -->
+  <script src="../../js/config.js"></script>
+  <script src="../../js/api-client.js"></script>
+  
+  <!-- UI Scripts -->
+  <script src="../../js/ui.js"></script>
+  <script src="../../js/navbar.js"></script>
+  <script src="../../js/pagination.js"></script>
+  
+  <!-- Order Management Script -->
+  <script src="../../js/order_management.js"></script>
+</body>
+</html>
