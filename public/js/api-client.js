@@ -127,7 +127,7 @@ const auth = {
     login: async (username, password) => await post('auth.php?action=login', { username, password }),
     logout: async () => {
         try {
-            // 使用POST方法调用登出API
+            // Using POST method to call logout API
             console.log('Calling logout API...');
             const response = await fetch(apiUrl('auth.php?action=logout'), {
                 method: 'POST',
@@ -138,13 +138,13 @@ const auth = {
                 }
             });
             
-            // 确保清除会话cookie
+            // Ensure session cookie is cleared
             document.cookie = 'PHPSESSID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
             
             return await handleResponse(response);
         } catch (error) {
             console.error('Logout API error:', error);
-            // 即使API调用失败，也尝试清除本地会话状态
+            // Try to clear local session state even if API call fails
             document.cookie = 'PHPSESSID=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
             throw error;
         }

@@ -131,7 +131,7 @@ function handleGetRequest($productId, $reviewId) {
     // Get all reviews for admin (no product ID specified, but need admin access)
     if ($productId === null) {
         try {
-            // 检查是否是管理员
+            // Check if user is admin
             session_start();
             if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
                 errorResponse('Admin access required', 403);
@@ -146,7 +146,7 @@ function handleGetRequest($productId, $reviewId) {
                 return;
             }
             
-            // 获取所有评论，并连接用户和产品信息
+            // Get all reviews and join with user and product information
             $stmt = $pdo->prepare("SELECT r.*, 
                                   u.username, u.avatar,
                                   p.name as product_name,

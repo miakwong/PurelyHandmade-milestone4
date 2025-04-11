@@ -90,7 +90,7 @@ $(document).ready(() => {
         let inputOrderID = $("#orderID").val().trim();
         if (!inputOrderID) {
             $("#errorMessage").text("Please enter an Order ID!").css("color", "red");
-            updateTable();  // 还原表格
+            updateTable();  // Reset table
             return;
         }
 

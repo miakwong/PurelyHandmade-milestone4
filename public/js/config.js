@@ -33,7 +33,7 @@ const config = {
   }
 };
 
-// 确保config对象在全局可用
+// Ensure config object is available globally
 window.config = config;
 
 // Helper functions - General URL getters

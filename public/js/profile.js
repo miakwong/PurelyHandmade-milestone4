@@ -8,7 +8,7 @@ let userAddresses = [];
 // Initialize profile page
 document.addEventListener('DOMContentLoaded', function() {
   console.log('Profile page initialized');
-  
+
   // Wait for page layout to be completely loaded
   setTimeout(function() {
     loadUserProfile();
@@ -23,21 +23,21 @@ function setupUIFirst() {
 
 
 function displayLoadingState() {
-  
+
   currentUser = {
     id: 0,
     name: 'Loading...',
     email: '...',
     role: 'user'
   };
-  
+
   displayUserData();
 }
 
-// Load user profile data 
+// Load user profile data
 function loadUserProfile() {
   console.log('Loading user profile data - improved flow...');
-  
+
   fetch(`${config.apiUrl}/auth.php?action=status`, {
     method: 'GET',
     credentials: 'include',
@@ -49,32 +49,32 @@ function loadUserProfile() {
   .then(response => response.json())
   .then(statusData => {
     console.log('Auth status response:', statusData);
-    
+
     // check if user is logged in
     if (!statusData.success || !statusData.data || !statusData.data.isLoggedIn) {
       console.warn('User is not logged in according to auth.php status check');
       showLoginPrompt();
       return;
     }
-    
+
     // user is logged in, get the user ID to display
     const urlParams = new URLSearchParams(window.location.search);
     const urlUserId = urlParams.get('id');
-    
+
     // get the current logged in user ID
     const currentUserId = statusData.data.user.id;
     console.log(`Current logged in user ID: ${currentUserId}`);
-    
+
     // decide which user's profile to get
     // if there is a ID parameter and it is not the current user, check if it is an admin
     let targetUserId = currentUserId;
     const isAdmin = statusData.data.user.isAdmin;
-    
+
     console.log('Admin status from auth.php:', {
       isAdmin: isAdmin,
       userData: statusData.data.user
     });
-    
+
     if (urlUserId && urlUserId !== currentUserId.toString()) {
       if (isAdmin) {
         // admin can view any user
@@ -89,13 +89,13 @@ function loadUserProfile() {
         }
       }
     }
-    
+
     // try to use the user data from the auth status check
     if (targetUserId == currentUserId) {
       console.log('Using user data from auth status check');
       // directly use the user data from auth.php
       const userData = statusData.data.user;
-      
+
       // ensure the admin status is set correctly
       const isUserAdmin = userData.isAdmin === true;
       console.log('Setting user admin status:', {
@@ -103,7 +103,7 @@ function loadUserProfile() {
         convertedIsAdmin: isUserAdmin,
         user: userData
       });
-      
+
       currentUser = {
         id: userData.id,
         username: userData.username,
@@ -116,14 +116,14 @@ function loadUserProfile() {
         is_admin: isUserAdmin,
         created_at: userData.joinDate
       };
-      
+
       // display the user data
       displayUserData();
-      
-      
+
+
       if (isUserAdmin) {
         console.log('User is admin - showing admin tab and dashboard button');
-        
+
         // display the admin tab and dashboard button
         const adminTabContainer = document.getElementById('admin-tab-container');
         if (adminTabContainer) {
@@ -132,13 +132,13 @@ function loadUserProfile() {
         } else {
           console.warn('Admin tab container element not found');
         }
-        
+
         // display the admin dashboard button
         const adminDashboardBtnContainer = document.getElementById('admin-dashboard-btn-container');
         if (adminDashboardBtnContainer) {
           console.log('Found admin dashboard button container - setting to display:block');
           adminDashboardBtnContainer.style.display = 'block';
-          
+
           // add some highlighted styles
           adminDashboardBtnContainer.classList.add('p-3', 'bg-light', 'rounded', 'mb-3');
         } else {
@@ -147,10 +147,10 @@ function loadUserProfile() {
       } else {
         console.log('User is NOT admin - hiding admin elements');
       }
-      
+
       return;
     }
-    
+
     //view other user's profile
     console.log(`Fetching profile for user ID: ${targetUserId}`);
     fetch(`${config.apiUrl}/users.php?action=get_user&id=${targetUserId}`, {
@@ -170,12 +170,12 @@ function loadUserProfile() {
     })
     .then(userData => {
       console.log('User data response:', userData);
-      
+
       if (userData.success && userData.data) {
         // successfully get the data
         currentUser = userData.data;
         displayUserData();
-        
+
       } else {
         throw new Error(userData.message || 'Failed to load user data');
       }
@@ -194,7 +194,7 @@ function loadUserProfile() {
 // display login prompt
 function showLoginPrompt() {
   console.log('Displaying login prompt');
-  
+
   // find the profile-container element
   const container = document.getElementById('profile-container');
   if (container) {
@@ -220,7 +220,7 @@ function showLoginPrompt() {
 // use default user data
 function useDefaultUserData() {
   console.log('Using default user data for display');
-  
+
   currentUser = {
     id: 0,
     name: 'Guest User',
@@ -229,14 +229,13 @@ function useDefaultUserData() {
     role: 'user',
     created_at: new Date().toISOString()
   };
-  
-  displayUserData();
-  loadUserAddresses(); // display mock address data
+
+  displayUserData();// Display mock address data
 }
 
 // Display user data in profile
 function displayUserData() {
-  
+
   // split name - only split from the name field
   let firstName = '';
   let lastName = '';
@@ -244,8 +243,8 @@ function displayUserData() {
 
   if (currentUser.name && currentUser.name.trim() !== '') {
     fullName = currentUser.name.trim();
-    
-    // 拆分name为first_name和last_name
+
+    // Split name into first_name and last_name
     const nameParts = fullName.split(' ');
     if (nameParts.length > 0) {
       firstName = nameParts[0];
@@ -253,50 +252,50 @@ function displayUserData() {
         lastName = nameParts.slice(1).join(' ');
       }
     }
-    
+
     currentUser.first_name = firstName;
     currentUser.last_name = lastName;
-    
+
     console.log('Name split into:', { firstName, lastName });
   } else {
     console.warn('No name field available for splitting');
   }
-  
+
   // Update profile
   const userFullName = document.getElementById('user-full-name');
   if (userFullName) {
     userFullName.textContent = fullName || '';
   }
-  
+
   const userEmail = document.getElementById('user-email');
   if (userEmail) {
     userEmail.textContent = currentUser.email || '';
   }
-  
+
   const joinDate = document.getElementById('join-date');
   if (joinDate && currentUser.created_at) {
     const date = new Date(currentUser.created_at);
     joinDate.textContent = date.toLocaleDateString();
   }
-  
-  // update details area 
+
+  // update details area
   const firstNameElement = document.getElementById('first-name');
   if (firstNameElement) {
     firstNameElement.textContent = firstName || 'Not set';
     console.log('Setting first-name display to:', firstName || 'Not set');
   }
-  
+
   const lastNameElement = document.getElementById('last-name');
   if (lastNameElement) {
     lastNameElement.textContent = lastName || 'Not set';
     console.log('Setting last-name display to:', lastName || 'Not set');
   }
-  
+
   const emailDisplay = document.getElementById('email-display');
   if (emailDisplay) {
     emailDisplay.textContent = currentUser.email || '';
   }
-  
+
   const birthdayDisplay = document.getElementById('birthday-display');
   if (birthdayDisplay) {
     if (currentUser.birthday) {
@@ -306,12 +305,12 @@ function displayUserData() {
       birthdayDisplay.textContent = 'Not set';
     }
   }
-  
+
   const genderDisplay = document.getElementById('gender-display');
   if (genderDisplay) {
     genderDisplay.textContent = currentUser.gender || 'Not set';
   }
-  
+
   // update avatar
   const profileImg = document.getElementById('profile-img');
   if (profileImg) {
@@ -328,7 +327,7 @@ function displayUserData() {
       profileImg.src = currentUser.image_url;
     }
   }
-  
+
   // check if the user is an admin, show/hide the admin dashboard button
   const adminDashboardBtnContainer = document.getElementById('admin-dashboard-btn-container');
   if (adminDashboardBtnContainer) {
@@ -344,15 +343,15 @@ function displayUserData() {
 
     if(isAdmin) {
       adminDashboardBtnContainer.style.display = 'block';
-      
+
       // ensure the button is visible
       const parentElement = adminDashboardBtnContainer.parentElement;
       if (parentElement) {
         parentElement.insertBefore(adminDashboardBtnContainer, parentElement.firstChild);
-        
+
         // add some highlighted styles
         adminDashboardBtnContainer.classList.add('p-3', 'bg-light', 'rounded', 'mb-3');
-        
+
         setTimeout(() => {
           console.log('Admin button visibility:', adminDashboardBtnContainer.offsetParent !== null);
           console.log('Admin button computed style:', window.getComputedStyle(adminDashboardBtnContainer).display);
@@ -360,30 +359,30 @@ function displayUserData() {
       }
     }
   }
-  
+
   // update edit form fields
   const firstNameInput = document.getElementById('firstName');
   if (firstNameInput) {
     firstNameInput.value = firstName;
   }
-  
+
   const lastNameInput = document.getElementById('lastName');
   if (lastNameInput) {
     lastNameInput.value = lastName;
   }
-  
+
   const emailInput = document.getElementById('email');
   if (emailInput) {
     emailInput.value = currentUser.email || '';
   }
-  
+
   // birthday field
   const birthdayInput = document.getElementById('birthday');
   if (birthdayInput && currentUser.birthday) {
     try {
       // ensure the format is YYYY-MM-DD
       let birthdayValue = currentUser.birthday;
-      
+
       if (!birthdayValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
         const date = new Date(birthdayValue);
         if (!isNaN(date.getTime())) {
@@ -393,13 +392,13 @@ function displayUserData() {
           birthdayValue = `${year}-${month}-${day}`;
         }
       }
-      
+
       birthdayInput.value = birthdayValue;
     } catch (error) {
       console.error('Error formatting birthday:', error);
     }
   }
-  
+
   // gender radio button
   if (currentUser.gender) {
     const genderRadio = document.querySelector(`input[name="gender"][value="${currentUser.gender}"]`);
@@ -410,27 +409,27 @@ function displayUserData() {
 
 // Setup event listeners
 function setupEventListeners() {
-  // Avatar upload - 确保元素存在且事件处理正确
+  // Avatar upload - ensure element exists and event handling is correct
   setupAvatarUpload();
-  
+
   // Save profile button
   const saveProfileBtn = document.getElementById('save-profile');
   if (saveProfileBtn) {
     saveProfileBtn.addEventListener('click', updateUserProfile);
   }
-  
+
   // Save address button
   const saveAddressBtn = document.getElementById('save-address');
   if (saveAddressBtn) {
     saveAddressBtn.addEventListener('click', saveAddress);
   }
-  
+
   // Update address button
   const updateAddressBtn = document.getElementById('update-address');
   if (updateAddressBtn) {
     updateAddressBtn.addEventListener('click', updateAddress);
   }
-  
+
   // Change password form
   const changePasswordForm = document.getElementById('change-password-form');
   if (changePasswordForm) {
@@ -438,18 +437,18 @@ function setupEventListeners() {
   }
 }
 
-// 设置头像上传按钮和事件
+// Set up avatar upload button and event
 function setupAvatarUpload() {
   const avatarUpload = document.getElementById('avatar-upload');
   if (!avatarUpload) {
     console.warn('Avatar upload input not found');
     return;
   }
-  
-  // 添加事件监听器
+
+  // Add event listener
   avatarUpload.addEventListener('change', handleAvatarUpload);
-  
-  // 设置头像点击触发上传
+
+  // Set avatar click to trigger upload
   const avatarOverlay = document.querySelector('.avatar-overlay');
   if (avatarOverlay) {
     avatarOverlay.addEventListener('click', function() {
@@ -459,8 +458,8 @@ function setupAvatarUpload() {
   } else {
     console.warn('Avatar overlay element not found');
   }
-  
-  // 设置直接点击头像也能触发上传
+
+  // Set direct click on avatar to trigger upload
   const profileImg = document.getElementById('profile-img');
   if (profileImg && !avatarOverlay) {
     profileImg.style.cursor = 'pointer';
@@ -475,21 +474,21 @@ function setupAvatarUpload() {
 function handleAvatarUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  
+
   console.log('Avatar file selected:', file.name);
-  
-  // 验证文件类型
+
+  // Validate file type
   if (!file.type.match('image.*')) {
     showToast('Please select an image file', 'error');
     return;
   }
-  
-  // 文件大小限制 (2MB)
+
+  // File size limit (2MB)
   if (file.size > 2 * 1024 * 1024) {
     showToast('Image size should be less than 2MB', 'error');
     return;
   }
-  
+
   // Preview image
   const profileImg = document.getElementById('profile-img');
   if (profileImg) {
@@ -497,27 +496,27 @@ function handleAvatarUpload(event) {
     reader.onload = e => {
       const base64Image = e.target.result;
       profileImg.src = base64Image;
-      
-      // 保存base64图片到服务器
+
+      // Save base64 image to server
       updateAvatarOnServer(base64Image);
     };
     reader.readAsDataURL(file);
   }
 }
 
-// 发送base64图片到服务器
+// Send base64 image to server
 function updateAvatarOnServer(base64Image) {
   console.log('Updating avatar on server with base64 data');
-  
-  // 准备数据
+
+  // Prepare data
   const userData = {
     avatar: base64Image
   };
-  
-  // 调用API更新头像
+
+  // Call API to update avatar
   const userId = currentUser.id;
   fetch(`${config.apiUrl}/users.php?id=${userId}`, {
-    method: 'PUT', 
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
     },
@@ -534,8 +533,8 @@ function updateAvatarOnServer(base64Image) {
     console.log('Avatar update response:', response);
     if (response.success) {
       showToast('Profile photo updated successfully', 'success');
-      
-      // 更新用户数据
+
+      // Update user data
       if (response.data) {
         currentUser = response.data;
       } else {
@@ -560,36 +559,36 @@ function updateUserProfile() {
   const birthday = document.getElementById('birthday').value;
   const genderEl = document.querySelector('input[name="gender"]:checked');
   const gender = genderEl ? genderEl.value : null;
-  
+
   // Validation
   if (!firstName) {
     showError('profile-error', 'Please enter your first name');
     return;
   }
-  
+
   if (!email || !isValidEmail(email)) {
     showError('profile-error', 'Please enter a valid email address');
     return;
   }
-  
-  // 构建name字段 - 始终由first_name和last_name组合而成
+
+  // Construct name field - always combined from first_name and last_name
   const name = lastName ? `${firstName} ${lastName}` : firstName;
   console.log('Constructed name field:', name);
-  
-  // Create user data object, 明确只发送name字段
+
+  // Create user data object, explicitly only send name field
   const userData = {
     name: name,
     email: email,
     birthday: birthday || null,
     gender: gender || null
   };
-  
+
   console.log('Updating profile with data:', userData);
-  
+
   // Call API to update profile
   const userId = currentUser.id;
   const updateUrl = `${config.apiUrl}/users.php?id=${userId}`;
-  
+
   fetch(updateUrl, {
     method: 'PUT',
     headers: {
@@ -609,68 +608,69 @@ function updateUserProfile() {
       if (!response.success) {
         throw new Error(response.message || 'Failed to update profile');
       }
-      
+
       // Update current user data with the response data or our sent data
       if (response.data) {
-        // 服务器返回了更新后的用户数据
+        // Server returned updated user data
         currentUser = response.data;
       } else {
-        // 服务器没有返回数据，使用我们发送的数据更新
+        // Server didn't return data, use the data we sent to update
         Object.assign(currentUser, userData);
       }
-      
+
       // Update display
       displayUserData();
-      
-      // Close modal
-      const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
-      if (modal) {
-        modal.hide();
+
+      // Hide modal if present
+      const profileModal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+      if (profileModal) {
+        profileModal.hide();
       }
-      
+
       // Show success message
       showToast('Profile updated successfully', 'success');
     })
     .catch(error => {
       console.error('Error updating profile:', error);
-      showError('profile-error', error.message || 'Error updating profile. Please try again.');
+      // Show server returned error message or generic error
+      showError('profile-error', error.message || 'Failed to update profile. Please try again.');
     });
 }
 
 // Change password
 function changePassword(event) {
   event.preventDefault();
-  
+
   // Get form values
   const currentPassword = document.getElementById('current-password').value;
   const newPassword = document.getElementById('new-password').value;
   const confirmPassword = document.getElementById('confirm-password').value;
-  
+
   // Validation
   if (!currentPassword || !newPassword || !confirmPassword) {
     showError('password-error', 'Please fill in all password fields');
     return;
   }
-  
+
   if (newPassword !== confirmPassword) {
     showError('password-error', 'New passwords do not match');
     return;
   }
-  
+
   if (newPassword.length < 8) {
     showError('password-error', 'New password must be at least 8 characters');
     return;
   }
-  
+
   // Create password change data
   const passwordData = {
     current_password: currentPassword,
     new_password: newPassword
   };
-  
+
   // Call users.php to change password
   const passwordUrl = `${config.apiUrl}/users.php?action=change_password`;
-  
+
   fetch(passwordUrl, {
     method: 'POST',
     headers: {
@@ -692,22 +692,22 @@ function changePassword(event) {
       if (!response.success) {
         throw new Error(response.message || 'Failed to change password');
       }
-      
+
       // Clear form
       document.getElementById('current-password').value = '';
       document.getElementById('new-password').value = '';
       document.getElementById('confirm-password').value = '';
-      
+
       // Hide error
       hideError('password-error');
-      
+
       // Show success message
       showToast('Password changed successfully', 'success');
     })
     .catch(error => {
       console.error('Error changing password:', error);
-      
-      // 显示服务器返回的错误消息或通用错误
+
+      // Show server returned error message or generic error
       const errorMessage = error.message || 'Error changing password. Please try again.';
       showError('password-error', errorMessage);
     });
@@ -782,4 +782,4 @@ function hideError(elementId) {
 // Expose functions to global scope
 window.editAddress = editAddress;
 window.deleteAddress = deleteAddress;
-window.setDefaultAddress = setDefaultAddress; 
+window.setDefaultAddress = setDefaultAddress;
