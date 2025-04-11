@@ -227,11 +227,16 @@ function getUsers() {
                 $row['last_name'] = '';
             }
             
-            // 处理头像URL
+            // 处理头像数据 - 如果是二进制数据则进行base64编码或改为URL
             if (!empty($row['avatar'])) {
-                $row['image_url'] = $row['avatar'];
+                // 检查avatar是否已经是URL或base64字符串
+                if (filter_var($row['avatar'], FILTER_VALIDATE_URL) === false && 
+                    strpos($row['avatar'], 'data:image') !== 0) {
+                    // 如果是二进制数据，转为base64编码
+                    $row['avatar'] = 'data:image/jpeg;base64,' . base64_encode($row['avatar']);
+                }
             } else {
-                $row['image_url'] = ASSETS_URL . '/img/default-avatar.png';
+                $row['avatar'] = '';
             }
             
             // 处理is_admin兼容性
@@ -324,8 +329,12 @@ function getUser($userId) {
             }
         }
         
-        // 不处理头像URL，保持avatar字段原样
-        // 不再添加image_url字段
+        if (!empty($user['avatar'])) {
+            if (filter_var($user['avatar'], FILTER_VALIDATE_URL) === false && 
+                strpos($user['avatar'], 'data:image') !== 0) {
+                $user['avatar'] = 'data:image/jpeg;base64,' . base64_encode($user['avatar']);
+            }
+        }
         
         // 处理is_admin兼容性
         $user['is_admin'] = (strtolower($user['role']) === 'admin');
@@ -344,12 +353,32 @@ function updateUser($userId) {
     // Get JSON data
     $data = json_decode(file_get_contents('php://input'), true);
     
+    error_log("updateUser function called with userId: " . $userId);
+    error_log("Session data: " . print_r($_SESSION, true));
+    error_log("POST/JSON data: " . print_r($data, true));
+    
+    if (isset($data['user_id']) && is_numeric($data['user_id'])) {
+        error_log("Using user_id from request data: " . $data['user_id']);
+        $userId = (int)$data['user_id'];
+    }
+    
+    error_log("Session user_id: " . ($_SESSION['user_id'] ?? 'not set'));
+    error_log("Target user_id for update: " . $userId);
+    
+    $isUserAdmin = isAdmin();
+    error_log("Is user admin? " . ($isUserAdmin ? 'Yes' : 'No'));
+    
+    if ($userId != $_SESSION['user_id'] && !$isUserAdmin) {
+        error_log("Permission denied: Non-admin user " . ($_SESSION['user_id'] ?? 'unknown') . " tried to update user " . $userId);
+        jsonResponse(false, 'You are not authorized to update this user', null, 403);
+        return;
+    }
+    
     // Validate input
     if (empty($data)) {
         jsonResponse(false, 'No data provided', null, 400);
     }
     
-    // 记录请求数据用于调试
     error_log('Update user request data: ' . json_encode($data));
     
     // Check if user exists
@@ -437,14 +466,41 @@ function updateUser($userId) {
     // Process avatar field - can be base64 or URL
     if (isset($data['avatar'])) {
         error_log('Avatar field found in request data. Processing...');
-        // 直接保存base64图像数据
         $avatar = $data['avatar'];
         
         // 确保avatar字段不为null
         if (!empty($avatar)) {
-            error_log('Avatar data found, saving directly to database');
-            $updateFields[] = "avatar = ?";
-            $params[] = $avatar;
+            // 如果是完整的base64字符串（包含data:image前缀），提取实际的base64数据
+            if (strpos($avatar, 'data:image') === 0) {
+                error_log('Processing base64 image data');
+                $matches = [];
+                if (preg_match('/^data:image\/(\w+);base64,(.+)$/', $avatar, $matches)) {
+                    // $matches[1] 包含图像类型（如 jpeg, png 等）
+                    // $matches[2] 包含实际的 base64 数据
+                    $imageData = base64_decode($matches[2]);
+                    if ($imageData !== false) {
+                        error_log('Base64 image decoded successfully');
+                        $updateFields[] = "avatar = ?";
+                        $params[] = $imageData; // 存储解码后的二进制数据
+                    } else {
+                        error_log('Failed to decode base64 image data');
+                    }
+                } else {
+                    error_log('Invalid base64 image format');
+                }
+            } 
+            // 如果是URL，直接保存
+            else if (filter_var($avatar, FILTER_VALIDATE_URL)) {
+                error_log('Avatar is a URL, saving directly');
+                $updateFields[] = "avatar = ?";
+                $params[] = $avatar;
+            }
+            // 其他情况（可能是二进制数据或简单的base64），直接保存
+            else {
+                error_log('Avatar data format unknown, saving as-is');
+                $updateFields[] = "avatar = ?";
+                $params[] = $avatar;
+            }
         } else {
             error_log('Avatar data is empty');
         }

@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
   loadProductDetails(productId);
   loadProductReviews(productId);
   setupReviewForm(productId);
+  
+  // Setup review update listener
+  setupReviewUpdateListener(productId);
 });
 
 // Load product details from the API
@@ -288,6 +291,9 @@ function loadProductReviews(productId, forceRefresh = false) {
   .then(data => {
     if (data.success) {
       displayReviews(data.data.reviews, data.data.stats);
+      
+      // Update product rating in product details section
+      updateProductRating(data.data.stats);
     } else {
       reviewList.innerHTML = `<div class="alert alert-warning">Failed to load reviews: ${data.message}</div>`;
     }
@@ -510,8 +516,37 @@ function setupReviewForm(productId) {
           .then(data => {
             if (data.success) {
               window.showToast("Review has been submitted", "success");
+              
+              // Show special notification about profile update
+              setTimeout(() => {
+                window.showToast("Your review will be visible in your profile page", "info");
+              }, 1500);
+              
               document.getElementById("review-form").reset();
               loadProductReviews(productId, true);
+              
+              // Set flag for profile page to know a new review was added
+              const reviewAddedData = {
+                productId: productId,
+                timestamp: new Date().getTime(),
+                reviewData: data.data
+              };
+              console.log('Setting review_added in localStorage:', reviewAddedData);
+              localStorage.setItem('review_added', JSON.stringify(reviewAddedData));
+              
+              // Also try triggering storage event manually for same-tab detection
+              try {
+                const storageEvent = new StorageEvent('storage', {
+                  key: 'review_added',
+                  newValue: JSON.stringify(reviewAddedData),
+                  oldValue: null,
+                  storageArea: localStorage
+                });
+                window.dispatchEvent(storageEvent);
+                console.log('Manually dispatched storage event');
+              } catch (e) {
+                console.error('Error dispatching storage event:', e);
+              }
             } else {
               window.showToast(data.message || "Failed to submit review", "error");
             }
@@ -592,7 +627,7 @@ function showErrorMessage(message) {
   `;
 }
 
-// Simplified breadcrumb navigation update
+// breadcrumb navigation update
 function updateBreadcrumbNavigation(product, categoryId, categoryName) {
   if (!product) return;
   
@@ -656,6 +691,64 @@ function updateBreadcrumbElements(breadcrumbCategory, breadcrumbItem, productCat
   if (productCategory) {
     productCategory.textContent = categoryName;
     productCategory.href = categoryLink;
+  }
+}
+
+// Setup listener for review updates from profile page
+function setupReviewUpdateListener(productId) {
+  // Check for updates immediately
+  checkForReviewUpdates(productId);
+  
+  // Then check periodically
+  setInterval(() => {
+    checkForReviewUpdates(productId);
+  }, 3000); // Check every 3 seconds
+}
+
+// Check if reviews were updated from profile page
+function checkForReviewUpdates(productId) {
+  const updatedFlag = localStorage.getItem('reviews_updated');
+  if (!updatedFlag) return;
+  
+  try {
+    const updateData = JSON.parse(updatedFlag);
+    // Check if update is for current product and is recent (less than 10 seconds old)
+    const isRecentUpdate = (new Date().getTime() - updateData.timestamp) < 10000;
+    const isForCurrentProduct = String(updateData.productId) === String(productId);
+    
+    if (isRecentUpdate && isForCurrentProduct) {
+      console.log('Detected review update from profile page:', updateData.action);
+      // Reload reviews with force refresh
+      loadProductReviews(productId, true);
+      // Clear the flag after processing
+      localStorage.removeItem('reviews_updated');
+    } else if (!isRecentUpdate) {
+      // Remove stale updates
+      localStorage.removeItem('reviews_updated');
+    }
+  } catch (e) {
+    console.error('Error checking for review updates:', e);
+    localStorage.removeItem('reviews_updated');
+  }
+}
+
+// Update product rating in product details section
+function updateProductRating(stats) {
+  if (!stats) return;
+  
+  const avgRating = parseFloat(stats.avg_rating) || 0;
+  const totalReviews = parseInt(stats.total_reviews) || 0;
+  
+  // Update rating stars in product details
+  const productRating = document.getElementById("product-rating");
+  if (productRating) {
+    productRating.innerHTML = generateStarsHtml(avgRating);
+  }
+  
+  // Update review count in product details
+  const reviewCount = document.getElementById("review-count");
+  if (reviewCount) {
+    reviewCount.textContent = `(${totalReviews} reviews)`;
   }
 }
 

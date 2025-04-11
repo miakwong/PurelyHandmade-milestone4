@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(function() {
     loadUserProfile();
     setupEventListeners();
+    
+    // Start checking for new reviews
+    startReviewCheckInterval();
   }, 300);
 });
 
@@ -367,7 +370,7 @@ function displayUserData() {
               // 这是解码整个base64字符串的关键代码，保留
               const decoded = atob(currentUser.avatar);
               profileImg.src = decoded;
-            } else {
+    } else {
               // 普通base64字符串，加上前缀
               profileImg.src = 'data:image/jpeg;base64,' + currentUser.avatar;
             }
@@ -378,8 +381,8 @@ function displayUserData() {
         }
         // 处理其他可能的情况
         else if (currentUser.avatar.startsWith('data:image/')) {
-          profileImg.src = currentUser.avatar;
-        }
+      profileImg.src = currentUser.avatar;
+    }
         else if (currentUser.avatar.startsWith('http')) {
           profileImg.src = currentUser.avatar;
         }
@@ -435,19 +438,19 @@ function displayUserData() {
     try {
       // ensure the format is YYYY-MM-DD for the input
       if (currentUser.birthday) {
-        let birthdayValue = currentUser.birthday;
-        
-        if (!birthdayValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          const date = new Date(birthdayValue);
-          if (!isNaN(date.getTime())) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            birthdayValue = `${year}-${month}-${day}`;
-          }
+      let birthdayValue = currentUser.birthday;
+      
+      if (!birthdayValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const date = new Date(birthdayValue);
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          birthdayValue = `${year}-${month}-${day}`;
         }
-        
-        birthdayInput.value = birthdayValue;
+      }
+      
+      birthdayInput.value = birthdayValue;
       } else {
         birthdayInput.value = '';
       }
@@ -470,8 +473,8 @@ function displayUserData() {
     if (genderRadio) {
       genderRadio.checked = true;
     }
+    }
   }
-}
 
 // Setup event listeners
 function setupEventListeners() {
@@ -860,9 +863,9 @@ function updateUserProfile() {
             if (birthday) {
               const date = new Date(birthday);
               fieldValue.textContent = date.toLocaleDateString();
-            } else {
+      } else {
               fieldValue.textContent = 'Not set';
-            }
+      }
           } else if (labelText.includes('gender')) {
             fieldValue.textContent = gender || 'Not set';
           }
@@ -1181,7 +1184,7 @@ function updateReview() {
   updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
   
   // Call API to update review 
-  fetch(`${config.apiUrl}/product_reviews.php?id=${reviewId}`, {
+  fetch(`${config.apiUrl}/product_reviews.php?id=${reviewId}&action=update`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1202,6 +1205,14 @@ function updateReview() {
       
       // Reload reviews
       loadUserReviews();
+      
+      // Set flag for product page to reload reviews
+      localStorage.setItem('reviews_updated', JSON.stringify({
+        productId: productId,
+        action: 'update',
+        reviewId: reviewId,
+        timestamp: new Date().getTime()
+      }));
       
       // Show success message
       showToast('Review updated successfully', 'success');
@@ -1235,18 +1246,34 @@ function deleteReview(reviewId) {
     }
   }
   
-  fetch(`${config.apiUrl}/product_reviews.php?id=${reviewId}`, {
+  fetch(`${config.apiUrl}/product_reviews.php?id=${reviewId}&action=delete`, {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({}),
     credentials: 'include'
   })
   .then(response => response.json())
   .then(data => {
     if (data.success) {
+      // Get product ID before removing from array
+      const review = userReviews.find(r => r.id == reviewId);
+      const productId = review ? review.product_id : null;
+      
       // Remove from array
       userReviews = userReviews.filter(review => review.id != reviewId);
       
       // Update display
       displayUserReviews();
+      
+      // Set flag for product page to reload reviews
+      localStorage.setItem('reviews_updated', JSON.stringify({
+        productId: productId,
+        action: 'delete',
+        reviewId: reviewId,
+        timestamp: new Date().getTime()
+      }));
       
       // Show success message
       showToast('Review deleted successfully', 'success');
@@ -1315,6 +1342,45 @@ function hideError(elementId) {
   }
 }
 
+// Start interval to check for new reviews
+function startReviewCheckInterval() {
+  // Check immediately
+  checkForNewReviews();
+  
+  // Then check periodically
+  setInterval(() => {
+    checkForNewReviews();
+  }, 3000); // Check every 3 seconds
+}
+
+// Check if new reviews were added from product page
+function checkForNewReviews() {
+  const reviewAddedFlag = localStorage.getItem('review_added');
+  if (!reviewAddedFlag) return;
+  
+  try {
+    const reviewData = JSON.parse(reviewAddedFlag);
+    // Check if update is recent (less than 10 seconds old)
+    const isRecentUpdate = (new Date().getTime() - reviewData.timestamp) < 10000;
+    
+    if (isRecentUpdate && currentUser) {
+      console.log('Detected new review from product page');
+      // Refresh reviews list
+      loadUserReviews();
+      // Clear the flag after processing
+      localStorage.removeItem('review_added');
+      
+      // Show a toast notification
+      showToast('Your review list has been updated', 'info');
+    } else if (!isRecentUpdate) {
+      // Remove stale updates
+      localStorage.removeItem('review_added');
+    }
+  } catch (e) {
+    console.error('Error checking for new reviews:', e);
+    localStorage.removeItem('review_added');
+  }
+}
 
 // Expose functions to global scope
 window.editReview = editReview;
