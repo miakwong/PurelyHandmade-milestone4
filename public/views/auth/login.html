@@ -7,11 +7,26 @@
     <title>Login - Purely Homemade</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="../../css/styles.css" rel="stylesheet">
+    <link href="../../css/cart-sidebar.css" rel="stylesheet">
+    <style>
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+    </style>
 </head>
 
 <body>
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
 <!-- Navbar Placeholder -->
 <div id="navbar-placeholder"></div>
+
+<!-- Cart Sidebar Placeholder -->
+<div id="cart-sidebar-placeholder"></div>
 
 <!-- Main Content -->
 <div id="main-content">
@@ -31,7 +46,8 @@
                             <button type="submit" class="btn btn-primary w-100">Login</button>
                         </form>
                         <div class="mt-3 text-center">
-                            <p>Don't have an account? <a href="../auth/register.html">Register</a></p>
+                            <p>Don't have an account? <a
+                                    href="/~miakuang/PurelyHandmade/public/views/auth/register.html">Register</a></p>
                         </div>
                         <div class="text-end mt-2">
                             <a href="#" id="forgot-password">Forgot Password?</a>
@@ -46,40 +62,23 @@
 <!-- Footer Placeholder -->
 <div id="footer-placeholder"></div>
 
+<!-- Configuration and API -->
+<script src="../../js/config.js"></script>
+<script src="../../js/api-client.js"></script>
+<script src="../../js/ui.js"></script>
+<script src="../../js/navbar.js"></script>
+<script src="../../js/cart.js"></script>
+
 <script>
     // Load navbar and footer content dynamically
-    fetch('../../layout/navbar.html').then(r => r.text()).then(html => document.getElementById('navbar-placeholder').innerHTML = html);
-    fetch('../../layout/footer.html').then(r => r.text()).then(html => document.getElementById('footer-placeholder').innerHTML = html);
-
-    // Ensure `admin` account exists
-    document.addEventListener('DOMContentLoaded', function () {
-        ensureAdminAccount();
-    });
-
-    function ensureAdminAccount() {
-        let users = JSON.parse(localStorage.getItem('users') || '[]');
-
-        // If `admin` account does not exist, create it
-        if (!users.some(user => user.username === "admin")) {
-            const adminUser = {
-                id: 1,
-                username: "admin",
-                email: "admin@example.com",
-                password: "admin123",  // Default password
-                isAdmin: true,
-                createdAt: new Date().toISOString()
-            };
-
-            users.push(adminUser);
-            localStorage.setItem('users', JSON.stringify(users));
-            console.log("✅ Default admin account has been created!");
-        }
-    }
+    loadLayoutComponents();
 
     // Login logic
-    document.getElementById('login-form').addEventListener('submit', function (e) {
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
         e.preventDefault();
         const form = e.target;
+
+        // Basic form validation
         if (!form.checkValidity()) {
             form.reportValidity();
             return;
@@ -88,59 +87,88 @@
         const identifier = document.getElementById('loginIdentifier').value.trim();
         const password = document.getElementById('loginPassword').value;
 
-        function isEmail(input) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
-        }
+        try {
+            // Call login API
+            const response = await fetch(`${config.apiUrl}/auth.php?action=login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: identifier,
+                    password: password
+                }),
+                credentials: 'include'
+            });
 
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-
-        // Find matching user
-        const user = users.find(u =>
-            (isEmail(identifier) ? u.email === identifier : u.username === identifier) &&
-            u.password === password
-        );
-
-        if (user) {
-            // Store current user info
-            localStorage.setItem('currentUser', JSON.stringify({
-                id: user.id,
-                username: user.username,
-                email: user.email,
-                isAdmin: user.isAdmin || false
-            }));
-
-            if (user.isAdmin) {
-                localStorage.setItem('isAdmin', 'true');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Check if there are pending items to add to the cart
-            const pendingCart = localStorage.getItem('pendingAddToCart');
-            if (pendingCart) {
+            const result = await response.json();
+            console.log('Login response:', result);
+
+            if (result.success) {
+                // Show success message
+                showToast('Login successful! Welcome back!');
+
+                // wait 3 seconds for user to see the success message
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // check user status
                 try {
-                    const { productId, quantity } = JSON.parse(pendingCart);
-                    // Clear pending record
-                    localStorage.removeItem('pendingAddToCart');
+                    const statusResponse = await fetch(`${config.apiUrl}/auth.php?action=status`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
 
-                    // Redirect to the homepage and automatically add the product after login
-                    alert(`Successfully logged in! Welcome, ${user.username}!`);
-                    window.location.href = '../../index.html';
-                    return;
+                    if (!statusResponse.ok) {
+                        throw new Error(`Status check failed! status: ${statusResponse.status}`);
+                    }
+
+                    const statusResult = await statusResponse.json();
+                    console.log('Status check response:', statusResult);
+
+                    if (statusResult.success && statusResult.data.isLoggedIn) {
+                        // Check if there are pending items to add to the cart
+                        const pendingCart = localStorage.getItem('pendingAddToCart');
+                        if (pendingCart) {
+                            try {
+                                const { productId, quantity } = JSON.parse(pendingCart);
+                                // Clear pending record
+                                localStorage.removeItem('pendingAddToCart');
+                                // Redirect to homepage
+                                window.location.href = '/~miakuang/PurelyHandmade/public/index.html';
+                                return;
+                            } catch (error) {
+                                console.error('Error processing pending cart item:', error);
+                            }
+                        }
+
+                        // check user status and redirect to profile page with user ID
+                        const userId = statusResult.data.user.id;
+                        window.location.href = `profile.html?id=${userId}`;
+                    } else {
+                        showToast('Login status verification failed. Please try again.', 'error');
+                    }
                 } catch (error) {
-                    console.error('Error processing pending cart item:', error);
+                    console.error('Status check error:', error);
+                    showToast('Failed to verify login status. Please try again.', 'error');
                 }
+            } else {
+                // Show error message
+                showToast(result.message || 'Login failed. Please try again.', 'error');
             }
-
-            alert(`Successfully logged in! Welcome, ${user.username}!`);
-            window.location.href = 'profile.html';
-        } else {
-            alert('Invalid username/email or password. Please try again.');
+        } catch (error) {
+            console.error('Login error:', error);
+            showToast('An error occurred during login. Please try again.', 'error');
         }
     });
 
     // Forgot password functionality
     document.getElementById('forgot-password').addEventListener('click', function (e) {
         e.preventDefault();
-        alert('Password reset instructions would be sent to your email.');
+        showToast('Password reset instructions would be sent to your email.');
     });
 </script>
 

@@ -14,150 +14,8 @@
 
   <!-- Custom CSS -->
   <link rel="stylesheet" href="css/styles.css">
-
-  <style>
-    /* CSS */
-    .filter-sidebar {
-      background-color: #f8f9fa;
-      border-radius: 8px;
-      padding: 20px;
-    }
-
-    .filter-group {
-      margin-bottom: 20px;
-    }
-
-    .filter-group-title {
-      font-weight: 600;
-      margin-bottom: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-    }
-
-    .price-range-inputs {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .price-range-inputs input {
-      width: 80px;
-    }
-
-    /* Product card styles */
-    .product-card {
-      border-radius: 8px;
-      overflow: hidden;
-      margin-bottom: 30px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .product-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-    }
-
-    .product-img {
-      height: 220px;
-      object-fit: cover;
-    }
-
-    .product-badge {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background-color: #dc3545;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .product-price {
-      font-weight: 600;
-      color: #0d6efd;
-      font-size: 1.1rem;
-    }
-
-    .product-price-discount {
-      text-decoration: line-through;
-      color: #6c757d;
-      font-size: 0.9rem;
-      margin-left: 5px;
-    }
-
-    .product-item {
-      position: relative;
-    }
-
-    .add-to-cart-btn {
-      position: absolute;
-      bottom: 15px;
-      right: 15px;
-      z-index: 10;
-    }
-
-    /* Card link */
-    .product-card-link {
-      display: block;
-      color: inherit;
-      text-decoration: none;
-    }
-
-    /* Pagination styles */
-    .pagination .page-item.active .page-link {
-      background-color: #0d6efd;
-      border-color: #0d6efd;
-    }
-
-    .pagination .page-link {
-      color: #0d6efd;
-    }
-
-    .sort-select {
-      width: auto;
-      min-width: 150px;
-    }
-
-    /* Breadcrumb */
-    .breadcrumb {
-      margin-bottom: 20px;
-    }
-
-    /* Toast styles */
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    @keyframes fadeOut {
-      from {
-        opacity: 1;
-      }
-
-      to {
-        opacity: 0;
-      }
-    }
-
-    .toast-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 9999;
-    }
-  </style>
+  <link rel="stylesheet" href="css/cart-sidebar.css">
+  <link rel="stylesheet" href="css/index.css">
 </head>
 
 <body>
@@ -313,6 +171,9 @@
   </div>
 </div>
 
+<!-- Cart Sidebar Placeholder -->
+<div id="cart-sidebar-placeholder"></div>
+
 <!-- Toast container -->
 <div class="toast-container" id="toast-container"></div>
 
@@ -327,9 +188,12 @@
 <script src="js/config.js"></script>
 <script src="js/api-client.js"></script>
 
+<!-- Auth and Navbar -->
+<script src="js/navbar.js"></script>
+
 <!-- Modular JS files -->
-<script src="js/products.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/products.js"></script>
 <script src="js/cart.js"></script>
 <script src="js/pagination.js"></script>
 
@@ -339,14 +203,40 @@
 
   // Initialize after page load
   document.addEventListener('DOMContentLoaded', function () {
-    // Initialize the page
-    initializePage();
+    // Initialize URL parameters first
+    if (typeof initializeUrlParams === 'function') {
+      initializeUrlParams();
+    } else {
+      // Fallback for direct URL parameter parsing
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('category')) {
+        activeCategoryId = parseInt(urlParams.get('category'));
+        console.log('Direct URL parsing: category ID =', activeCategoryId);
+      }
+    }
 
-    // Check for items to add to the cart after login
-    setTimeout(() => {
-      // Delay execution to ensure addToCart function is loaded
-      checkPendingCartItems();
-    }, 500);
+    // Load navbar and footer
+    if (typeof loadLayoutComponents === 'function') {
+      loadLayoutComponents();
+    } else if (typeof window.loadLayoutComponents === 'function') {
+      window.loadLayoutComponents();
+    } else {
+      console.error('Layout loading function not found. Make sure ui.js is loaded correctly.');
+    }
+
+    // Initialize the filter accordion
+    if (typeof initializeFilterAccordion === 'function') {
+      initializeFilterAccordion();
+    }
+
+    // Load categories and products
+    if (typeof loadCategories === 'function') {
+      loadCategories();
+    }
+
+    if (typeof loadProducts === 'function') {
+      loadProducts();
+    }
   });
 
   // Check for items to add to the cart after login

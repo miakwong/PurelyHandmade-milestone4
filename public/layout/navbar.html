@@ -33,12 +33,11 @@
                            id="register-link">Register</a></li>
                 </ul>
             </div>
-            <!-- Cart Icon -->
-            <a href="/~miakuang/PurelyHandmade/public/views/checkout/cart.html" class="btn btn-outline-primary"
-               id="cart-link">
+            <!-- Cart Icon - changed to button that toggles slide cart -->
+            <button class="btn btn-outline-primary" id="toggle-cart-btn">
                 <i class="material-icons-outlined">shopping_bag</i>
                 <span class="badge bg-danger rounded-pill" id="cart-count" style="display: none;">0</span>
-            </a>
+            </button>
         </div>
     </div>
 </nav>
@@ -58,73 +57,3 @@
         </div>
     </nav>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const userDropdown = document.getElementById('userDropdown');
-        const loginLink = document.getElementById('login-link');
-        const registerLink = document.getElementById('register-link');
-        const cartLink = document.getElementById('cart-link');
-        const navbarLogo = document.getElementById('navbar-logo');
-        const navbarCss = document.getElementById('navbar-css');
-
-        // get the base URL and API URL from the config object
-        const apiUrl = window.config ? window.config.apiUrl : 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade/server/api';
-        const baseUrl = window.config ? window.config.baseUrl : 'https://cosc360.ok.ubc.ca/~miakuang/PurelyHandmade';
-
-        // css path
-        if (window.config && window.config.production) {
-            navbarCss.href = `${baseUrl}/css/navbar.css`;
-        }
-
-        // logo path
-        if (window.config && window.config.imagesUrl) {
-            navbarLogo.src = `${window.config.imagesUrl}/logo.jpg`;
-        }
-
-        // check user status
-        fetch(`${apiUrl}/auth.php?action=status`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.loggedIn) {
-                    // user is logged in
-                    loginLink.parentElement.style.display = 'none';
-                    registerLink.parentElement.style.display = 'none';
-
-                    const profileItem = document.createElement('li');
-                    profileItem.innerHTML = `<a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/auth/profile.html">My Profile</a>`;
-
-                    const logoutItem = document.createElement('li');
-                    logoutItem.innerHTML = `<a class="dropdown-item" href="#" id="logout-link">Logout</a>`;
-
-                    // if the user is an admin, add the admin panel link
-                    if (data.isAdmin) {
-                        const adminItem = document.createElement('li');
-                        adminItem.innerHTML = `<a class="dropdown-item" href="/~miakuang/PurelyHandmade/public/views/admin/dashboard.html">Admin Panel</a>`;
-                        loginLink.parentElement.parentElement.appendChild(adminItem);
-                    }
-
-                    loginLink.parentElement.parentElement.appendChild(profileItem);
-                    loginLink.parentElement.parentElement.appendChild(logoutItem);
-
-                    //logout
-                    document.getElementById('logout-link').addEventListener('click', function (e) {
-                        e.preventDefault();
-                        fetch(`${apiUrl}/auth.php?action=logout`)
-                            .then(response => response.json())
-                            .then(() => {
-                                window.location.reload();
-                            });
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error checking authentication status:', error);
-            });
-
-        // boostrap dropdown initialization
-        if (typeof bootstrap !== 'undefined') {
-            const dropdown = new bootstrap.Dropdown(userDropdown);
-        }
-    });
-</script>

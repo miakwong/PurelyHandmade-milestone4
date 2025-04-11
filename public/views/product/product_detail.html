@@ -10,6 +10,7 @@
 
     <link rel="stylesheet" href="../../css/styles.css">
     <link rel="stylesheet" href="../../css/product_detail.css">
+    <link rel="stylesheet" href="../../css/cart-sidebar.css">
 </head>
 
 <body>
@@ -58,7 +59,6 @@
 
                     <div class="product-price-container mb-4">
                         <span class="product-price" id="product-price">$0.00</span>
-                        <span class="product-original-price" id="product-original-price">$0.00</span>
                         <span class="badge bg-danger ms-2" id="sale-badge" style="display: none;">Sale</span>
                     </div>
 
@@ -82,9 +82,6 @@
                         </button>
                         <button id="buy-now-btn" class="btn btn-outline-primary ms-2" disabled>
                             Buy Now
-                        </button>
-                        <button id="add-to-wishlist-btn" class="btn btn-outline-secondary ms-2">
-                            <i class="bi bi-heart"></i>
                         </button>
                     </div>
 
@@ -290,6 +287,9 @@
 <!-- Toast notification container -->
 <div class="toast-container" id="toast-container"></div>
 
+<!-- Cart Sidebar Placeholder -->
+<div id="cart-sidebar-placeholder"></div>
+
 <!-- Footer Placeholder -->
 <div id="footer-placeholder"></div>
 
@@ -298,13 +298,40 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="../../js/config.js"></script>
 <script src="../../js/api-client.js"></script>
+<script src="../../js/navbar.js"></script>
 <script src="../../js/cart.js"></script>
 <script src="../../js/product_detail.js"></script>
 <script src="../../js/ui.js"></script>
 
 <script>
-    // Load navbar and footer
+    // Load navbar and footer content dynamically
     loadLayoutComponents();
+
+    // Ensure navbar cart button works properly after navbar is loaded
+    document.addEventListener('DOMContentLoaded', function () {
+        // Setup MutationObserver to watch for navbar loading
+        const navbarPlaceholder = document.getElementById('navbar-placeholder');
+        if (navbarPlaceholder) {
+            const observer = new MutationObserver(function (mutations) {
+                for (const mutation of mutations) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        // Navbar was loaded, setup cart button event listener
+                        console.log('Navbar loaded in product detail page, setting up cart button');
+                        const toggleCartBtn = document.getElementById('toggle-cart-btn');
+                        if (toggleCartBtn) {
+                            toggleCartBtn.addEventListener('click', window.toggleCart);
+                            console.log('Cart button listener attached successfully');
+                        }
+                        observer.disconnect();
+                        break;
+                    }
+                }
+            });
+
+            // Start observing the navbar placeholder
+            observer.observe(navbarPlaceholder, { childList: true, subtree: true });
+        }
+    });
 </script>
 </body>
 
